@@ -36,12 +36,43 @@ impl Lexer {
                 ',' => self.append_token(TType::Comma),
                 '.' => self.append_token(TType::Dot),
                 ';' => self.append_token(TType::Semi),
-                
+
                 // operators
-                '+' => if self.get('=') { self.append_token(TType::PlusEq) } else { self.append_token(TType::Plus) },
-                '-' => if self.get('=') { self.append_token(TType::MinusEq) } else { self.append_token(TType::Minus) },
-                '*' => if self.get('=') { self.append_token(TType::TimesEq) } else { self.append_token(TType::Times) },
-                '/' => if self.get('=') { self.append_token(TType::DivideEq) } else { self.append_token(TType::Divide) },
+                '+' => {
+                    if self.get('=') {
+                        self.append_token(TType::PlusEq)
+                    } else {
+                        self.append_token(TType::Plus)
+                    }
+                }
+                '-' => {
+                    if self.get('=') {
+                        self.append_token(TType::MinusEq)
+                    } else {
+                        self.append_token(TType::Minus)
+                    }
+                }
+                '*' => {
+                    if self.get('=') {
+                        self.append_token(TType::TimesEq)
+                    } else if self.get('*') {
+                        if self.get('=') {
+                            self.append_token(TType::PowEq)
+                        } else {
+                            self.append_token(TType::Pow)
+                        }
+                    } else {
+                        self.append_token(TType::Times)
+                    }
+                }
+                '/' => {
+                    if self.get('=') {
+                        self.append_token(TType::DivideEq)
+                    } else {
+                        self.append_token(TType::Divide)
+                    }
+                }
+                ' ' | '\r' => (),
 
                 _ => {
                     return Err(Error::new(
@@ -66,14 +97,18 @@ impl Lexer {
     }
 
     fn get(&mut self, char: char) -> bool {
-        if self.peek() != char { return false; }
+        if self.peek() != char {
+            return false;
+        }
 
         self.i += 1;
         true
     }
 
     fn peek(&self) -> char {
-        if self.i >= self.chars.len() { return '\0'; }
+        if self.i >= self.chars.len() {
+            return '\0';
+        }
         return self.chars[self.i];
     }
 }
