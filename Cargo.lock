@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "derius-lang"
-version = "0.1.0"
+name = "europa-lang"
+version = "0.0.0"
