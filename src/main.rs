@@ -23,6 +23,6 @@ fn main() {
     let mut lexer = Lexer::new(&code);
     match lexer.init() {
         Err(e) => e.display(),
-        Ok(_) => todo!(),
+        Ok(tok) => println!("{:?}", tok),
     }
 }

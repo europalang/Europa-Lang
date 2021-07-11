@@ -1,5 +1,7 @@
+use super::error::*;
+
 #[derive(Debug, Clone, Copy)]
-pub enum Token {
+pub enum TType {
     // delims
     LeftS, // {{
     RightS, // }}
@@ -17,6 +19,14 @@ pub enum Token {
     Not,
     EqEq,
     NotEq,
+
+    // assignment
+    Eq,
+    PlusEq,
+    MinusEq,
+    TimesEq,
+    DivideEq,
+    PowEq,
     
     // operators
     Plus,
@@ -43,7 +53,15 @@ pub enum Token {
     Break,
     Continue,
     Or,
-    And
+    And,
+
+    EOF
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Token {
+    pub ttype: TType,
+    pub lineinfo: LineInfo
 }
 
 impl Token {
