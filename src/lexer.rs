@@ -3,7 +3,7 @@ use std::usize;
 use super::token::*;
 use super::error::Error;
 
-struct Lexer {
+pub struct Lexer {
     code: String,
     chars: Vec<char>,
     i: usize, // index
@@ -13,21 +13,26 @@ struct Lexer {
 }
 
 impl Lexer {
-    fn new(&mut self, code: &String) {
-        self.code = code.to_string();
-        self.chars = code.chars().collect();
+    pub fn new(code: &String) -> Self {
+        Self {
+            code: code.to_string(),
+            chars: code.chars().collect(),
+            i: 0,
+            line: 1,
+            col: 1,
+            tokens: vec![]
+        }
     }
 
-    fn init(&mut self) -> Result<Vec<Token>, Error> {
+    pub fn init(&mut self) -> Result<Vec<Token>, Error> {
         while self.i < self.code.len() {
             let char = self.chars[self.i];
 
-            // match char {
+            match char {
+                _ => return Err(Error::new(self.line, self.col, format!("Unknown token {}", char)))
+            };
 
-            //     _ => 
-            // };
-
-            self.i += 1;
+            // self.i += 1;
         }
 
         Ok(self.tokens.to_vec())

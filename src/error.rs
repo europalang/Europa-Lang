@@ -5,13 +5,13 @@ pub struct Error {
 }
 
 impl Error {
-    fn new(&mut self, line: i32, col: i32, error: String) {
-        self.line = line;
-        self.col = col;
-        self.error = error;
+    pub fn new(line: i32, col: i32, error: String) -> Self {
+        Self {
+            line, col, error
+        }
     }
 
-    fn display(&self) {
+    pub fn display(&self) {
         println!("[Line:{} Col:{}] {}", self.line, self.col, self.error);
     }
 }

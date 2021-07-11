@@ -20,5 +20,9 @@ fn main() {
         process::exit(1);
     });
     
-    // lexer(code);
+    let mut lexer = Lexer::new(&code);
+    match lexer.init() {
+        Err(e) => e.display(),
+        Ok(_) => todo!(),
+    }
 }
