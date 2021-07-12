@@ -19,9 +19,9 @@ pub struct Error {
 }
 
 impl Error {
-    pub fn new(line: i32, col: i32, error: String) -> Self {
+    pub fn new(info: LineInfo, error: String) -> Self {
         Self {
-            info: LineInfo::new(line, col),
+            info,
             error
         }
     }

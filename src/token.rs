@@ -39,7 +39,8 @@ pub enum TType {
     Identifier,
     String,
     Number,
-    Bool,
+    True,
+    False,
     Nil,
 
     // keywords
@@ -59,10 +60,18 @@ pub enum TType {
 }
 
 #[derive(Debug, Clone)]
+pub enum Value {
+    String(String),
+    Ident(String),
+    Float(f32),
+    Nil
+}
+
+#[derive(Debug, Clone)]
 pub struct Token {
     pub ttype: TType,
     pub lineinfo: LineInfo,
-    pub value: Type
+    pub value: Value
 }
 
 impl Token {

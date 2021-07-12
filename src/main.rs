@@ -9,7 +9,6 @@ use std::time::Instant;
 use std::{env, fs, process};
 
 use lexer::*;
-use token::Token;
 
 fn main() {
     let args: Vec<String> = env::args().collect();

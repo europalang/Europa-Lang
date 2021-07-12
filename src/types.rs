@@ -1,6 +1,6 @@
 #[derive(Debug, Clone)]
 pub enum Type {
-    Number(i32),
+    Float(f32),
     String(String),
     Bool(bool),
     Array(Vec<Type>),

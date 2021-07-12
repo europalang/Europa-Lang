@@ -1,9 +1,7 @@
 use super::error::*;
 use super::token::*;
-use super::types::Type;
 
 use std::collections::HashMap;
-
 
 pub struct Lexer {
     code: String,
@@ -11,7 +9,7 @@ pub struct Lexer {
     i: usize, // index
     info: LineInfo,
     tokens: Vec<Token>,
-    keywords: HashMap<String, TType>
+    keywords: HashMap<String, TType>,
 }
 
 impl Lexer {
@@ -23,18 +21,21 @@ impl Lexer {
             info: LineInfo::new(1, 0),
             tokens: vec![],
             keywords: hashmap! {
+                "true".into() => TType::True,
+                "false".into() => TType::False,
+                "nil".into() => TType::Nil,
                 "fn".into() => TType::Fn,
                 "return".into() => TType::Return,
                 "var".into() => TType::Var,
-                "use".into() => TType::While,
+                "use".into() => TType::Use,
+                "while".into() => TType::While,
                 "for".into() => TType::For,
                 "in".into() => TType::In,
                 "break".into() => TType::Break,
                 "continue".into() => TType::Continue,
                 "or".into() => TType::Or,
                 "and".into() => TType::And,
-
-            }
+            },
         }
     }
 
@@ -57,17 +58,70 @@ impl Lexer {
                     self.next();
                 }
 
+                if !self.is_valid() {
+                    return Err(Error::new(self.info, String::from("Unterminated string.")));
+                }
+
                 self.next(); // "
+
                 self.tokens.push(Token {
                     ttype: TType::String,
                     lineinfo: self.info,
-                    value: Type::String(str),
+                    value: Value::String(str),
                 });
-                
                 continue;
             } else if self.is_alpha(char) {
+                let mut name = String::from(char);
+                while self.is_valid() && self.is_alphanum(self.peek()) {
+                    name += &self.peek().to_string();
+                    self.next();
+                }
+
+                if self.keywords.contains_key(&name) {
+                    self.tokens.push(Token {
+                        ttype: self.keywords[&name],
+                        lineinfo: self.info,
+                        value: Value::Nil,
+                    });
+                } else {
+                    self.tokens.push(Token {
+                        ttype: TType::Identifier,
+                        lineinfo: self.info,
+                        value: Value::Ident(name),
+                    });
+                }
+
                 continue;
             } else if self.is_number(char) {
+                let mut num = String::from(char);
+
+                while self.is_valid() && (self.is_number(self.peek()) || self.peek() == '_') {
+                    let n = self.peek();
+                    if n != '_' {
+                        num += &n.to_string();
+                    }
+                    self.next();
+                }
+
+                if self.peek() == '.' {
+                    num += &self.peek().to_string();
+                    self.next(); // .
+
+                    while self.is_valid() && (self.is_number(self.peek()) || self.peek() == '_') {
+                        let n = self.peek();
+                        if n != '_' {
+                            num += &n.to_string();
+                        }
+                        self.next();
+                    }
+                }
+
+                self.tokens.push(Token {
+                    ttype: TType::Number,
+                    lineinfo: self.info,
+                    value: Value::Float(num.parse::<f32>().unwrap())
+                });
+
                 continue;
             }
 
@@ -90,6 +144,21 @@ impl Lexer {
                 ')' => self.append_token(TType::RigthParen),
                 '[' => self.append_token(TType::LeftBrack),
                 ']' => self.append_token(TType::RightBrack),
+
+                '!' => {
+                    if self.get('=') {
+                        self.append_token(TType::NotEq)
+                    } else {
+                        self.append_token(TType::Not)
+                    }
+                }
+                '=' => {
+                    if self.get('=') {
+                        self.append_token(TType::EqEq)
+                    } else {
+                        self.append_token(TType::Eq)
+                    }
+                }
 
                 ',' => self.append_token(TType::Comma),
                 '.' => self.append_token(TType::Dot),
@@ -141,8 +210,7 @@ impl Lexer {
 
                         if !self.is_valid() {
                             return Err(Error::new(
-                                self.info.line,
-                                self.info.col,
+                                self.info,
                                 String::from("Unterminated multiline comment."),
                             ));
                         }
@@ -156,13 +224,7 @@ impl Lexer {
                 ' ' | '\r' | '\t' => (),
                 '\n' => self.newline(),
 
-                _ => {
-                    return Err(Error::new(
-                        self.info.line,
-                        self.info.col,
-                        format!("Invalid token {}", char),
-                    ))
-                }
+                _ => return Err(Error::new(self.info, format!("Invalid token {}", char))),
             };
         }
 
@@ -200,7 +262,7 @@ impl Lexer {
         self.tokens.push(Token {
             ttype: token,
             lineinfo: self.info,
-            value: Type::Nil,
+            value: Value::Nil,
         });
     }
 
