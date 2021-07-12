@@ -63,6 +63,8 @@ impl Lexer {
                     lineinfo: self.info,
                     value: Type::String(str),
                 });
+                
+                continue;
             } else if self.is_alpha(char) {
                 continue;
             } else if self.is_number(char) {
