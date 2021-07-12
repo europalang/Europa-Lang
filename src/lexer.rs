@@ -44,33 +44,7 @@ impl Lexer {
             let char = self.peek();
             self.next();
 
-            if char == '"' || char == '\'' {
-                let str_type = char;
-                let mut str = String::new();
-
-                while self.is_valid() && self.peek() != str_type {
-                    str += &self.peek().to_string();
-
-                    if self.peek() == '\n' {
-                        self.newline();
-                    }
-
-                    self.next();
-                }
-
-                if !self.is_valid() {
-                    return Err(Error::new(self.info, String::from("Unterminated string.")));
-                }
-
-                self.next(); // "
-
-                self.tokens.push(Token {
-                    ttype: TType::String,
-                    lineinfo: self.info,
-                    value: Value::String(str),
-                });
-                continue;
-            } else if self.is_alpha(char) {
+            if self.is_alpha(char) {
                 let mut name = String::from(char);
                 while self.is_valid() && self.is_alphanum(self.peek()) {
                     name += &self.peek().to_string();
@@ -119,7 +93,7 @@ impl Lexer {
                 self.tokens.push(Token {
                     ttype: TType::Number,
                     lineinfo: self.info,
-                    value: Value::Float(num.parse::<f32>().unwrap())
+                    value: Value::Float(num.parse::<f32>().unwrap()),
                 });
 
                 continue;
@@ -158,6 +132,48 @@ impl Lexer {
                     } else {
                         self.append_token(TType::Eq)
                     }
+                }
+
+                '>' => {
+                    if self.get('=') {
+                        self.append_token(TType::GreaterEq)
+                    } else {
+                        self.append_token(TType::Greater)
+                    }
+                }
+                '<' => {
+                    if self.get('=') {
+                        self.append_token(TType::LessEq)
+                    } else {
+                        self.append_token(TType::Less)
+                    }
+                }
+
+                '"' | '\'' => {
+                    let str_type = char;
+                    let mut str = String::new();
+
+                    while self.is_valid() && self.peek() != str_type {
+                        str += &self.peek().to_string();
+
+                        if self.peek() == '\n' {
+                            self.newline();
+                        }
+
+                        self.next();
+                    }
+
+                    if !self.is_valid() {
+                        return Err(Error::new(self.info, String::from("Unterminated string.")));
+                    }
+
+                    self.next(); // "
+
+                    self.tokens.push(Token {
+                        ttype: TType::String,
+                        lineinfo: self.info,
+                        value: Value::String(str),
+                    });
                 }
 
                 ',' => self.append_token(TType::Comma),

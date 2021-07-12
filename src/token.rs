@@ -1,9 +1,9 @@
-use super::{error::*,types::Type};
+use super::error::*;
 
 #[derive(Debug, Clone, Copy)]
 pub enum TType {
     // delims
-    LeftS, // {{
+    LeftS,  // {{
     RightS, // }}
     LeftBrace,
     RightBrace,
@@ -19,6 +19,10 @@ pub enum TType {
     Not,
     EqEq,
     NotEq,
+    Greater,
+    GreaterEq,
+    Less,
+    LessEq,
 
     // assignment
     Eq,
@@ -27,7 +31,7 @@ pub enum TType {
     TimesEq,
     DivideEq,
     PowEq,
-    
+
     // operators
     Plus,
     Minus,
@@ -56,7 +60,7 @@ pub enum TType {
     Or,
     And,
 
-    EOF
+    EOF,
 }
 
 #[derive(Debug, Clone)]
@@ -64,16 +68,14 @@ pub enum Value {
     String(String),
     Ident(String),
     Float(f32),
-    Nil
+    Nil,
 }
 
 #[derive(Debug, Clone)]
 pub struct Token {
     pub ttype: TType,
     pub lineinfo: LineInfo,
-    pub value: Value
+    pub value: Value,
 }
 
-impl Token {
-
-}
+impl Token {}
