@@ -2,12 +2,16 @@ use super::error::*;
 use super::token::*;
 use super::types::Type;
 
+use std::collections::HashMap;
+
+
 pub struct Lexer {
     code: String,
     chars: Vec<char>,
     i: usize, // index
     info: LineInfo,
     tokens: Vec<Token>,
+    keywords: HashMap<String, TType>
 }
 
 impl Lexer {
@@ -18,6 +22,19 @@ impl Lexer {
             i: 0,
             info: LineInfo::new(1, 0),
             tokens: vec![],
+            keywords: hashmap! {
+                "fn".into() => TType::Fn,
+                "return".into() => TType::Return,
+                "var".into() => TType::Var,
+                "use".into() => TType::While,
+                "for".into() => TType::For,
+                "in".into() => TType::In,
+                "break".into() => TType::Break,
+                "continue".into() => TType::Continue,
+                "or".into() => TType::Or,
+                "and".into() => TType::And,
+
+            }
         }
     }
 
@@ -44,7 +61,7 @@ impl Lexer {
                 self.tokens.push(Token {
                     ttype: TType::String,
                     lineinfo: self.info,
-                    value: Value::String(str.as_str()),
+                    value: Type::String(str),
                 });
             } else if self.is_alpha(char) {
                 continue;
@@ -149,7 +166,7 @@ impl Lexer {
 
         self.append_token(TType::EOF);
 
-        Ok(self.tokens.to_vec())
+        Ok(self.tokens.clone())
     }
 
     // characters
@@ -181,7 +198,7 @@ impl Lexer {
         self.tokens.push(Token {
             ttype: token,
             lineinfo: self.info,
-            value: Value::Nil,
+            value: Type::Nil,
         });
     }
 

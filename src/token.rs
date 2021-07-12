@@ -58,18 +58,11 @@ pub enum TType {
     EOF
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum Value{
-    String(str),
-    Number(i32),
-    Nil
-}
-
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Token {
     pub ttype: TType,
     pub lineinfo: LineInfo,
-    pub value: Value
+    pub value: Type
 }
 
 impl Token {
