@@ -1,7 +1,6 @@
-use std::usize;
-
 use super::error::*;
 use super::token::*;
+use super::types::Type;
 
 pub struct Lexer {
     code: String,
@@ -24,8 +23,34 @@ impl Lexer {
 
     pub fn init(&mut self) -> Result<Vec<Token>, Error> {
         while self.i < self.code.len() {
-            let char = self.chars[self.i];
+            let char = self.peek();
             self.next();
+
+            if char == '"' || char == '\'' {
+                let str_type = char;
+                let mut str = String::new();
+
+                while self.is_valid() && self.peek() != str_type {
+                    str += &self.peek().to_string();
+
+                    if self.peek() == '\n' {
+                        self.newline();
+                    }
+
+                    self.next();
+                }
+
+                self.next(); // "
+                self.tokens.push(Token {
+                    ttype: TType::String,
+                    lineinfo: self.info,
+                    value: Value::String(str.as_str()),
+                });
+            } else if self.is_alpha(char) {
+                continue;
+            } else if self.is_number(char) {
+                continue;
+            }
 
             match char {
                 '{' => {
@@ -127,6 +152,20 @@ impl Lexer {
         Ok(self.tokens.to_vec())
     }
 
+    // characters
+    fn is_alpha(&self, char: char) -> bool {
+        ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_'
+    }
+
+    fn is_number(&self, char: char) -> bool {
+        '0' <= char && char <= '9'
+    }
+
+    fn is_alphanum(&self, char: char) -> bool {
+        self.is_alpha(char) || self.is_number(char)
+    }
+
+    // advancing
     fn next(&mut self) {
         self.i += 1;
         self.info.col += 1;
@@ -137,13 +176,16 @@ impl Lexer {
         self.info.col = 0;
     }
 
+    // util
     fn append_token(&mut self, token: TType) {
         self.tokens.push(Token {
             ttype: token,
             lineinfo: self.info,
+            value: Value::Nil,
         });
     }
 
+    // lookahead
     fn get(&mut self, char: char) -> bool {
         if self.peek() != char {
             return false;

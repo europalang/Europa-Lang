@@ -1,4 +1,4 @@
-use super::error::*;
+use super::{error::*,types::Type};
 
 #[derive(Debug, Clone, Copy)]
 pub enum TType {
@@ -59,9 +59,17 @@ pub enum TType {
 }
 
 #[derive(Debug, Clone, Copy)]
+pub enum Value{
+    String(str),
+    Number(i32),
+    Nil
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct Token {
     pub ttype: TType,
-    pub lineinfo: LineInfo
+    pub lineinfo: LineInfo,
+    pub value: Value
 }
 
 impl Token {
