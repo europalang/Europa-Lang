@@ -17,7 +17,7 @@ impl Lexer {
             code: code.to_string(),
             chars: code.chars().collect(),
             i: 0,
-            info: LineInfo::new(1, 1),
+            info: LineInfo::new(1, 0),
             tokens: vec![],
         }
     }
@@ -25,9 +25,23 @@ impl Lexer {
     pub fn init(&mut self) -> Result<Vec<Token>, Error> {
         while self.i < self.code.len() {
             let char = self.chars[self.i];
-            self.i += 1;
+            self.next();
 
             match char {
+                '{' => {
+                    if self.get('{') {
+                        self.append_token(TType::LeftS)
+                    } else {
+                        self.append_token(TType::LeftBrace)
+                    }
+                }
+                '}' => {
+                    if self.get('}') {
+                        self.append_token(TType::RightS)
+                    } else {
+                        self.append_token(TType::RightBrace)
+                    }
+                }
                 '(' => self.append_token(TType::LeftParen),
                 ')' => self.append_token(TType::RigthParen),
                 '[' => self.append_token(TType::LeftBrack),
@@ -68,11 +82,35 @@ impl Lexer {
                 '/' => {
                     if self.get('=') {
                         self.append_token(TType::DivideEq)
+                    } else if self.get('/') {
+                        while self.peek() != '\n' && self.is_valid() {
+                            self.next();
+                        }
+                    } else if self.get('*') {
+                        while self.is_valid() && (self.peek() != '*' && self.peek_n(1) != '/') {
+                            if self.peek() == '\n' {
+                                self.newline();
+                            }
+
+                            self.next();
+                        }
+
+                        if !self.is_valid() {
+                            return Err(Error::new(
+                                self.info.line,
+                                self.info.col,
+                                String::from("Unterminated multiline comment."),
+                            ));
+                        }
+
+                        self.next(); // *
+                        self.next() // /
                     } else {
                         self.append_token(TType::Divide)
                     }
                 }
-                ' ' | '\r' => (),
+                ' ' | '\r' | '\t' => (),
+                '\n' => self.newline(),
 
                 _ => {
                     return Err(Error::new(
@@ -87,6 +125,16 @@ impl Lexer {
         self.append_token(TType::EOF);
 
         Ok(self.tokens.to_vec())
+    }
+
+    fn next(&mut self) {
+        self.i += 1;
+        self.info.col += 1;
+    }
+
+    fn newline(&mut self) {
+        self.info.line += 1;
+        self.info.col = 0;
     }
 
     fn append_token(&mut self, token: TType) {
@@ -106,9 +154,20 @@ impl Lexer {
     }
 
     fn peek(&self) -> char {
-        if self.i >= self.chars.len() {
+        if !self.is_valid() {
             return '\0';
         }
-        return self.chars[self.i];
+        self.chars[self.i]
+    }
+
+    fn peek_n(&self, n: usize) -> char {
+        if self.i + n >= self.chars.len() {
+            return '\0';
+        }
+        self.chars[self.i + n]
+    }
+
+    fn is_valid(&self) -> bool {
+        self.i < self.chars.len()
     }
 }
