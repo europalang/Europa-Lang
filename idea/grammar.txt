@@ -1,0 +1,15 @@
+NUMBER = [ "0" - "9" ]+
+STRING = ( "'" | "\"" ) any ( "\" | "\"" )
+
+
+expression => equality
+
+equality => comparison ( ( "==" | "!=" ) comparison )*
+comparison => addition ( ( ">" | "<" | ">=" | "<=" ) addition )*
+
+addition => times ( ( "-" | "+" ) times )*
+times => unary ( ( "*" | "/" ) unary )*
+
+unary => ( ( "!" | "-" ) unary ) | primary
+
+primary => NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")"

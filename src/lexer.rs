@@ -44,61 +44,6 @@ impl Lexer {
             let char = self.peek();
             self.next();
 
-            if self.is_alpha(char) {
-                let mut name = String::from(char);
-                while self.is_valid() && self.is_alphanum(self.peek()) {
-                    name += &self.peek().to_string();
-                    self.next();
-                }
-
-                if self.keywords.contains_key(&name) {
-                    self.tokens.push(Token {
-                        ttype: self.keywords[&name],
-                        lineinfo: self.info,
-                        value: Value::Nil,
-                    });
-                } else {
-                    self.tokens.push(Token {
-                        ttype: TType::Identifier,
-                        lineinfo: self.info,
-                        value: Value::Ident(name),
-                    });
-                }
-
-                continue;
-            } else if self.is_number(char) {
-                let mut num = String::from(char);
-
-                while self.is_valid() && (self.is_number(self.peek()) || self.peek() == '_') {
-                    let n = self.peek();
-                    if n != '_' {
-                        num += &n.to_string();
-                    }
-                    self.next();
-                }
-
-                if self.peek() == '.' {
-                    num += &self.peek().to_string();
-                    self.next(); // .
-
-                    while self.is_valid() && (self.is_number(self.peek()) || self.peek() == '_') {
-                        let n = self.peek();
-                        if n != '_' {
-                            num += &n.to_string();
-                        }
-                        self.next();
-                    }
-                }
-
-                self.tokens.push(Token {
-                    ttype: TType::Number,
-                    lineinfo: self.info,
-                    value: Value::Float(num.parse::<f32>().unwrap()),
-                });
-
-                continue;
-            }
-
             match char {
                 '{' => {
                     if self.get('{') {
@@ -240,7 +185,63 @@ impl Lexer {
                 ' ' | '\r' | '\t' => (),
                 '\n' => self.newline(),
 
-                _ => return Err(Error::new(self.info, format!("Invalid token {}", char))),
+                _ => {
+                    if self.is_alpha(char) {
+                        let mut name = String::from(char);
+                        while self.is_valid() && self.is_alphanum(self.peek()) {
+                            name += &self.peek().to_string();
+                            self.next();
+                        }
+
+                        if self.keywords.contains_key(&name) {
+                            self.tokens.push(Token {
+                                ttype: self.keywords[&name],
+                                lineinfo: self.info,
+                                value: Value::Nil,
+                            });
+                        } else {
+                            self.tokens.push(Token {
+                                ttype: TType::Identifier,
+                                lineinfo: self.info,
+                                value: Value::Ident(name),
+                            });
+                        }
+                    } else if self.is_number(char) {
+                        let mut num = String::from(char);
+
+                        while self.is_valid() && (self.is_number(self.peek()) || self.peek() == '_')
+                        {
+                            let n = self.peek();
+                            if n != '_' {
+                                num += &n.to_string();
+                            }
+                            self.next();
+                        }
+
+                        if self.peek() == '.' {
+                            num += &self.peek().to_string();
+                            self.next(); // .
+
+                            while self.is_valid()
+                                && (self.is_number(self.peek()) || self.peek() == '_')
+                            {
+                                let n = self.peek();
+                                if n != '_' {
+                                    num += &n.to_string();
+                                }
+                                self.next();
+                            }
+                        }
+
+                        self.tokens.push(Token {
+                            ttype: TType::Number,
+                            lineinfo: self.info,
+                            value: Value::Float(num.parse::<f32>().unwrap()),
+                        });
+                    } else {
+                        return Err(Error::new(self.info, format!("Invalid token {}", char)));
+                    }
+                }
             };
         }
 

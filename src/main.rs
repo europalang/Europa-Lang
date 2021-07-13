@@ -1,7 +1,10 @@
-#[macro_use] extern crate maplit;
+#[macro_use]
+extern crate maplit;
 
 mod error;
 mod lexer;
+mod parser;
+mod expr;
 mod token;
 mod types;
 
