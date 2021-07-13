@@ -2,9 +2,9 @@
 extern crate maplit;
 
 mod error;
+mod expr;
 mod lexer;
 mod parser;
-mod expr;
 mod token;
 mod types;
 
@@ -12,6 +12,7 @@ use std::time::Instant;
 use std::{env, fs, process};
 
 use lexer::*;
+use parser::*;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -28,9 +29,22 @@ fn main() {
 
     let start = Instant::now();
     let mut lexer = Lexer::new(&code);
-    let end = start.elapsed();
     match lexer.init() {
         Err(e) => e.display(),
-        Ok(tok) => println!("{:#?} {:?}", tok, end),
-    }
+        Ok(toks) => {
+            let end = start.elapsed();
+            println!("lexer {:?}", end);
+            
+            let start = Instant::now();
+            let mut parser = Parser::new(toks);
+            match parser.init() {
+                Err(e) => e.display(),
+                Ok(tree) => {
+                    let end = start.elapsed();
+                    println!("parser {:?}", end);
+                    println!("{:#?}", tree);
+                },
+            }
+        }
+    };
 }

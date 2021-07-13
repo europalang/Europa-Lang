@@ -96,12 +96,14 @@ impl Parser {
             return Ok(Expr::Literal(Type::Nil));
         }
 
-        match self.get_tup(&[TType::String]) {
-            Some(Value::String(x)) => return Ok(Expr::Literal(Type::String(x))),
-            Some(Value::Float(x)) => return Ok(Expr::Literal(Type::Float(x))),
-            _ => (),
+        if let Some(x) = self.get_tup(&[TType::String, TType::Number]) {
+            return Ok(match x {
+                Value::String(v) => Expr::Literal(Type::String(v)),
+                Value::Float(v) => Expr::Literal(Type::Float(v)),
+                _ => Expr::Literal(Type::Nil)
+            })
         }
-
+        
         if self.get(&[TType::LeftParen]) {
             let expr = self.expr()?;
             self.consume(
@@ -126,11 +128,21 @@ impl Parser {
         self.next();
 
         while self.is_valid() {
-            if self.prev().ttype == TType::Semi { return; }
+            if self.prev().ttype == TType::Semi {
+                return;
+            }
 
             match self.peek().ttype {
-                TType::Use | TType::Fn | TType::Var | TType::For | TType::If | TType::Return | TType::While => { return; }
-                _ => ()
+                TType::Use
+                | TType::Fn
+                | TType::Var
+                | TType::For
+                | TType::If
+                | TType::Return
+                | TType::While => {
+                    return;
+                }
+                _ => (),
             }
 
             self.next();
@@ -153,7 +165,7 @@ impl Parser {
         for i in tokens.iter() {
             if self.check(*i) {
                 self.next();
-                return Some(self.peek().value);
+                return Some(self.prev().value);
             }
         }
 
@@ -185,6 +197,6 @@ impl Parser {
     }
 
     fn is_valid(&self) -> bool {
-        self.peek().ttype == TType::EOF
+        self.peek().ttype != TType::EOF
     }
 }
