@@ -35,6 +35,9 @@ impl Lexer {
                 "continue".into() => TType::Continue,
                 "or".into() => TType::Or,
                 "and".into() => TType::And,
+                "if".into() => TType::If,
+                "else".into() => TType::Else,
+                "elif".into() => TType::Elif,
             },
         }
     }
@@ -60,7 +63,7 @@ impl Lexer {
                     }
                 }
                 '(' => self.append_token(TType::LeftParen),
-                ')' => self.append_token(TType::RigthParen),
+                ')' => self.append_token(TType::RightParen),
                 '[' => self.append_token(TType::LeftBrack),
                 ']' => self.append_token(TType::RightBrack),
 
@@ -157,7 +160,7 @@ impl Lexer {
                     if self.get('=') {
                         self.append_token(TType::ModEq)
                     } else {
-                        self.append_token((TType::Mod))
+                        self.append_token(TType::Mod)
                     }
                 }
                 '/' => {

@@ -8,7 +8,7 @@ pub enum TType {
     LeftBrace,
     RightBrace,
     LeftParen,
-    RigthParen,
+    RightParen,
     LeftBrack,
     RightBrack,
     Comma,
@@ -61,6 +61,9 @@ pub enum TType {
     Continue,
     Or,
     And,
+    If,
+    Else,
+    Elif,
 
     EOF,
 }
