@@ -8,7 +8,7 @@ equality => comparison ( ( "==" | "!=" ) comparison )*
 comparison => addition ( ( ">" | "<" | ">=" | "<=" ) addition )*
 
 addition => times ( ( "-" | "+" ) times )*
-times => unary ( ( "*" | "/" ) unary )*
+times => unary ( ( "*" | "/" | "%" ) unary )*
 
 unary => ( ( "!" | "-" ) unary ) | primary
 

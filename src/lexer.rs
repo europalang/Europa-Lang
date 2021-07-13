@@ -153,6 +153,13 @@ impl Lexer {
                         self.append_token(TType::Times)
                     }
                 }
+                '%' => {
+                    if self.get('=') {
+                        self.append_token(TType::ModEq)
+                    } else {
+                        self.append_token((TType::Mod))
+                    }
+                }
                 '/' => {
                     if self.get('=') {
                         self.append_token(TType::DivideEq)

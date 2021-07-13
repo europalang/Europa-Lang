@@ -1,6 +1,6 @@
 use super::error::*;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TType {
     // delims
     LeftS,  // {{
@@ -31,6 +31,7 @@ pub enum TType {
     TimesEq,
     DivideEq,
     PowEq,
+    ModEq,
 
     // operators
     Plus,
@@ -38,6 +39,7 @@ pub enum TType {
     Times,
     Divide,
     Pow,
+    Mod,
 
     // literals
     Identifier,
