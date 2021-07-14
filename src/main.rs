@@ -2,11 +2,10 @@
 extern crate maplit;
 
 mod error;
-mod expr;
 mod interpreter;
 mod lexer;
+mod nodes;
 mod parser;
-mod statement;
 mod token;
 mod types;
 

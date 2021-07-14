@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::error::LineInfo;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -76,11 +78,15 @@ pub enum Value {
     Nil,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Token {
     pub ttype: TType,
     pub lineinfo: LineInfo,
     pub value: Value,
 }
 
-impl Token {}
+impl Display for TType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}

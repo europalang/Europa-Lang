@@ -1,6 +1,6 @@
 use crate::error::{Error, ErrorType};
-use crate::expr::Expr;
-use crate::statement::Stmt;
+use crate::nodes::expr::Expr;
+use crate::nodes::stmt::Stmt;
 use crate::token::{TType, Token};
 use crate::types::Type;
 

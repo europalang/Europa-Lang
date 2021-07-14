@@ -1,8 +1,8 @@
 use std::rc::Rc;
 
 use crate::error::{Error, ErrorType};
-use crate::expr::Expr;
-use crate::statement::Stmt;
+use crate::nodes::expr::Expr;
+use crate::nodes::stmt::Stmt;
 use crate::token::{TType, Token, Value};
 use crate::types::Type;
 
@@ -32,13 +32,38 @@ impl Parser {
     // recursive descent
     // statements
     fn stmt(&mut self) -> SResult {
+        if self.get(&[TType::Var]) {
+            return self.var_decl();
+        }
+
         self.expr_stmt()
     }
 
     fn expr_stmt(&mut self) -> SResult {
         let expr = self.expr()?;
-        self.consume(TType::Semi, "Expected ';' after statement.".into(), ErrorType::SyntaxError)?;
+        self.consume(TType::Semi, "Expected ';' after statement.".into())?;
         Ok(Stmt::ExprStmt(expr))
+    }
+
+    fn var_decl(&mut self) -> SResult {
+        let name = self.consume(
+            TType::Identifier,
+            "Expected variable name after 'var'".into(),
+        )?;
+
+        let value;
+        if self.get(&[TType::Eq]) {
+            value = self.expr()?;
+        } else {
+            value = Expr::Literal(Type::Nil);
+        }
+
+        self.consume(
+            TType::Semi,
+            "Expected ';' after variable declaration.".into(),
+        )?;
+
+        Ok(Stmt::VarDecl(name.value, value))
     }
 
     // expressions
@@ -128,25 +153,38 @@ impl Parser {
             self.consume(
                 TType::RightParen,
                 String::from("Expected ')' after grouping expression."),
-                ErrorType::SyntaxError,
             )?;
             return Ok(Expr::Grouping(Rc::new(expr)));
+        }
+
+        if self.get(&[TType::Identifier]) {
+            let tok = self.prev();
+
+            return Ok(Expr::Variable(tok.value));
+        }
+
+        if self.is_valid() {
+            let tok = self.peek();
+            return Err(Error::new(
+                tok.lineinfo,
+                format!("Unexpected token '{}'.", tok.ttype),
+                ErrorType::SyntaxError,
+            ));
         }
 
         Ok(Expr::Literal(Type::Nil))
     }
 
     // errors
-    fn consume(
-        &mut self,
-        token: TType,
-        error_message: String,
-        error_type: ErrorType,
-    ) -> Result<Token, Error> {
+    fn consume(&mut self, token: TType, error_message: String) -> Result<Token, Error> {
         if self.check(token) {
             return Ok(self.next());
         }
-        Err(Error::new(self.peek().lineinfo, error_message, error_type))
+        Err(Error::new(
+            self.peek().lineinfo,
+            error_message,
+            ErrorType::SyntaxError,
+        ))
     }
 
     fn synchronize(&mut self) {
