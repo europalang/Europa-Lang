@@ -108,6 +108,7 @@ impl Parser {
             self.consume(
                 TType::RightParen,
                 String::from("Expected ')' after grouping expression."),
+                ErrorType::SyntaxError,
             )?;
             return Ok(Expr::Grouping(Rc::new(expr)));
         }
@@ -116,11 +117,16 @@ impl Parser {
     }
 
     // errors
-    fn consume(&mut self, token: TType, message: String) -> Result<Token, Error> {
+    fn consume(
+        &mut self,
+        token: TType,
+        error_message: String,
+        error_type: ErrorType,
+    ) -> Result<Token, Error> {
         if self.check(token) {
             return Ok(self.next());
         }
-        Err(Error::new(self.peek().lineinfo, message))
+        Err(Error::new(self.peek().lineinfo, error_message, error_type))
     }
 
     fn synchronize(&mut self) {
