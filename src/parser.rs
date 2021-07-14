@@ -1,8 +1,8 @@
 use std::rc::Rc;
 
-use super::error::*;
+use super::error::Error;
 use super::expr::Expr;
-use super::token::*;
+use super::token::{Token, TType, Value};
 use super::types::Type;
 
 type PResult = Result<Expr, Error>;

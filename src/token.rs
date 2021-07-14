@@ -1,4 +1,4 @@
-use super::error::*;
+use super::error::LineInfo;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TType {
