@@ -1,10 +1,6 @@
-use std::borrow::Borrow;
-use std::convert::TryInto;
-use std::rc::Rc;
-
 use super::error::{Error, ErrorType};
-use super::expr::*;
-use super::token::*;
+use super::expr::Expr;
+use super::token::{TType, Token};
 use super::types::Type;
 
 type IResult = Result<Type, Error>;

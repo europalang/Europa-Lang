@@ -1,5 +1,5 @@
-use super::error::*;
-use super::token::*;
+use super::error::{Error, LineInfo};
+use super::token::{TType, Token, Value};
 
 use std::collections::HashMap;
 
