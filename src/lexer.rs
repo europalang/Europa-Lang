@@ -132,6 +132,7 @@ impl Lexer {
                                         .map_err(|_| Error::new(
                                             self.info,
                                             "Invalid string escape.".into(),
+                                            ErrorType::SyntaxError,
                                         ))?
                                 },
                                 'x' => {
@@ -141,6 +142,7 @@ impl Lexer {
                                         .map_err(|_| Error::new(
                                             self.info,
                                             "Invalid string escape.".into(),
+                                            ErrorType::SyntaxError,
                                         ))?
                                 },
                                 'u' => {
@@ -150,6 +152,7 @@ impl Lexer {
                                         .map_err(|_| Error::new(
                                             self.info,
                                             "Invalid string escape.".into(),
+                                            ErrorType::SyntaxError,
                                         ))?
                                 },
                                 'U' => {
@@ -159,11 +162,13 @@ impl Lexer {
                                         .map_err(|_| Error::new(
                                             self.info,
                                             "Invalid string escape.".into(),
+                                            ErrorType::SyntaxError,
                                         ))?
                                 },
                                 _ => return Err(Error::new(
                                     self.info,
                                     "Invalid string escape.".into(),
+                                    ErrorType::SyntaxError,
                                 )),
                             });
                         } else {
