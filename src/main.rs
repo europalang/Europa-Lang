@@ -20,13 +20,13 @@ use interpreter::Interpreter;
 fn main() {
     let args: Vec<String> = env::args().collect();
 
+    if args[1].eq("--version") || args[1].eq("-v") {
+        println!("Europa Lang v0.0.0"); // todo: rust compiler version
+        process::exit(0);
+    }
+    
     if args.len() != 2 {
         println!("Usage: europa <file>");
-        process::exit(1);
-    }
-
-    if args[0].eq("--version") {
-        println!("Europa Lang v0.0.0");
         process::exit(1);
     }
 
