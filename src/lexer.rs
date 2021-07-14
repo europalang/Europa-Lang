@@ -246,7 +246,7 @@ impl Lexer {
                         self.tokens.push(Token {
                             ttype: TType::Number,
                             lineinfo: self.info,
-                            value: Value::Float(num.parse::<f32>().unwrap()),
+                            value: Value::Float(num.parse().unwrap()),
                         });
                     } else {
                         return Err(Error::new(self.info, format!("Invalid token {}", char)));

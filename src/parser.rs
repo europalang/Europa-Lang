@@ -13,7 +13,6 @@ pub struct Parser {
 }
 
 impl Parser {
-    // todo: result
     pub fn new(tokens: Vec<Token>) -> Self {
         Self { tokens, i: 0 }
     }

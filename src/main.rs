@@ -7,6 +7,8 @@ mod lexer;
 mod parser;
 mod token;
 mod types;
+mod interpreter;
+
 
 use std::time::Instant;
 use std::{env, fs, process};
