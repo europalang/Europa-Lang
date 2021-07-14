@@ -1,6 +1,8 @@
+use super::error::ErrorType;
+
 use std::cmp::Ordering;
 
-type TResult = Result<Type, String>;
+type TResult = Result<Type, (String, ErrorType)>;
 
 #[derive(Debug, Clone)]
 pub enum Type {
@@ -25,7 +27,10 @@ impl Type {
             return Ok(Self::String(format!("{}{}", a, b)));
         }
 
-        Err("Operator '+' can only be applied to strings and numbers.".into())
+        Err((
+            "Operator '+' can only be applied to strings and numbers.".into(),
+            ErrorType::TypeError,
+        ))
     }
 
     pub fn sub(&self, other: &Type) -> TResult {
@@ -33,7 +38,10 @@ impl Type {
             return Ok(Self::Float(a - b));
         }
 
-        Err("Operator '-' can only be applied to numbers.".into())
+        Err((
+            "Operator '-' can only be applied to numbers.".into(),
+            ErrorType::TypeError,
+        ))
     }
 
     pub fn mult(&self, other: &Type) -> TResult {
@@ -41,25 +49,34 @@ impl Type {
             return Ok(Self::Float(a * b));
         }
 
-        Err("Operator '*' can only be applied to numbers.".into())
+        Err((
+            "Operator '*' can only be applied to numbers.".into(),
+            ErrorType::TypeError,
+        ))
     }
 
     pub fn div(&self, other: &Type) -> TResult {
         if let (Self::Float(a), Self::Float(b)) = (self, other) {
-            if *b == 0f32 { return Err("Division by 0.".into()); }
+            if *b == 0f32 { return Err(("Division by 0.".into(), ErrorType::MathError)) }
             return Ok(Self::Float(a / b));
         }
 
-        Err("Operator '/' can only be applied to numbers.".into())
+        Err((
+            "Operator '/' can only be applied to numbers.".into(),
+            ErrorType::TypeError,
+        ))
     }
 
     pub fn modulo(&self, other: &Type) -> TResult {
         if let (Self::Float(a), Self::Float(b)) = (self, other) {
-            if *b == 0f32 { return Err("Division by 0.".into()) }
+            if *b == 0f32 { return Err(("Division by 0.".into(), ErrorType::MathError)) }
             return Ok(Self::Float(a % b));
         }
 
-        Err("Operator '%' can only be applied to numbers.".into())
+        Err((
+            "Operator '%' can only be applied to numbers.".into(),
+            ErrorType::TypeError,
+        ))
     }
 }
 

@@ -1,4 +1,4 @@
-use super::error::Error;
+use super::error::{Error, ErrorType};
 use super::expr::Expr;
 use super::token::{TType, Token};
 use super::types::Type;
@@ -81,10 +81,10 @@ impl Interpreter {
         }
     }
 
-    fn out(&self, val: &Result<Type, String>, tok: &Token) -> Result<Type, Error> {
+    fn out(&self, val: &Result<Type, (String, ErrorType)>, tok: &Token) -> Result<Type, Error> {
         match val {
             Ok(r) => Ok(r.clone()),
-            Err(t) => return Err(Error::new(tok.lineinfo, t.clone())),
+            Err(t) => return Err(Error::new(tok.lineinfo, t.clone().0, t.clone().1)),
         }
     }
 }

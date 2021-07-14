@@ -1,4 +1,4 @@
-use super::error::{Error, LineInfo};
+use super::error::{Error, LineInfo, ErrorType};
 use super::token::{TType, Token, Value};
 
 use std::collections::HashMap;
@@ -112,7 +112,11 @@ impl Lexer {
                     }
 
                     if !self.is_valid() {
-                        return Err(Error::new(self.info, String::from("Unterminated string.")));
+                        return Err(Error::new(
+                            self.info,
+                            String::from("Unterminated string."),
+                            ErrorType::SyntaxError,
+                        ));
                     }
 
                     self.next(); // "
@@ -183,6 +187,7 @@ impl Lexer {
                             return Err(Error::new(
                                 self.info,
                                 String::from("Unterminated multiline comment."),
+                                ErrorType::SyntaxError,
                             ));
                         }
 
@@ -249,7 +254,11 @@ impl Lexer {
                             value: Value::Float(num.parse().unwrap()),
                         });
                     } else {
-                        return Err(Error::new(self.info, format!("Invalid token {}", char)));
+                        return Err(Error::new(
+                            self.info,
+                            format!("Invalid token {}", char),
+                            ErrorType::SyntaxError,
+                        ));
                     }
                 }
             };

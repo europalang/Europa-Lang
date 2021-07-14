@@ -10,20 +10,32 @@ impl LineInfo {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+pub enum ErrorType {
+    MathError,
+    TypeError,
+    SyntaxError,
+}
+
+#[derive(Clone, Debug)]
 pub struct Error {
     info: LineInfo,
+    error_type: ErrorType,
     error: String,
 }
 
 impl Error {
-    pub fn new(info: LineInfo, error: String) -> Self {
-        Self { info, error }
+    pub fn new(info: LineInfo, error: String, error_type: ErrorType) -> Self {
+        Self { info, error, error_type }
     }
 
     pub fn display(&self) {
-        println!(
-            "[Line:{} Col:{}] {}",
-            self.info.line, self.info.col, self.error
+        eprintln!(
+            "[{}:{}] {:?}: {}",
+            self.info.line,
+            self.info.col,
+            self.error_type,
+            self.error,
         );
     }
 }
