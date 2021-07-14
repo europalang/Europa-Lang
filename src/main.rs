@@ -16,9 +16,6 @@ use interpreter::Interpreter;
 use lexer::Lexer;
 use parser::Parser;
 
-const VERSION: &str = "0.0.0";
-const RUST_VERSION: &str = "1.53.0";
-
 fn main() {
     let args: Vec<String> = env::args().collect();
 
@@ -27,12 +24,8 @@ fn main() {
         process::exit(1);
     }
 
-    if args[1].eq("--version") || args[1].eq("-v") {
-        println!(
-            "Europa Lang {}
-Rust Compiler {}",
-            VERSION, RUST_VERSION
-        ); // todo: rust compiler version
+    if args[1] == "--version" || args[1] == "-v" {
+        println!("Europa Lang {}", env!("CARGO_PKG_VERSION"));
         process::exit(0);
     }
 
