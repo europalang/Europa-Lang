@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use super::error::Error;
+use super::error::{Error, ErrorType};
 use super::expr::Expr;
 use super::token::{Token, TType, Value};
 use super::types::Type;

@@ -1,4 +1,4 @@
-use super::error::{Error, LineInfo};
+use super::error::{Error, LineInfo, ErrorType};
 use super::token::{TType, Token, Value};
 
 use std::collections::HashMap;
