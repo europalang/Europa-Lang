@@ -1,4 +1,4 @@
-use super::error::LineInfo;
+use crate::error::LineInfo;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TType {

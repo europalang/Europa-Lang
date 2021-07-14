@@ -6,6 +6,7 @@ mod expr;
 mod interpreter;
 mod lexer;
 mod parser;
+mod statement;
 mod token;
 mod types;
 
@@ -55,10 +56,9 @@ fn main() {
                     let interpreter = Interpreter::new(tree);
                     match interpreter.init() {
                         Err(e) => e.display(),
-                        Ok(t) => {
+                        Ok(()) => {
                             let end = start.elapsed();
                             println!("interpreter {:?}", end);
-                            println!("{}", Interpreter::stringify(t));
                         }
                     }
                 }

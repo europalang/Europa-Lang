@@ -1,11 +1,13 @@
 use std::rc::Rc;
 
-use super::error::{Error, ErrorType};
-use super::expr::Expr;
-use super::token::{Token, TType, Value};
-use super::types::Type;
+use crate::error::{Error, ErrorType};
+use crate::expr::Expr;
+use crate::statement::Stmt;
+use crate::token::{TType, Token, Value};
+use crate::types::Type;
 
 type PResult = Result<Expr, Error>;
+type SResult = Result<Stmt, Error>;
 
 pub struct Parser {
     tokens: Vec<Token>,
@@ -17,11 +19,29 @@ impl Parser {
         Self { tokens, i: 0 }
     }
 
-    pub fn init(&mut self) -> PResult {
-        self.expr()
+    pub fn init(&mut self) -> Result<Vec<Stmt>, Error> {
+        let mut stmts: Vec<Stmt> = Vec::new();
+
+        while self.is_valid() {
+            stmts.push(self.stmt()?);
+        }
+
+        Ok(stmts)
     }
 
     // recursive descent
+    // statements
+    fn stmt(&mut self) -> SResult {
+        self.expr_stmt()
+    }
+
+    fn expr_stmt(&mut self) -> SResult {
+        let expr = self.expr()?;
+        self.consume(TType::Semi, "Expected ';' after statement.".into(), ErrorType::SyntaxError)?;
+        Ok(Stmt::ExprStmt(expr))
+    }
+
+    // expressions
     fn expr(&mut self) -> PResult {
         self.equality()
     }

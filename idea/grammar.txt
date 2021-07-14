@@ -1,13 +1,11 @@
-NUMBER = [ "0" - "9" ]+
-STRING = ( "'" | "\"" ) any ( "\" | "\"" )
-
 program => statement* EOF
 
 
 # statements
-statement => exprStmt
+statement => exprStmt | varDecl
 
 exprStmt => expression ";"
+varDecl => "var" IDENTIFIER ("=" expression )? ";"
 
 
 # expressions
@@ -21,4 +19,4 @@ times => unary ( ( "*" | "/" | "%" ) unary )*
 
 unary => ( ( "!" | "-" ) unary ) | primary
 
-primary => NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")"
+primary => NUMBER | STRING | IDENTIFIER | "true" | "false" | "nil" | "(" expression ")"

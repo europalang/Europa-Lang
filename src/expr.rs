@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
-use super::token::Token;
-use super::types::Type;
+use crate::token::Token;
+use crate::types::Type;
 
 #[derive(Debug, Clone)]
 pub enum Expr {

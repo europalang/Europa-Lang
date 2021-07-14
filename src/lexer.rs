@@ -1,5 +1,5 @@
-use super::error::{Error, LineInfo, ErrorType};
-use super::token::{TType, Token, Value};
+use crate::error::{Error, LineInfo, ErrorType};
+use crate::token::{TType, Token, Value};
 
 use std::collections::HashMap;
 use std::char::from_u32 as char_from_u32;

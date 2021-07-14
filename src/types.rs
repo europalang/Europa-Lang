@@ -1,4 +1,4 @@
-use super::error::ErrorType;
+use crate::error::ErrorType;
 
 use std::cmp::Ordering;
 

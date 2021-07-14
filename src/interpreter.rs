@@ -1,17 +1,19 @@
-use super::error::{Error, ErrorType};
-use super::expr::Expr;
-use super::token::{TType, Token};
-use super::types::Type;
+use crate::error::{Error, ErrorType};
+use crate::expr::Expr;
+use crate::statement::Stmt;
+use crate::token::{TType, Token};
+use crate::types::Type;
 
 type IResult = Result<Type, Error>;
+type SResult = Result<(), Error>;
 
 pub struct Interpreter {
-    nodes: Expr,
+    nodes: Vec<Stmt>,
 }
 
 impl Interpreter {
     // static methods
-    pub fn new(nodes: Expr) -> Self {
+    pub fn new(nodes: Vec<Stmt>) -> Self {
         Self { nodes }
     }
 
@@ -37,15 +39,27 @@ impl Interpreter {
         }
     }
 
-    pub fn init(&self) -> IResult {
-        self.eval(self.nodes.clone())
+    pub fn init(&self) -> Result<(), Error> {
+        for stmt in &self.nodes {
+            self.eval_stmt(stmt.clone())?;
+        }
+
+        Ok(())
     }
 
-    fn eval(&self, node: Expr) -> IResult {
+    fn eval_stmt(&self, node: Stmt) -> SResult {
+        match node {
+            Stmt::ExprStmt(s) => self.eval_expr(s)?,
+        };
+
+        Ok(())
+    }
+
+    fn eval_expr(&self, node: Expr) -> IResult {
         match node {
             Expr::Binary(left, tok, right) => {
-                let lval = self.eval(left.as_ref().clone())?;
-                let rval = self.eval(right.as_ref().clone())?;
+                let lval = self.eval_expr(left.as_ref().clone())?;
+                let rval = self.eval_expr(right.as_ref().clone())?;
 
                 Ok(match tok.ttype {
                     TType::Plus => self.out(&lval.add(&rval), &tok)?,
@@ -64,10 +78,10 @@ impl Interpreter {
                     _ => Type::Nil,
                 })
             }
-            Expr::Grouping(expr) => Ok(self.eval(expr.as_ref().clone())?),
+            Expr::Grouping(expr) => Ok(self.eval_expr(expr.as_ref().clone())?),
             Expr::Literal(val) => Ok(val),
             Expr::Unary(tok, right) => {
-                let rval = self.eval(right.as_ref().clone())?;
+                let rval = self.eval_expr(right.as_ref().clone())?;
 
                 match tok.ttype {
                     TType::Not => Ok(match rval {
