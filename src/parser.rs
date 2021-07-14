@@ -29,7 +29,7 @@ impl Parser {
     fn equality(&mut self) -> PResult {
         let mut expr = self.comp()?;
 
-        while self.get(&[TType::NotEq, TType::Eq]) {
+        while self.get(&[TType::NotEq, TType::EqEq]) {
             let op = self.prev();
             let right = self.comp()?;
             expr = Expr::Binary(Rc::new(expr), op, Rc::new(right));
@@ -99,10 +99,10 @@ impl Parser {
             return Ok(match x {
                 Value::String(v) => Expr::Literal(Type::String(v)),
                 Value::Float(v) => Expr::Literal(Type::Float(v)),
-                _ => Expr::Literal(Type::Nil)
-            })
+                _ => Expr::Literal(Type::Nil),
+            });
         }
-        
+
         if self.get(&[TType::LeftParen]) {
             let expr = self.expr()?;
             self.consume(
@@ -175,6 +175,7 @@ impl Parser {
         if !self.is_valid() {
             return false;
         }
+
         self.peek().ttype == token
     }
 
