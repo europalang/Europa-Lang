@@ -25,6 +25,11 @@ fn main() {
         process::exit(1);
     }
 
+    if args[0].eq("--version") {
+        println!("Europa Lang v0.0.0");
+        process::exit(1);
+    }
+
     let code = fs::read_to_string(&args[1]).unwrap_or_else(|err| {
         println!("Error reading file: {}", err.to_string());
         process::exit(1);
