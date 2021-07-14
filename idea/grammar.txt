@@ -1,7 +1,16 @@
 NUMBER = [ "0" - "9" ]+
 STRING = ( "'" | "\"" ) any ( "\" | "\"" )
 
+program => statement* EOF
 
+
+# statements
+statement => exprStmt
+
+exprStmt => expression ";"
+
+
+# expressions
 expression => equality
 
 equality => comparison ( ( "==" | "!=" ) comparison )*
