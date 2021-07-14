@@ -1,7 +1,8 @@
-use super::error::{Error, LineInfo};
+use super::error::{Error, LineInfo, ErrorType};
 use super::token::{TType, Token, Value};
 
 use std::collections::HashMap;
+use std::char::from_u32 as char_from_u32;
 
 pub struct Lexer {
     code: String,
@@ -98,21 +99,90 @@ impl Lexer {
                 }
 
                 '"' | '\'' => {
-                    let str_type = char;
+                    let str_type = char; // " or '
                     let mut str = String::new();
 
                     while self.is_valid() && self.peek() != str_type {
-                        str += &self.peek().to_string();
-
                         if self.peek() == '\n' {
                             self.newline();
                         }
 
-                        self.next();
+                        if self.peek() == '\\' {
+                            self.next();
+                            let ch = self.peek();
+                            self.next();
+
+                            str.push(match ch {
+                                'n' => '\n',
+                                'r' => '\r',
+                                't' => '\t',
+                                'a' => '\x07',
+                                'b' => '\x08',
+                                'e' => '\x1b',
+                                'f' => '\x0c',
+                                'v' => '\x0b',
+                                '\\' => '\\',
+                                '\'' => '\'',
+                                '\"' => '\"',
+                                '?' => '?',
+                                'o' => {
+                                    u8::from_str_radix(self.read_n(3).as_str(), 8)
+                                        .map_err(|_| ())
+                                        .and_then(|c| char_from_u32(c as u32).ok_or(()))
+                                        .map_err(|_| Error::new(
+                                            self.info,
+                                            "Invalid string escape.".into(),
+                                            ErrorType::SyntaxError,
+                                        ))?
+                                },
+                                'x' => {
+                                    u8::from_str_radix(self.read_n(2).as_str(), 16)
+                                        .map_err(|_| ())
+                                        .and_then(|c| char_from_u32(c as u32).ok_or(()))
+                                        .map_err(|_| Error::new(
+                                            self.info,
+                                            "Invalid string escape.".into(),
+                                            ErrorType::SyntaxError,
+                                        ))?
+                                },
+                                'u' => {
+                                    u16::from_str_radix(self.read_n(4).as_str(), 16)
+                                        .map_err(|_| ())
+                                        .and_then(|c| char_from_u32(c as u32).ok_or(()))
+                                        .map_err(|_| Error::new(
+                                            self.info,
+                                            "Invalid string escape.".into(),
+                                            ErrorType::SyntaxError,
+                                        ))?
+                                },
+                                'U' => {
+                                    u32::from_str_radix(self.read_n(8).as_str(), 16)
+                                        .map_err(|_| ())
+                                        .and_then(|c| char_from_u32(c).ok_or(()))
+                                        .map_err(|_| Error::new(
+                                            self.info,
+                                            "Invalid string escape.".into(),
+                                            ErrorType::SyntaxError,
+                                        ))?
+                                },
+                                _ => return Err(Error::new(
+                                    self.info,
+                                    "Invalid string escape.".into(),
+                                    ErrorType::SyntaxError,
+                                )),
+                            });
+                        } else {
+                            str.push(self.peek());
+                            self.next();
+                        }
                     }
 
                     if !self.is_valid() {
-                        return Err(Error::new(self.info, String::from("Unterminated string.")));
+                        return Err(Error::new(
+                            self.info,
+                            String::from("Unterminated string."),
+                            ErrorType::SyntaxError,
+                        ));
                     }
 
                     self.next(); // "
@@ -183,6 +253,7 @@ impl Lexer {
                             return Err(Error::new(
                                 self.info,
                                 String::from("Unterminated multiline comment."),
+                                ErrorType::SyntaxError,
                             ));
                         }
 
@@ -249,7 +320,11 @@ impl Lexer {
                             value: Value::Float(num.parse().unwrap()),
                         });
                     } else {
-                        return Err(Error::new(self.info, format!("Invalid token {}", char)));
+                        return Err(Error::new(
+                            self.info,
+                            format!("Invalid token {}", char),
+                            ErrorType::SyntaxError,
+                        ));
                     }
                 }
             };
@@ -315,6 +390,16 @@ impl Lexer {
             return '\0';
         }
         self.chars[self.i + n]
+    }
+
+    fn read_n(&mut self, n: usize) -> String {
+        let mut string = String::new();
+        for _ in 0..n {
+            string.push(self.peek());
+            self.next();
+        }
+
+        string
     }
 
     fn is_valid(&self) -> bool {
