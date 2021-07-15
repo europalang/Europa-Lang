@@ -73,7 +73,24 @@ impl Parser {
 
     // expressions
     fn expr(&mut self) -> PResult {
-        self.equality()
+        self.assign()
+    }
+
+    fn assign(&mut self) -> PResult {
+        let expr = self.equality()?;
+
+        if self.get(&[TType::Eq]) {
+            let eq = self.prev();
+            let val = self.assign()?;
+
+            if let Expr::Variable(var) = expr {
+                return Ok(Expr::Assign(var, Rc::new(val)));
+            }
+
+            return Err(Error::new(eq.lineinfo, "Invalid assignment target.".into(), ErrorType::TypeError));
+        }
+
+        Ok(expr)
     }
 
     fn equality(&mut self) -> PResult {
@@ -160,7 +177,7 @@ impl Parser {
         Ok(match &tok.ttype {
             TType::String(x) => Expr::Literal(Type::String(x.clone())),
             TType::Number(x) => Expr::Literal(Type::Float(*x)),
-            TType::Identifier(x) => Expr::Variable(x.clone()),
+            TType::Identifier(_) => Expr::Variable(tok),
             _ => {
                 return Err(Error::new(
                     tok.lineinfo,
@@ -176,6 +193,8 @@ impl Parser {
         if self.check(token) {
             return Ok(self.next());
         }
+
+        self.synchronize();
         Err(Error::new(
             self.peek().lineinfo,
             error_message,

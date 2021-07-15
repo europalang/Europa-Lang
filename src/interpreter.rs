@@ -66,7 +66,7 @@ impl Interpreter {
         Ok(())
     }
 
-    fn eval_expr(&self, node: &Expr) -> IResult {
+    fn eval_expr(&mut self, node: &Expr) -> IResult {
         match node {
             Expr::Binary(left, tok, right) => {
                 let lval = self.eval_expr(&left.as_ref())?;
@@ -103,7 +103,12 @@ impl Interpreter {
                     _ => panic!(),
                 }
             }
-            Expr::Variable(_) => todo!(),
+            Expr::Variable(v) => self.environ.get(v),
+            Expr::Assign(k, v) => {
+                let val = self.eval_expr(&v)?;
+                self.environ.assign(k, &val)?;
+                Ok(val)
+            },
         }
     }
 
