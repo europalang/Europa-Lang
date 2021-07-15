@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate maplit;
 
+mod environment;
 mod error;
 mod interpreter;
 mod lexer;
@@ -52,7 +53,7 @@ fn main() {
                     println!("parser {:?}", end);
 
                     let start = Instant::now();
-                    let interpreter = Interpreter::new(tree);
+                    let mut interpreter = Interpreter::new(tree);
                     match interpreter.init() {
                         Err(e) => e.display(),
                         Ok(()) => {

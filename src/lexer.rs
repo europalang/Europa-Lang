@@ -1,8 +1,8 @@
-use crate::error::{Error, LineInfo, ErrorType};
-use crate::token::{TType, Token, Value};
+use crate::error::{Error, ErrorType, LineInfo};
+use crate::token::{TType, Token};
 
-use std::collections::HashMap;
 use std::char::from_u32 as char_from_u32;
+use std::collections::HashMap;
 
 pub struct Lexer {
     code: String,
@@ -125,51 +125,53 @@ impl Lexer {
                                 '\'' => '\'',
                                 '\"' => '\"',
                                 '?' => '?',
-                                'o' => {
-                                    u8::from_str_radix(self.read_n(3).as_str(), 8)
-                                        .map_err(|_| ())
-                                        .and_then(|c| char_from_u32(c as u32).ok_or(()))
-                                        .map_err(|_| Error::new(
+                                'o' => u8::from_str_radix(self.read_n(3).as_str(), 8)
+                                    .map_err(|_| ())
+                                    .and_then(|c| char_from_u32(c as u32).ok_or(()))
+                                    .map_err(|_| {
+                                        Error::new(
                                             self.info,
                                             "Invalid string escape.".into(),
                                             ErrorType::SyntaxError,
-                                        ))?
-                                },
-                                'x' => {
-                                    u8::from_str_radix(self.read_n(2).as_str(), 16)
-                                        .map_err(|_| ())
-                                        .and_then(|c| char_from_u32(c as u32).ok_or(()))
-                                        .map_err(|_| Error::new(
+                                        )
+                                    })?,
+                                'x' => u8::from_str_radix(self.read_n(2).as_str(), 16)
+                                    .map_err(|_| ())
+                                    .and_then(|c| char_from_u32(c as u32).ok_or(()))
+                                    .map_err(|_| {
+                                        Error::new(
                                             self.info,
                                             "Invalid string escape.".into(),
                                             ErrorType::SyntaxError,
-                                        ))?
-                                },
-                                'u' => {
-                                    u16::from_str_radix(self.read_n(4).as_str(), 16)
-                                        .map_err(|_| ())
-                                        .and_then(|c| char_from_u32(c as u32).ok_or(()))
-                                        .map_err(|_| Error::new(
+                                        )
+                                    })?,
+                                'u' => u16::from_str_radix(self.read_n(4).as_str(), 16)
+                                    .map_err(|_| ())
+                                    .and_then(|c| char_from_u32(c as u32).ok_or(()))
+                                    .map_err(|_| {
+                                        Error::new(
                                             self.info,
                                             "Invalid string escape.".into(),
                                             ErrorType::SyntaxError,
-                                        ))?
-                                },
-                                'U' => {
-                                    u32::from_str_radix(self.read_n(8).as_str(), 16)
-                                        .map_err(|_| ())
-                                        .and_then(|c| char_from_u32(c).ok_or(()))
-                                        .map_err(|_| Error::new(
+                                        )
+                                    })?,
+                                'U' => u32::from_str_radix(self.read_n(8).as_str(), 16)
+                                    .map_err(|_| ())
+                                    .and_then(|c| char_from_u32(c).ok_or(()))
+                                    .map_err(|_| {
+                                        Error::new(
                                             self.info,
                                             "Invalid string escape.".into(),
                                             ErrorType::SyntaxError,
-                                        ))?
-                                },
-                                _ => return Err(Error::new(
-                                    self.info,
-                                    "Invalid string escape.".into(),
-                                    ErrorType::SyntaxError,
-                                )),
+                                        )
+                                    })?,
+                                _ => {
+                                    return Err(Error::new(
+                                        self.info,
+                                        "Invalid string escape.".into(),
+                                        ErrorType::SyntaxError,
+                                    ))
+                                }
                             });
                         } else {
                             str.push(self.peek());
@@ -188,9 +190,8 @@ impl Lexer {
                     self.next(); // "
 
                     self.tokens.push(Token {
-                        ttype: TType::String,
+                        ttype: TType::String(str),
                         lineinfo: self.info,
-                        value: Value::String(str),
                     });
                 }
 
@@ -276,15 +277,13 @@ impl Lexer {
 
                         if self.keywords.contains_key(&name) {
                             self.tokens.push(Token {
-                                ttype: self.keywords[&name],
+                                ttype: self.keywords[&name].clone(),
                                 lineinfo: self.info,
-                                value: Value::Nil,
                             });
                         } else {
                             self.tokens.push(Token {
-                                ttype: TType::Identifier,
+                                ttype: TType::Identifier(name),
                                 lineinfo: self.info,
-                                value: Value::Ident(name),
                             });
                         }
                     } else if self.is_number(char) {
@@ -315,9 +314,8 @@ impl Lexer {
                         }
 
                         self.tokens.push(Token {
-                            ttype: TType::Number,
+                            ttype: TType::Number(num.parse().unwrap()),
                             lineinfo: self.info,
-                            value: Value::Float(num.parse().unwrap()),
                         });
                     } else {
                         return Err(Error::new(
@@ -364,7 +362,6 @@ impl Lexer {
         self.tokens.push(Token {
             ttype: token,
             lineinfo: self.info,
-            value: Value::Nil,
         });
     }
 

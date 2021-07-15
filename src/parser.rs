@@ -3,7 +3,7 @@ use std::rc::Rc;
 use crate::error::{Error, ErrorType};
 use crate::nodes::expr::Expr;
 use crate::nodes::stmt::Stmt;
-use crate::token::{TType, Token, Value};
+use crate::token::{TType, Token};
 use crate::types::Type;
 
 type PResult = Result<Expr, Error>;
@@ -46,24 +46,29 @@ impl Parser {
     }
 
     fn var_decl(&mut self) -> SResult {
-        let name = self.consume(
-            TType::Identifier,
-            "Expected variable name after 'var'".into(),
-        )?;
+        if let TType::Identifier(name) = self.peek().ttype {
+            self.next();
 
-        let value;
-        if self.get(&[TType::Eq]) {
-            value = self.expr()?;
+            let value;
+            if self.get(&[TType::Eq]) {
+                value = self.expr()?;
+            } else {
+                value = Expr::Literal(Type::Nil);
+            }
+
+            self.consume(
+                TType::Semi,
+                "Expected ';' after variable declaration.".into(),
+            )?;
+
+            Ok(Stmt::VarDecl(name, value))
         } else {
-            value = Expr::Literal(Type::Nil);
+            return Err(Error::new(
+                self.peek().lineinfo,
+                "Expected variable name after 'var'".into(),
+                ErrorType::SyntaxError,
+            ));
         }
-
-        self.consume(
-            TType::Semi,
-            "Expected ';' after variable declaration.".into(),
-        )?;
-
-        Ok(Stmt::VarDecl(name.value, value))
     }
 
     // expressions
@@ -140,14 +145,6 @@ impl Parser {
             return Ok(Expr::Literal(Type::Nil));
         }
 
-        if let Some(x) = self.get_tup(&[TType::String, TType::Number]) {
-            return Ok(match x {
-                Value::String(v) => Expr::Literal(Type::String(v)),
-                Value::Float(v) => Expr::Literal(Type::Float(v)),
-                _ => Expr::Literal(Type::Nil),
-            });
-        }
-
         if self.get(&[TType::LeftParen]) {
             let expr = self.expr()?;
             self.consume(
@@ -157,22 +154,21 @@ impl Parser {
             return Ok(Expr::Grouping(Rc::new(expr)));
         }
 
-        if self.get(&[TType::Identifier]) {
-            let tok = self.prev();
+        self.next();
 
-            return Ok(Expr::Variable(tok.value));
-        }
-
-        if self.is_valid() {
-            let tok = self.peek();
-            return Err(Error::new(
-                tok.lineinfo,
-                format!("Unexpected token '{}'.", tok.ttype),
-                ErrorType::SyntaxError,
-            ));
-        }
-
-        Ok(Expr::Literal(Type::Nil))
+        let tok = self.prev();
+        Ok(match &tok.ttype {
+            TType::String(x) => Expr::Literal(Type::String(x.clone())),
+            TType::Number(x) => Expr::Literal(Type::Float(*x)),
+            TType::Identifier(x) => Expr::Variable(x.clone()),
+            _ => {
+                return Err(Error::new(
+                    tok.lineinfo,
+                    format!("Unexpected token '{}'.", tok.ttype),
+                    ErrorType::SyntaxError,
+                ));
+            }
+        })
     }
 
     // errors
@@ -215,24 +211,13 @@ impl Parser {
     // lookahead
     fn get(&mut self, tokens: &[TType]) -> bool {
         for i in tokens.iter() {
-            if self.check(*i) {
+            if self.check(i.clone()) {
                 self.next();
                 return true;
             }
         }
 
         false
-    }
-
-    fn get_tup(&mut self, tokens: &[TType]) -> Option<Value> {
-        for i in tokens.iter() {
-            if self.check(*i) {
-                self.next();
-                return Some(self.prev().value);
-            }
-        }
-
-        None
     }
 
     fn check(&self, token: TType) -> bool {

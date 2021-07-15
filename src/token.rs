@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use crate::error::LineInfo;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TType {
     // delims
     LeftS,  // {{
@@ -44,9 +44,9 @@ pub enum TType {
     Mod,
 
     // literals
-    Identifier,
-    String,
-    Number,
+    Identifier(String),
+    String(String),
+    Number(f32),
     True,
     False,
     Nil,
@@ -70,19 +70,18 @@ pub enum TType {
     EOF,
 }
 
-#[derive(Debug, Clone)]
-pub enum Value {
-    String(String),
-    Ident(String),
-    Float(f32),
-    Nil,
-}
+// #[derive(Debug, Clone)]
+// pub enum Value {
+//     String(String),
+//     Ident(String),
+//     Float(f32),
+//     Nil,
+// }
 
 #[derive(Clone)]
 pub struct Token {
     pub ttype: TType,
     pub lineinfo: LineInfo,
-    pub value: Value,
 }
 
 impl Display for TType {

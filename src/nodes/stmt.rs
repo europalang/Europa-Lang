@@ -1,7 +1,7 @@
-use crate::{nodes::expr::Expr, token::Value};
+use crate::nodes::expr::Expr;
 
 #[derive(Clone)]
 pub enum Stmt {
     ExprStmt(Expr),
-    VarDecl(Value, Expr)
+    VarDecl(String, Expr),
 }

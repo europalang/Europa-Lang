@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::token::{Token, Value};
+use crate::token::Token;
 use crate::types::Type;
 
 #[derive(Clone)]
@@ -9,5 +9,5 @@ pub enum Expr {
     Grouping(Rc<Expr>),
     Literal(Type),
     Unary(Token, Rc<Expr>),
-    Variable(Value)
+    Variable(String)
 }

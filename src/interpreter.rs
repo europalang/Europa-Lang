@@ -1,3 +1,4 @@
+use crate::environment::Environment;
 use crate::error::{Error, ErrorType};
 use crate::nodes::expr::Expr;
 use crate::nodes::stmt::Stmt;
@@ -9,12 +10,16 @@ type SResult = Result<(), Error>;
 
 pub struct Interpreter {
     nodes: Vec<Stmt>,
+    environ: Environment,
 }
 
 impl Interpreter {
     // static methods
     pub fn new(nodes: Vec<Stmt>) -> Self {
-        Self { nodes }
+        Self {
+            nodes,
+            environ: Environment::new(),
+        }
     }
 
     pub fn stringify(value: Type) -> String {
@@ -39,27 +44,33 @@ impl Interpreter {
         }
     }
 
-    pub fn init(&self) -> Result<(), Error> {
-        for stmt in &self.nodes {
-            self.eval_stmt(stmt.clone())?;
+    pub fn init(&mut self) -> Result<(), Error> {
+        for stmt in self.nodes {
+            self.eval_stmt(&stmt.clone())?;
         }
 
         Ok(())
     }
 
-    fn eval_stmt(&self, node: Stmt) -> SResult {
+    fn eval_stmt(&mut self, node: &Stmt) -> SResult {
         match node {
-            Stmt::ExprStmt(s) => self.eval_expr(s)?,
+            Stmt::ExprStmt(s) => {
+                self.eval_expr(s)?;
+            }
+            Stmt::VarDecl(name, val) => {
+                let val = self.eval_expr(&val)?;
+                self.environ.define(&name, &val);
+            }
         };
 
         Ok(())
     }
 
-    fn eval_expr(&self, node: Expr) -> IResult {
+    fn eval_expr(&self, node: &Expr) -> IResult {
         match node {
             Expr::Binary(left, tok, right) => {
-                let lval = self.eval_expr(left.as_ref().clone())?;
-                let rval = self.eval_expr(right.as_ref().clone())?;
+                let lval = self.eval_expr(&left.as_ref())?;
+                let rval = self.eval_expr(&right.as_ref())?;
 
                 Ok(match tok.ttype {
                     TType::Plus => self.out(&lval.add(&rval), &tok)?,
@@ -75,13 +86,13 @@ impl Interpreter {
                     TType::Greater => Type::Bool(lval > rval),
                     TType::LessEq => Type::Bool(lval <= rval),
                     TType::GreaterEq => Type::Bool(lval >= rval),
-                    _ => Type::Nil,
+                    _ => panic!(),
                 })
             }
-            Expr::Grouping(expr) => Ok(self.eval_expr(expr.as_ref().clone())?),
-            Expr::Literal(val) => Ok(val),
+            Expr::Grouping(expr) => Ok(self.eval_expr(&expr.as_ref())?),
+            Expr::Literal(val) => Ok(val.clone()),
             Expr::Unary(tok, right) => {
-                let rval = self.eval_expr(right.as_ref().clone())?;
+                let rval = self.eval_expr(&right.as_ref())?;
 
                 match tok.ttype {
                     TType::Not => Ok(match rval {
@@ -89,9 +100,10 @@ impl Interpreter {
                         Type::Bool(v) => Type::Bool(v),
                         _ => Type::Bool(true),
                     }),
-                    _ => Ok(Type::Nil),
+                    _ => panic!(),
                 }
             }
+            Expr::Variable(_) => todo!(),
         }
     }
 
