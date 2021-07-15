@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::environment::Environment;
 use crate::error::{Error, ErrorType};
 use crate::nodes::expr::Expr;
@@ -52,18 +54,22 @@ impl Interpreter {
         Ok(self.environ.clone())
     }
 
-    fn eval_stmt(&mut self, node: &Stmt) -> SResult {
+    // eval
+    fn eval_stmt(&mut self, node: &Stmt) -> IResult {
         match node {
             Stmt::ExprStmt(s) => {
-                self.eval_expr(s)?;
+                self.eval_expr(s)
             }
             Stmt::VarDecl(name, val) => {
                 let val = self.eval_expr(&val)?;
                 self.environ.define(&name, &val);
+                Ok(Type::Nil)
+            },
+            Stmt::Block(stmts) => {
+                self.eval_block(Environment::new(Some(Box::new(self.environ.clone()))), stmts, false)?;
+                Ok(Type::Nil)
             }
-        };
-
-        Ok(())
+        }
     }
 
     fn eval_expr(&mut self, node: &Expr) -> IResult {
@@ -109,9 +115,24 @@ impl Interpreter {
                 self.environ.assign(k, &val)?;
                 Ok(val)
             },
+            Expr::Block(_) => todo!(),
         }
     }
 
+    fn eval_block(&mut self, env: Environment, block: &Vec<Stmt>, ret_val: bool) -> Result<Option<Type>, Error> {
+        let prev = self.environ.clone();
+        self.environ = env;
+        
+        for stmt in block {
+            self.eval_stmt(stmt)?;
+        }
+
+        self.environ = prev;
+        
+        Ok(None)
+    }
+
+    // util
     fn out(&self, val: &Result<Type, (String, ErrorType)>, tok: &Token) -> Result<Type, Error> {
         match val {
             Ok(r) => Ok(r.clone()),

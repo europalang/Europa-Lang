@@ -8,12 +8,14 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct Environment {
+    parent: Option<Box<Environment>>,
     values: HashMap<String, Type>,
 }
 
 impl Environment {
-    pub fn new() -> Self {
+    pub fn new(parent: Option<Box<Environment>>) -> Self {
         Self {
+            parent,
             values: HashMap::new(),
         }
     }
@@ -23,13 +25,15 @@ impl Environment {
             TType::Identifier(name) => {
                 if self.values.contains_key(name) {
                     return Ok(self.values[name].clone());
-                } else {
-                    Err(Error::new(
-                        tok.lineinfo,
-                        format!("Undefined variable {}", name),
-                        ErrorType::TypeError,
-                    ))
+                } else if let Some(parent) = &self.parent {
+                    return parent.get(tok);
                 }
+
+                Err(Error::new(
+                    tok.lineinfo,
+                    format!("Undefined variable {}", name),
+                    ErrorType::TypeError,
+                ))
             }
             _ => panic!(),
         }
@@ -47,8 +51,10 @@ impl Environment {
                 if self.values.contains_key(&k) {
                     self.values.insert(k, val.clone());
                     return Ok(());
+                } else if let Some(parent) = &mut self.parent {
+                    return parent.assign(name, val);
                 }
-                
+
                 Err(Error::new(
                     name.lineinfo,
                     format!("Undefined variable {}", k).into(),

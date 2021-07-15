@@ -40,7 +40,7 @@ fn main() {
     });
 
     // Load code and create Environment
-    let environ = load(code, Environment::new());
+    let environ = load(code, Environment::new(None));
     repl(environ);
 }
 

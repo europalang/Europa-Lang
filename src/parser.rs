@@ -32,9 +32,8 @@ impl Parser {
     // recursive descent
     // statements
     fn stmt(&mut self) -> SResult {
-        if self.get(&[TType::Var]) {
-            return self.var_decl();
-        }
+        if self.get(&[TType::Var]) { return self.var_decl(); }
+        if self.get(&[TType::LeftBrace]) { return Ok(Stmt::Block(self.block()?)); }
 
         self.expr_stmt()
     }
@@ -161,6 +160,9 @@ impl Parser {
         if self.get(&[TType::Nil]) {
             return Ok(Expr::Literal(Type::Nil));
         }
+        if self.get(&[TType::LeftBrace]) {
+            return Ok(Expr::Block(self.block()?));
+        }
 
         if self.get(&[TType::LeftParen]) {
             let expr = self.expr()?;
@@ -186,6 +188,18 @@ impl Parser {
                 ));
             }
         })
+    }
+
+    fn block(&mut self) -> Result<Vec<Stmt>, Error> {
+        let mut stmts: Vec<Stmt> = Vec::new();
+        
+        while !self.check(TType::RightBrace) && self.is_valid() {
+            stmts.push(self.stmt()?);
+        }
+
+        self.consume(TType::RightBrace, "Expected '}' after block expression".into());
+
+        Ok(stmts)
     }
 
     // errors
