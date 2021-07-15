@@ -45,4 +45,6 @@ for i in array {
 ```
 
 ## Credits
-Thanks @justamirror and Dart for design suggestions and name suggestions. Thank you @CoolCoderSJ for creating the discord server! Thank you @SixBeeps for designing the logo!
+- @justamirror and Dart for name and language design suggestions.
+- @CoolCoderSJ for creating the discord server, along with language design suggestions!
+- @SixBeeps for designing the Europa logo!
