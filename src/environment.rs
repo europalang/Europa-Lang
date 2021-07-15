@@ -6,6 +6,7 @@ use crate::{
     types::Type,
 };
 
+#[derive(Debug)]
 pub struct Environment {
     values: HashMap<String, Type>,
 }
