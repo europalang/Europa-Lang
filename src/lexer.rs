@@ -2,6 +2,7 @@ use crate::error::{Error, ErrorType, LineInfo};
 use crate::token::{TType, Token};
 
 use std::char::from_u32 as char_from_u32;
+use maplit::hashmap;
 use std::collections::HashMap;
 
 pub struct Lexer {

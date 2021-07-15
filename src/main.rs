@@ -1,4 +1,3 @@
-#[macro_use]
 extern crate maplit;
 
 mod environment;
@@ -12,10 +11,15 @@ mod types;
 
 use std::time::Instant;
 use std::{env, fs, process};
+use std::io::{stdin, stdout, Write};
 
 use interpreter::Interpreter;
 use lexer::Lexer;
 use parser::Parser;
+
+use crate::token::Token;
+use crate::nodes::stmt::Stmt;
+use crate::environment::Environment;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -35,34 +39,76 @@ fn main() {
         process::exit(1);
     });
 
-    let start = Instant::now();
-    let mut lexer = Lexer::new(&code);
+    // Load code and create Environment
+    let environ = load(code, Environment::new());
+    repl(environ);
+}
 
-    match lexer.init() {
-        Err(e) => e.display(),
+// Loader for code, returns Environment mutated from environ
+fn load(code: String, environ: Environment) -> Environment {
+    let mut time = Instant::now();
+    let tokens: Vec<Token> = match Lexer::new(&code).init() {
+        Err(e) => {
+            e.display();
+            return environ;
+        },
         Ok(toks) => {
-            let end = start.elapsed();
-            println!("lexer {:?}", end);
-
-            let start = Instant::now();
-            let mut parser = Parser::new(toks);
-            match parser.init() {
-                Err(e) => e.display(),
-                Ok(tree) => {
-                    let end = start.elapsed();
-                    println!("parser {:?}", end);
-
-                    let start = Instant::now();
-                    let mut interpreter = Interpreter::new(tree);
-                    match interpreter.init() {
-                        Err(e) => e.display(),
-                        Ok(()) => {
-                            let end = start.elapsed();
-                            println!("interpreter {:?}", end);
-                        }
-                    }
-                }
-            }
+            println!("lexer {:?}", time.elapsed());
+            toks
         }
     };
+
+    // Turn tokens into AST
+    time = Instant::now();
+    let tree: Vec<Stmt> = match Parser::new(tokens).init() {
+        Err(e) => {
+            e.display();
+            return environ;
+        },
+        Ok(tree) => {
+            println!("parser {:?}", time.elapsed());
+            tree
+        }
+    };
+
+    // Interpret and return environment
+    time = Instant::now();
+    let mut interpreter = Interpreter::new(tree, environ.clone());
+    match interpreter.init() {
+        Err(e) => {
+            e.display();
+            environ
+        },
+        Ok(env) => {
+            println!("interpreter {:?}", time.elapsed());
+            env
+        }
+    }
+}
+
+// Loops until exited
+fn repl(mut environ: Environment) {
+    loop {
+        // Same line print
+        print!("\x1b[33m>\x1b[0m ");
+        stdout().flush().unwrap();
+
+        // Wait for input from user
+        let mut input = String::new();
+        match stdin().read_line(&mut input) {
+            Err(e) => {
+                println!("Unexpected REPL Error: {:?}", e);
+                process::exit(1);
+            },
+            Ok(_) => input = input.trim().to_string()
+        }
+
+        // Exit out of program
+        if input.eq("exit") {
+            process::exit(0);
+        }
+
+        environ = load(input, environ);
+        println!("{:?}", environ);
+    }
 }

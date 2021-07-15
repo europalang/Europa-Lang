@@ -15,10 +15,10 @@ pub struct Interpreter {
 
 impl Interpreter {
     // static methods
-    pub fn new(nodes: Vec<Stmt>) -> Self {
+    pub fn new(nodes: Vec<Stmt>, environ: Environment) -> Self {
         Self {
             nodes,
-            environ: Environment::new(),
+            environ
         }
     }
 
@@ -44,12 +44,12 @@ impl Interpreter {
         }
     }
 
-    pub fn init(&mut self) -> Result<(), Error> {
+    pub fn init(&mut self) -> Result<Environment, Error> {
         for stmt in self.nodes.clone() {
             self.eval_stmt(&stmt.clone())?;
         }
 
-        Ok(())
+        Ok(self.environ.clone())
     }
 
     fn eval_stmt(&mut self, node: &Stmt) -> SResult {
