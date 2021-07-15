@@ -1,5 +1,6 @@
 use std::rc::Rc;
 
+use crate::nodes::stmt::Stmt;
 use crate::token::Token;
 use crate::types::Type;
 
@@ -10,5 +11,6 @@ pub enum Expr {
     Grouping(Rc<Expr>),
     Literal(Type),
     Unary(Token, Rc<Expr>),
-    Variable(Token)
+    Variable(Token),
+    Block(Vec<Stmt>),
 }

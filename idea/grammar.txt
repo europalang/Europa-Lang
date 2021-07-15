@@ -2,9 +2,9 @@ program => statement* EOF
 
 
 # statements
-statement => exprStmt | varDecl
+statement => exprStmt | varDecl | block
 
-exprStmt => expression ";"
+exprStmt => ( expression ";" )
 varDecl => "var" IDENTIFIER ("=" expression )? ";"
 
 
@@ -21,4 +21,5 @@ times => unary ( ( "*" | "/" | "%" ) unary )*
 
 unary => ( ( "!" | "-" ) unary ) | primary
 
-primary => NUMBER | STRING | IDENTIFIER | "true" | "false" | "nil" | "(" expression ")"
+primary => NUMBER | STRING | IDENTIFIER | "true" | "false" | "nil" | "(" expression ")" | block
+block => "{" statement* "}"
