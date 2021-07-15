@@ -45,13 +45,9 @@ impl Interpreter {
     }
 
     pub fn init(&mut self) -> Result<(), Error> {
-        let nodes = std::mem::take(&mut self.nodes);
-        for stmt in &nodes {
+        for stmt in self.nodes.clone() {
             self.eval_stmt(&stmt.clone())?;
         }
-
-        self.nodes = nodes;
-        println!("{:?}", self.environ);
 
         Ok(())
     }

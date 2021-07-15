@@ -36,7 +36,6 @@ impl Environment {
     }
 
     pub fn define(&mut self, name: &String, val: &Type) {
-        let env = &mut self.values;
-        env.insert(name.clone(), val.clone());
+        self.values.insert(name.clone(), val.clone());
     }
 }
