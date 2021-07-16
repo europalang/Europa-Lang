@@ -2,10 +2,11 @@ program => statement* EOF
 
 
 # statements
-statement => exprStmt | varDecl | block
+statement => exprStmt | varDecl | block | ifStmt
 
 exprStmt => ( expression ";" )
 varDecl => "var" IDENTIFIER ("=" expression )? ";"
+ifStmt => "if" expr block ( "elif" expr block )* ( "else" block )?
 
 
 # expressions

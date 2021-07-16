@@ -197,7 +197,7 @@ impl Parser {
             stmts.push(self.stmt()?);
         }
 
-        self.consume(TType::RightBrace, "Expected '}' after block expression".into());
+        self.consume(TType::RightBrace, "Expected '}' after block expression".into())?;
 
         Ok(stmts)
     }

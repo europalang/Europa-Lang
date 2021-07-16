@@ -115,7 +115,13 @@ impl Interpreter {
                 self.environ.assign(k, &val)?;
                 Ok(val)
             }
-            Expr::Block(_) => todo!(),
+            Expr::Block(stmts) => Ok(self
+                .eval_block(
+                    Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
+                    stmts,
+                    true,
+                )?
+                .unwrap()),
         }
     }
 
