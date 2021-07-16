@@ -58,6 +58,7 @@ fn main() {
                         Err(e) => e.display(),
                         Ok(()) => {
                             let end = start.elapsed();
+                            println!("{:?}", interpreter.environ);
                             println!("interpreter {:?}", end);
                         }
                     }
