@@ -9,7 +9,7 @@ mod parser;
 mod token;
 mod types;
 
-use std::io::{stdin, stdout, Read};
+use std::io::{stdin, stdout, Write};
 use std::time::Instant;
 use std::{env, fs, process};
 
