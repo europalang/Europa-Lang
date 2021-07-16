@@ -20,6 +20,7 @@ use parser::Parser;
 use crate::token::Token;
 use crate::nodes::stmt::Stmt;
 use crate::environment::Environment;
+use crate::error::Error;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -40,18 +41,20 @@ fn main() {
     });
 
     // Load code and create Environment
-    let environ = load(code, Environment::new(None));
-    repl(environ);
+    match init(code, Environment::new(None)) {
+        Err(e) => e.display(),
+        Ok(environ) => {
+            // Start REPL if no errors
+            init_repl(environ)
+        }
+    }
 }
 
 // Loader for code, returns Environment mutated from environ
-fn load(code: String, environ: Environment) -> Environment {
+fn init(code: String, environ: Environment) -> Result<Environment, Error> {
     let mut time = Instant::now();
     let tokens: Vec<Token> = match Lexer::new(&code).init() {
-        Err(e) => {
-            e.display();
-            return environ;
-        },
+        Err(e) => return Err(e),
         Ok(toks) => {
             println!("lexer {:?}", time.elapsed());
             toks
@@ -61,10 +64,7 @@ fn load(code: String, environ: Environment) -> Environment {
     // Turn tokens into AST
     time = Instant::now();
     let tree: Vec<Stmt> = match Parser::new(tokens).init() {
-        Err(e) => {
-            e.display();
-            return environ;
-        },
+        Err(e) => return Err(e),
         Ok(tree) => {
             println!("parser {:?}", time.elapsed());
             tree
@@ -75,19 +75,16 @@ fn load(code: String, environ: Environment) -> Environment {
     time = Instant::now();
     let mut interpreter = Interpreter::new(tree, environ.clone());
     match interpreter.init() {
-        Err(e) => {
-            e.display();
-            environ
-        },
-        Ok(env) => {
+        Err(e) => return Err(e),
+        Ok(()) => {
             println!("interpreter {:?}", time.elapsed());
-            env
+            Ok(interpreter.environ)
         }
     }
 }
 
 // Loops until exited
-fn repl(mut environ: Environment) {
+fn init_repl(mut environ: Environment) {
     loop {
         // Same line print
         print!("\x1b[33m>\x1b[0m ");
@@ -107,8 +104,15 @@ fn repl(mut environ: Environment) {
         if input.eq("exit") {
             process::exit(0);
         }
-
-        environ = load(input, environ);
-        println!("{:?}", environ);
+        
+        // Attempt to run code
+        match init(input, environ.clone()) {
+            Err(e) => e.display(),
+            Ok(env) => {
+                // Change environ values if no errors
+                environ = env;
+                println!("{:?}", environ);
+            }
+        };
     }
 }

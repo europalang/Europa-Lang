@@ -12,7 +12,7 @@ type SResult = Result<(), Error>;
 
 pub struct Interpreter {
     nodes: Vec<Stmt>,
-    environ: Environment,
+    pub environ: Environment,
 }
 
 impl Interpreter {
@@ -46,12 +46,12 @@ impl Interpreter {
         }
     }
 
-    pub fn init(&mut self) -> Result<Environment, Error> {
+    pub fn init(&mut self) -> Result<(), Error> {
         for stmt in self.nodes.clone() {
             self.eval_stmt(&stmt.clone())?;
         }
 
-        Ok(self.environ.clone())
+        Ok(())
     }
 
     // eval
