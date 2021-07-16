@@ -16,10 +16,7 @@ pub struct Interpreter {
 impl Interpreter {
     // static methods
     pub fn new(nodes: Vec<Stmt>, environ: Box<Environment>) -> Self {
-        Self {
-            nodes,
-            environ,
-        }
+        Self { nodes, environ }
     }
 
     pub fn stringify(value: Type) -> String {
@@ -69,6 +66,44 @@ impl Interpreter {
                 )?;
                 Ok(Type::Nil)
             }
+            Stmt::IfStmt(cond, true_br, elif_brs, else_br) => {
+                let cond_val = self.eval_expr(cond)?;
+
+                if self.is_truthy(&cond_val) {
+                    return Ok(self
+                        .eval_block(
+                            Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
+                            true_br,
+                            true,
+                        )?
+                        .unwrap());
+                }
+                if elif_brs.len() != 0 {
+                    for (cond, elif_block) in elif_brs {
+                        let cond_val = self.eval_expr(cond)?;
+                        if self.is_truthy(&cond_val) {
+                            return Ok(self
+                                .eval_block(
+                                    Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
+                                    elif_block,
+                                    true,
+                                )?
+                                .unwrap());
+                        }
+                    }
+                }
+                if let Some(else_block) = else_br {
+                    return Ok(self
+                        .eval_block(
+                            Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
+                            else_block,
+                            true,
+                        )?
+                        .unwrap());
+                }
+
+                Ok(Type::Nil)
+            }
         }
     }
 
@@ -101,11 +136,7 @@ impl Interpreter {
                 let rval = self.eval_expr(&right.as_ref())?;
 
                 match tok.ttype {
-                    TType::Not => Ok(match rval {
-                        Type::Nil => Type::Bool(false),
-                        Type::Bool(v) => Type::Bool(v),
-                        _ => Type::Bool(true),
-                    }),
+                    TType::Not => Ok(Type::Bool(self.is_truthy(&rval))),
                     _ => panic!(),
                 }
             }
@@ -156,6 +187,14 @@ impl Interpreter {
         match val {
             Ok(r) => Ok(r.clone()),
             Err(t) => return Err(Error::new(tok.lineinfo, t.clone().0, t.clone().1)),
+        }
+    }
+
+    fn is_truthy(&self, v: &Type) -> bool {
+        match v {
+            Type::Nil => false,
+            Type::Bool(v) => *v,
+            _ => true,
         }
     }
 }

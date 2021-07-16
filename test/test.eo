@@ -1,3 +1,9 @@
 var a = {
-    1 + 2;
+    if false {
+        5;
+    } elif false {
+        6;
+    } else {
+        7;
+    }
 };

@@ -32,6 +32,7 @@ impl Parser {
     // recursive descent
     // statements
     fn stmt(&mut self) -> SResult {
+        if self.get(&[TType::If]) { return self.if_stmt(); }
         if self.get(&[TType::Var]) { return self.var_decl(); }
         if self.get(&[TType::LeftBrace]) { return Ok(Stmt::Block(self.block()?)); }
 
@@ -42,6 +43,32 @@ impl Parser {
         let expr = self.expr()?;
         self.consume(TType::Semi, "Expected ';' after statement.".into())?;
         Ok(Stmt::ExprStmt(expr))
+    }
+
+    fn if_stmt(&mut self) -> SResult {
+        let cond = self.expr()?;
+        self.consume(TType::LeftBrace, "Expected '{' after if statement condition.".into())?;
+        let true_br = self.block()?;
+        let mut elif_brs: Vec<(Expr, Vec<Stmt>)> = Vec::new();
+        let else_br: Option<Vec<Stmt>>;
+
+        if self.get(&[TType::Elif]) {
+            loop {
+                let elif_cond = self.expr()?;
+                self.consume(TType::LeftBrace, "Expected '{' after elif statement condition.".into())?;
+                elif_brs.push((elif_cond, self.block()?));
+                if !self.get(&[TType::Elif]) { break; }
+            }
+        }
+
+        if self.get(&[TType::Else]) {
+            self.consume(TType::LeftBrace, "Expected '{' after else keyword.".into())?;
+            else_br = Some(self.block()?);
+        } else {
+            else_br = None;
+        }
+
+        Ok(Stmt::IfStmt(cond, true_br, elif_brs, else_br))
     }
 
     fn var_decl(&mut self) -> SResult {
