@@ -15,10 +15,10 @@ pub struct Interpreter {
 
 impl Interpreter {
     // static methods
-    pub fn new(nodes: Vec<Stmt>) -> Self {
+    pub fn new(nodes: Vec<Stmt>, environ: Box<Environment>) -> Self {
         Self {
             nodes,
-            environ: Box::new(Environment::new()),
+            environ,
         }
     }
 
