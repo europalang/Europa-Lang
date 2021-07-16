@@ -103,7 +103,7 @@ impl Parser {
     }
 
     fn assign(&mut self) -> PResult {
-        let expr = self.equality()?;
+        let expr = self.or()?;
 
         if self.get(&[TType::Eq]) {
             let eq = self.prev();
@@ -114,6 +114,30 @@ impl Parser {
             }
 
             return Err(Error::new(eq.lineinfo, "Invalid assignment target.".into(), ErrorType::TypeError));
+        }
+
+        Ok(expr)
+    }
+
+    fn or(&mut self) -> PResult {
+        let mut expr = self.and()?;
+
+        while self.get(&[TType::Or]) {
+            let op = self.prev();
+            let right = self.and()?;
+            expr = Expr::Logical(Rc::new(expr), op, Rc::new(right));
+        }
+
+        Ok(expr)
+    }
+
+    fn and(&mut self) -> PResult {
+        let mut expr = self.equality()?;
+
+        while self.get(&[TType::And]) {
+            let op = self.prev();
+            let right = self.equality()?;
+            expr = Expr::Logical(Rc::new(expr), op, Rc::new(right));
         }
 
         Ok(expr)

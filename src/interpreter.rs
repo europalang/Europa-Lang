@@ -153,6 +153,17 @@ impl Interpreter {
                     true,
                 )?
                 .unwrap()),
+            Expr::Logical(left, tok, right) => {
+                let lval = self.eval_expr(left)?;
+
+                if tok.ttype == TType::Or {
+                    if self.is_truthy(&lval) { return Ok(lval); }
+                } else {
+                    if !self.is_truthy(&lval) { return Ok(lval); }
+                }
+
+                self.eval_expr(right)
+            }
         }
     }
 
