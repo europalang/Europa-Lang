@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use crate::environment::Environment;
 use crate::error::{Error, ErrorType};
 use crate::nodes::expr::Expr;
@@ -8,19 +6,19 @@ use crate::token::{TType, Token};
 use crate::types::Type;
 
 type IResult = Result<Type, Error>;
-type SResult = Result<(), Error>;
+// type SResult = Result<(), Error>;
 
 pub struct Interpreter {
     nodes: Vec<Stmt>,
-    pub environ: Environment,
+    pub environ: Box<Environment>,
 }
 
 impl Interpreter {
     // static methods
-    pub fn new(nodes: Vec<Stmt>, environ: Environment) -> Self {
+    pub fn new(nodes: Vec<Stmt>, environ: Box<Environment>) -> Self {
         Self {
             nodes,
-            environ
+            environ,
         }
     }
 
@@ -57,16 +55,18 @@ impl Interpreter {
     // eval
     fn eval_stmt(&mut self, node: &Stmt) -> IResult {
         match node {
-            Stmt::ExprStmt(s) => {
-                self.eval_expr(s)
-            }
+            Stmt::ExprStmt(s) => self.eval_expr(s),
             Stmt::VarDecl(name, val) => {
                 let val = self.eval_expr(&val)?;
                 self.environ.define(&name, &val);
                 Ok(Type::Nil)
-            },
+            }
             Stmt::Block(stmts) => {
-                self.eval_block(Environment::new(Some(Box::new(self.environ.clone()))), stmts, false)?;
+                self.eval_block(
+                    Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
+                    stmts,
+                    false,
+                )?;
                 Ok(Type::Nil)
             }
         }
@@ -114,22 +114,41 @@ impl Interpreter {
                 let val = self.eval_expr(&v)?;
                 self.environ.assign(k, &val)?;
                 Ok(val)
-            },
-            Expr::Block(_) => todo!(),
+            }
+            Expr::Block(stmts) => Ok(self
+                .eval_block(
+                    Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
+                    stmts,
+                    true,
+                )?
+                .unwrap()),
         }
     }
 
-    fn eval_block(&mut self, env: Environment, block: &Vec<Stmt>, ret_val: bool) -> Result<Option<Type>, Error> {
-        let prev = self.environ.clone();
-        self.environ = env;
-        
+    fn eval_block(
+        &mut self,
+        env: Box<Environment>,
+        block: &Vec<Stmt>,
+        ret_val: bool,
+    ) -> Result<Option<Type>, Error> {
+        self.environ = env.clone();
+        let mut val = Type::Nil;
+
         for stmt in block {
-            self.eval_stmt(stmt)?;
+            if ret_val {
+                val = self.eval_stmt(stmt)?;
+            } else {
+                self.eval_stmt(stmt)?;
+            }
         }
 
-        self.environ = prev;
-        
-        Ok(None)
+        self.environ = self.environ.parent.clone().unwrap();
+
+        if ret_val {
+            Ok(Some(val))
+        } else {
+            Ok(None)
+        }
     }
 
     // util

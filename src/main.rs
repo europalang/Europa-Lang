@@ -1,3 +1,4 @@
+#[macro_use]
 extern crate maplit;
 
 mod environment;
@@ -41,17 +42,16 @@ fn main() {
     });
 
     // Load code and create Environment
-    match init(code, Environment::new(None)) {
+    match init(code, Box::new(Environment::new())) {
         Err(e) => e.display(),
         Ok(environ) => {
-            // Start REPL if no errors
-            init_repl(environ)
+            init_repl(environ) // Start REPL if no errors
         }
     }
 }
 
 // Loader for code, returns Environment mutated from environ
-fn init(code: String, environ: Environment) -> Result<Environment, Error> {
+fn init(code: String, environ: Box<Environment>) -> Result<Box<Environment>, Error> {
     let mut time = Instant::now();
     let tokens: Vec<Token> = match Lexer::new(&code).init() {
         Err(e) => return Err(e),
@@ -76,7 +76,7 @@ fn init(code: String, environ: Environment) -> Result<Environment, Error> {
     let mut interpreter = Interpreter::new(tree, environ.clone());
     match interpreter.init() {
         Err(e) => return Err(e),
-        Ok(()) => {
+        Ok(_) => {
             println!("interpreter {:?}", time.elapsed());
             Ok(interpreter.environ)
         }
@@ -84,7 +84,7 @@ fn init(code: String, environ: Environment) -> Result<Environment, Error> {
 }
 
 // Loops until exited
-fn init_repl(mut environ: Environment) {
+fn init_repl(mut environ: Box<Environment>) {
     loop {
         // Same line print
         print!("\x1b[33m>\x1b[0m ");

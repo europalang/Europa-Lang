@@ -8,14 +8,21 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct Environment {
-    parent: Option<Box<Environment>>,
+    pub parent: Option<Box<Environment>>,
     values: HashMap<String, Type>,
 }
 
 impl Environment {
-    pub fn new(parent: Option<Box<Environment>>) -> Self {
+    pub fn new() -> Self {
         Self {
-            parent,
+            parent: None,
+            values: HashMap::new(),
+        }
+    }
+
+    pub fn new_enclosing(parent: Box<Environment>) -> Self {
+        Self {
+            parent: Some(parent),
             values: HashMap::new(),
         }
     }
