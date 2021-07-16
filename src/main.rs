@@ -10,28 +10,34 @@ mod parser;
 mod token;
 mod types;
 
+use std::io::{stdin, stdout, Write};
 use std::time::Instant;
 use std::{env, fs, process};
-use std::io::{stdin, stdout, Write};
 
 use interpreter::Interpreter;
 use lexer::Lexer;
 use parser::Parser;
 
-use crate::token::Token;
-use crate::nodes::stmt::Stmt;
 use crate::environment::Environment;
 use crate::error::Error;
+use crate::nodes::stmt::Stmt;
+use crate::token::Token;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    if args.len() != 2 {
-        println!("Usage: europa <file>");
-        process::exit(1);
+    if args.len() < 2 {
+        println!(
+            "Welcome to the Europa Interactive Repl."
+        );
+
+        let environ = Box::new(Environment::new());
+        init_repl(environ); // Start REPL with no context
+
+        process::exit(0);
     }
 
-    if args[1] == "--version" || args[1] == "-v" {
+    if args.len() == 2 && (args[1] == "--version" || args[1] == "-v") {
         println!("Europa Lang {}", env!("CARGO_PKG_VERSION"));
         process::exit(0);
     }
@@ -45,7 +51,9 @@ fn main() {
     match init(code, Box::new(Environment::new())) {
         Err(e) => e.display(),
         Ok(environ) => {
-            init_repl(environ) // Start REPL if no errors
+            if args.len() == 3 && args.contains(&String::from("--repl")) {
+                init_repl(environ); // Start repl with context
+            }
         }
     }
 }
@@ -96,15 +104,15 @@ fn init_repl(mut environ: Box<Environment>) {
             Err(e) => {
                 println!("Unexpected REPL Error: {:?}", e);
                 process::exit(1);
-            },
-            Ok(_) => input = input.trim().to_string()
+            }
+            Ok(_) => input = input.trim().to_string(),
         }
 
         // Exit out of program
         if input.eq("exit") {
             process::exit(0);
         }
-        
+
         // Attempt to run code
         match init(input, environ.clone()) {
             Err(e) => e.display(),
