@@ -1,1 +1,9 @@
-!!(37 % 6 == 1) == true
+var a = {
+    if false {
+        5;
+    } elif false {
+        6;
+    } else {
+        7;
+    }
+};

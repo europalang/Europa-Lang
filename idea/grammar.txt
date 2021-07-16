@@ -1,8 +1,18 @@
-NUMBER = [ "0" - "9" ]+
-STRING = ( "'" | "\"" ) any ( "\" | "\"" )
+program => statement* EOF
 
 
-expression => equality
+# statements
+statement => exprStmt | varDecl | block | ifStmt
+
+exprStmt => ( expression ";" )
+varDecl => "var" IDENTIFIER ("=" expression )? ";"
+ifStmt => "if" expr block ( "elif" expr block )* ( "else" block )?
+
+
+# expressions
+expression => assignment
+
+assignment => ( IDENTIFIER "=" assignment ) | equality
 
 equality => comparison ( ( "==" | "!=" ) comparison )*
 comparison => addition ( ( ">" | "<" | ">=" | "<=" ) addition )*
@@ -12,4 +22,5 @@ times => unary ( ( "*" | "/" | "%" ) unary )*
 
 unary => ( ( "!" | "-" ) unary ) | primary
 
-primary => NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")"
+primary => NUMBER | STRING | IDENTIFIER | "true" | "false" | "nil" | "(" expression ")" | block
+block => "{" statement* "}"

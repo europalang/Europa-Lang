@@ -1,6 +1,8 @@
-use super::error::LineInfo;
+use std::fmt::Display;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+use crate::error::LineInfo;
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum TType {
     // delims
     LeftS,  // {{
@@ -42,9 +44,9 @@ pub enum TType {
     Mod,
 
     // literals
-    Identifier,
-    String,
-    Number,
+    Identifier(String),
+    String(String),
+    Number(f32),
     True,
     False,
     Nil,
@@ -68,19 +70,22 @@ pub enum TType {
     EOF,
 }
 
-#[derive(Debug, Clone)]
-pub enum Value {
-    String(String),
-    Ident(String),
-    Float(f32),
-    Nil,
-}
+// #[derive(Debug, Clone)]
+// pub enum Value {
+//     String(String),
+//     Ident(String),
+//     Float(f32),
+//     Nil,
+// }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Token {
     pub ttype: TType,
     pub lineinfo: LineInfo,
-    pub value: Value,
 }
 
-impl Token {}
+impl Display for TType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}

@@ -1,3 +1,6 @@
+![Europa Lang](./images/europa.png)
+[Discord Server](https://discord.gg/csdaFGd5K9)
+
 # Europa Lang
 This language aims to be simple, minimal, and compact. There will not be any classes whatsoever, and importing other files should be painless.
 
@@ -42,4 +45,6 @@ for i in array {
 ```
 
 ## Credits
-Thanks @justamirror and Dart for design suggestions and name suggestions.
+- @justamirror and Dart for name and language design suggestions.
+- @CoolCoderSJ for creating the discord server, along with language design suggestions!
+- @SixBeeps for designing the Europa logo!
