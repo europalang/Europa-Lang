@@ -164,7 +164,7 @@ impl Lexer {
                     self.curr_type = String::from("");
                 },
 
-                // Groupers, will group with each other
+                // Group1, will group with each other
                 '{'|'}' => {
                     if &self.curr_type[..] != "group1" {
                         match self.add_token(&curr_str) {
@@ -188,6 +188,11 @@ impl Lexer {
                 
                 // Division or comment
                 '/' => {
+                    // Enter previous token
+                    self.add_token(&curr_str).unwrap();
+                    curr_str = String::from("");
+                    self.curr_type = String::from("");
+
                     if self.get('=') {
                         self.append_token(&TType::DivideEq)
                     } else if self.get('/') {
