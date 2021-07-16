@@ -9,7 +9,7 @@ mod parser;
 mod token;
 mod types;
 
-use std::io::{stdin, stdout, Write};
+use std::io::{stdin, stdout, Read};
 use std::time::Instant;
 use std::{env, fs, process};
 
@@ -104,7 +104,13 @@ fn init_repl(mut environ: Box<Environment>) {
                 println!("Unexpected REPL Error: {:?}", e);
                 process::exit(1);
             }
-            Ok(_) => input = input.trim().to_string(),
+            Ok(n) => {
+                if n == 0 {
+                    println!("\n");
+                    process::exit(0);
+                }
+                input = input.trim().to_string();
+            },
         }
 
         // Exit out of program
