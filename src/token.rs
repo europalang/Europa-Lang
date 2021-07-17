@@ -79,7 +79,7 @@ pub enum TType {
 //     Nil,
 // }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Token {
     pub ttype: TType,
     pub lineinfo: LineInfo,
