@@ -14,4 +14,5 @@ pub enum Expr {
     Variable(Token),
     Block(Vec<Stmt>),
     Logical(Rc<Expr>, Token, Rc<Expr>),
+    Ternary(Rc<Expr>, Rc<Expr>, Rc<Expr>),
 }
