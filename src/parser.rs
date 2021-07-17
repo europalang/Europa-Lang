@@ -149,9 +149,19 @@ impl Parser {
         self.assign()
     }
 
-    fn assign(&mut self) -> PResult {
-        let expr = self.or()?;
+    // Pass condition as parameter
+    fn tern_expr(&mut self, condition: Expr) -> PResult {
+        let true_br = self.expr()?;
+        self.consume(TType::Colon, "Expected ':' after statment.".into())?;
+        let else_br = self.expr()?;
 
+        Ok(Expr::Ternary(Rc::new(condition), Rc::new(true_br), Rc::new(else_br)))
+    }
+
+    fn assign(&mut self) -> PResult {
+        let mut expr = self.or()?;
+
+        // Set equal
         if self.get(&[
             TType::Eq,
             TType::PlusEq,
@@ -227,7 +237,11 @@ impl Parser {
         //         return Ok(Expr::Assign(var.clone(), Rc::new(Expr::Binary(Rc::new(expr), tok, Rc::new(val)))));
         //     }
         // }
-
+        
+        // Ternary
+        if self.get(&[TType::Question]) {
+            expr = self.tern_expr(expr)?;
+        }
         Ok(expr)
     }
 
