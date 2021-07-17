@@ -25,7 +25,10 @@ comparison => addition ( ( ">" | "<" | ">=" | "<=" ) addition )*
 addition => times ( ( "-" | "+" ) times )*
 times => unary ( ( "*" | "/" | "%" ) unary )*
 
-unary => ( ( "!" | "-" ) unary ) | primary
+unary => ( ( "!" | "-" ) unary ) | call
+call => primary ( "(" args? ")" )*
 
 primary => NUMBER | STRING | IDENTIFIER | "true" | "false" | "nil" | "(" expression ")" | block
+
 block => "{" statement* "}"
+args => expr ( "," expr )*

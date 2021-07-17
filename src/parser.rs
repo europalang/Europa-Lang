@@ -199,35 +199,6 @@ impl Parser {
             ));
         }
 
-        // if self.get(&[
-        //     TType::PlusEq,
-        //     TType::MinusEq,
-        //     TType::TimesEq,
-        //     TType::DivideEq,
-        //     TType::PowEq,
-        //     TType::ModEq,
-        // ]) {
-        //     let prev = self.prev();
-        //     let val = self.assign()?;
-
-        //     let tok = Token {
-        //         ttype: match prev.ttype {
-        //             TType::PlusEq => TType::Plus,
-        //             TType::MinusEq => TType::Minus,
-        //             TType::TimesEq => TType::Times,
-        //             TType::DivideEq => TType::Divide,
-        //             TType::PowEq => TType::Pow,
-        //             TType::ModEq => TType::Mod,
-        //             _ => panic!(),
-        //         },
-        //         ..prev
-        //     };
-
-        //     if let Expr::Variable(var) = expr {
-        //         return Ok(Expr::Assign(var.clone(), Rc::new(Expr::Binary(Rc::new(expr), tok, Rc::new(val)))));
-        //     }
-        // }
-
         Ok(expr)
     }
 
@@ -310,7 +281,21 @@ impl Parser {
             return Ok(Expr::Unary(op, Rc::new(right)));
         }
 
-        self.primary()
+        self.call()
+    }
+
+    fn call(&mut self) -> PResult {
+        let mut expr = self.primary()?;
+
+        loop {
+            if self.get(&[TType::LeftParen]) {
+                expr = self.finish_call(&mut expr)?;
+            } else {
+                break;
+            }
+        }
+
+        Ok(expr)
     }
 
     fn primary(&mut self) -> PResult {
@@ -366,6 +351,21 @@ impl Parser {
         )?;
 
         Ok(stmts)
+    }
+
+    // util
+    fn finish_call(&mut self, expr: &mut Expr) -> PResult {
+        let mut args: Vec<Expr> = Vec::new();
+        if !self.check(TType::RightParen) {
+            loop {
+                args.push(self.expr()?);
+
+                if !self.get(&[TType::Comma]) { break; }
+            }
+        }
+
+        let tok = self.consume(TType::RightParen, "Expected ')' after arguments.".into())?;
+        Ok(Expr::Call(Rc::new(expr.clone()), tok, args))
     }
 
     // errors

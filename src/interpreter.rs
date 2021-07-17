@@ -185,6 +185,11 @@ impl Interpreter {
 
                 self.eval_expr(right)
             }
+            Expr::Call(func, tok, args) => {
+                
+                
+                Ok(Type::Nil)
+            },
         }
     }
 
