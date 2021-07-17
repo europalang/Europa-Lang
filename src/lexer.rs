@@ -9,13 +9,9 @@ pub struct Lexer {
     code: String,
     chars: Vec<char>,
     i: usize, // index
-    curr_type: String,
     info: LineInfo,
     tokens: Vec<Token>,
     keywords: HashMap<String, TType>,
-    operators: HashMap<String, TType>,
-    separators: HashMap<String, TType>,
-    group1: HashMap<String, TType>,
 }
 
 impl Lexer {
@@ -24,11 +20,8 @@ impl Lexer {
             code: code.to_string(),
             chars: code.chars().collect(),
             i: 0,
-            curr_type: String::from(""),
             info: LineInfo::new(1, 0),
             tokens: vec![],
-
-            // Any length keyword
             keywords: hashmap! {
                 "true".into() => TType::True,
                 "false".into() => TType::False,
@@ -48,192 +41,73 @@ impl Lexer {
                 "else".into() => TType::Else,
                 "elif".into() => TType::Elif,
             },
-
-            // Any length string, will group
-            operators: hashmap! {
-                "+".into() => TType::Plus,
-                "+=".into() => TType::PlusEq,
-                "-".into() => TType::Minus,
-                "-=".into() => TType::MinusEq,
-                "*".into() => TType::Times,
-                "*=".into() => TType::TimesEq,
-                "/".into() => TType::Divide,
-                "/=".into() => TType::DivideEq,
-                "%".into() => TType::Mod,
-                "%=".into() => TType::ModEq,
-                "**".into() => TType::Pow,
-                "**=".into() => TType::PowEq,
-                "!".into() => TType::Not,
-                "!=".into() => TType::NotEq,
-                "=".into() => TType::Eq,
-                "==".into() => TType::EqEq,
-                ">".into() => TType::Greater,
-                ">=".into() => TType::GreaterEq,
-                "<".into() => TType::Less,
-                "<=".into() => TType::LessEq,
-            },
-
-            // Single character, does not group
-            separators: hashmap! {
-                "(".into() => TType::LeftParen,
-                ")".into() => TType::RightParen,
-                "[".into() => TType::LeftBrack,
-                "]".into() => TType::RightBrack,
-                ".".into() => TType::Dot,
-                ",".into() => TType::Comma,
-                ";".into() => TType::Semi,
-            },
-
-            // Any length, will group
-            group1: hashmap! {
-                "{".into() => TType::LeftBrace,
-                "}".into() => TType::RightBrace,
-                "{{".into() => TType::LeftS,
-                "}}".into() => TType::RightS,
-            }
-        }
-    }
-
-    fn add_token(&mut self, str: &String) -> Result<(), Error> {
-        // Check if a keyword
-        if self.keywords.contains_key(str) {
-            Ok(self.tokens.push(Token {
-                ttype: self.keywords[str].clone(),
-                lineinfo: self.info
-            }))
-
-        // Check if an operator
-        } else if self.operators.contains_key(str) {
-            Ok(self.tokens.push(Token {
-                ttype: self.operators[str].clone(),
-                lineinfo: self.info
-            }))
-
-        // Check if a separator
-        } else if self.separators.contains_key(str) {
-            Ok(self.tokens.push(Token {
-                ttype: self.separators[str].clone(),
-                lineinfo: self.info
-            }))
-
-        // Check if in group1
-        } else if self.group1.contains_key(str) {
-            Ok(self.tokens.push(Token {
-                ttype: self.group1[str].clone(),
-                lineinfo: self.info
-            }))
-
-        // Variables, Numbers
-        } else {
-            Ok(self.tokens.push(Token {
-                // Check if str is a number
-                ttype: match str.parse::<f32>() {
-                    Ok(num) => TType::Number(num),
-
-                    // Variable
-                    Err(_) => match str.len() {
-                        0 => return Ok(()), // Empty
-                        _ => TType::Identifier(str.to_string())
-                    }
-                },
-                lineinfo: self.info
-            }))
         }
     }
 
     pub fn init(&mut self) -> Result<Vec<Token>, Error> {
-        let mut curr_str = String::from("");
-
         while self.i < self.code.len() {
             let char = self.peek();
             self.next();
 
             match char {
-                ' '|'\r'|'\t' => {
-                    self.add_token(&curr_str).unwrap();
-                    curr_str = String::from("");
-                    self.curr_type = String::from("");
-                }
-                '\n' => self.newline(),
-
-                // Separators, will push a token immediately
-                '('|')'|'['|']'|'.'|','|';' => {
-                    self.add_token(&curr_str).unwrap();
-                    curr_str = String::from("");
-                    self.add_token(&char.to_string()).unwrap();
-                    self.curr_type = String::from("");
-                },
-
-                // Group1, will group with each other
-                '{'|'}' => {
-                    if &self.curr_type[..] != "group1" {
-                        match self.add_token(&curr_str) {
-                            Ok(_) => curr_str = char.to_string(),
-                            Err(e) => return Err(e)
-                        };
-                        self.curr_type = String::from("group1");
-                    }
-                }
-                
-                // Operators, will group with each other
-                '+'|'-'|'*'|'%'|'='|'!'|'>'|'<' => {
-                    if &self.curr_type[..] != "operator" {
-                        match self.add_token(&curr_str) {
-                            Ok(_) => curr_str = char.to_string(),
-                            Err(e) => return Err(e)
-                        };
-                        self.curr_type = String::from("operator");
-                    }
-                },
-                
-                // Division or comment
-                '/' => {
-                    // Enter previous token
-                    self.add_token(&curr_str).unwrap();
-                    curr_str = String::from("");
-                    self.curr_type = String::from("");
-
-                    if self.get('=') {
-                        self.append_token(&TType::DivideEq)
-                    } else if self.get('/') {
-                        while self.peek() != '\n' && self.is_valid() {
-                            self.next();
-                        }
-                    } else if self.get('*') {
-                        while self.is_valid() && (self.peek() != '*' && self.peek_n(1) != '/') {
-                            if self.peek() == '\n' { self.newline() };
-                            self.next();
-                        }
-
-                        if !self.is_valid() {
-                            return Err(Error::new(
-                                self.info,
-                                String::from("Unterminated multiline comment."),
-                                ErrorType::SyntaxError,
-                            ));
-                        }
-
-                        self.next(); self.next(); // End of multiline "*/"
+                '{' => {
+                    if self.get('{') {
+                        self.append_token(TType::LeftS)
                     } else {
-                        self.append_token(&TType::Divide)
+                        self.append_token(TType::LeftBrace)
                     }
                 }
-                
-                // Strings, will loop until end of string
-                '"' | '\'' => {
-                    // Enter previous token
-                    self.add_token(&curr_str).unwrap();
-                    curr_str = String::from("");
-                    self.curr_type = String::from("");
+                '}' => {
+                    if self.get('}') {
+                        self.append_token(TType::RightS)
+                    } else {
+                        self.append_token(TType::RightBrace)
+                    }
+                }
+                '(' => self.append_token(TType::LeftParen),
+                ')' => self.append_token(TType::RightParen),
+                '[' => self.append_token(TType::LeftBrack),
+                ']' => self.append_token(TType::RightBrack),
 
-                    
+                '!' => {
+                    if self.get('=') {
+                        self.append_token(TType::NotEq)
+                    } else {
+                        self.append_token(TType::Not)
+                    }
+                }
+                '=' => {
+                    if self.get('=') {
+                        self.append_token(TType::EqEq)
+                    } else {
+                        self.append_token(TType::Eq)
+                    }
+                }
+
+                '>' => {
+                    if self.get('=') {
+                        self.append_token(TType::GreaterEq)
+                    } else {
+                        self.append_token(TType::Greater)
+                    }
+                }
+                '<' => {
+                    if self.get('=') {
+                        self.append_token(TType::LessEq)
+                    } else {
+                        self.append_token(TType::Less)
+                    }
+                }
+
+                '"' | '\'' => {
                     let str_type = char; // " or '
                     let mut str = String::new();
 
                     while self.is_valid() && self.peek() != str_type {
-                        if self.peek() == '\n' { self.newline() };
-                        
-                        // Escape characters
+                        if self.peek() == '\n' {
+                            self.newline();
+                        }
+
                         if self.peek() == '\\' {
                             self.next();
                             let ch = self.peek();
@@ -320,20 +194,157 @@ impl Lexer {
                         ttype: TType::String(str),
                         lineinfo: self.info,
                     });
-                },
-                
-                // Add char to current string
-                _ => curr_str.push(char)
+                }
+
+                ',' => self.append_token(TType::Comma),
+                '.' => self.append_token(TType::Dot),
+                ';' => self.append_token(TType::Semi),
+
+                // operators
+                '+' => {
+                    if self.get('=') {
+                        self.append_token(TType::PlusEq)
+                    } else {
+                        self.append_token(TType::Plus)
+                    }
+                }
+                '-' => {
+                    if self.get('=') {
+                        self.append_token(TType::MinusEq)
+                    } else {
+                        self.append_token(TType::Minus)
+                    }
+                }
+                '*' => {
+                    if self.get('=') {
+                        self.append_token(TType::TimesEq)
+                    } else if self.get('*') {
+                        if self.get('=') {
+                            self.append_token(TType::PowEq)
+                        } else {
+                            self.append_token(TType::Pow)
+                        }
+                    } else {
+                        self.append_token(TType::Times)
+                    }
+                }
+                '%' => {
+                    if self.get('=') {
+                        self.append_token(TType::ModEq)
+                    } else {
+                        self.append_token(TType::Mod)
+                    }
+                }
+                '/' => {
+                    if self.get('=') {
+                        self.append_token(TType::DivideEq)
+                    } else if self.get('/') {
+                        while self.peek() != '\n' && self.is_valid() {
+                            self.next();
+                        }
+                    } else if self.get('*') {
+                        while self.is_valid() && (self.peek() != '*' && self.peek_n(1) != '/') {
+                            if self.peek() == '\n' {
+                                self.newline();
+                            }
+
+                            self.next();
+                        }
+
+                        if !self.is_valid() {
+                            return Err(Error::new(
+                                self.info,
+                                String::from("Unterminated multiline comment."),
+                                ErrorType::SyntaxError,
+                            ));
+                        }
+
+                        self.next(); // *
+                        self.next() // /
+                    } else {
+                        self.append_token(TType::Divide)
+                    }
+                }
+                ' ' | '\r' | '\t' => (),
+                '\n' => self.newline(),
+
+                _ => {
+                    if self.is_alpha(char) {
+                        let mut name = String::from(char);
+                        while self.is_valid() && self.is_alphanum(self.peek()) {
+                            name += &self.peek().to_string();
+                            self.next();
+                        }
+
+                        if self.keywords.contains_key(&name) {
+                            self.tokens.push(Token {
+                                ttype: self.keywords[&name].clone(),
+                                lineinfo: self.info,
+                            });
+                        } else {
+                            self.tokens.push(Token {
+                                ttype: TType::Identifier(name),
+                                lineinfo: self.info,
+                            });
+                        }
+                    } else if self.is_number(char) {
+                        let mut num = String::from(char);
+
+                        while self.is_valid() && (self.is_number(self.peek()) || self.peek() == '_')
+                        {
+                            let n = self.peek();
+                            if n != '_' {
+                                num += &n.to_string();
+                            }
+                            self.next();
+                        }
+
+                        if self.peek() == '.' {
+                            num += &self.peek().to_string();
+                            self.next(); // .
+
+                            while self.is_valid()
+                                && (self.is_number(self.peek()) || self.peek() == '_')
+                            {
+                                let n = self.peek();
+                                if n != '_' {
+                                    num += &n.to_string();
+                                }
+                                self.next();
+                            }
+                        }
+
+                        self.tokens.push(Token {
+                            ttype: TType::Number(num.parse().unwrap()),
+                            lineinfo: self.info,
+                        });
+                    } else {
+                        return Err(Error::new(
+                            self.info,
+                            format!("Invalid token {}", char),
+                            ErrorType::SyntaxError,
+                        ));
+                    }
+                }
             };
         }
-        
-        // Add final token and EOF
-        match self.add_token(&curr_str) {
-            Ok(_) => (), Err(e) => return Err(e)
-        }
-        self.append_token(&TType::EOF);
+
+        self.append_token(TType::EOF);
 
         Ok(self.tokens.clone())
+    }
+
+    // characters
+    fn is_alpha(&self, char: char) -> bool {
+        ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_'
+    }
+
+    fn is_number(&self, char: char) -> bool {
+        '0' <= char && char <= '9'
+    }
+
+    fn is_alphanum(&self, char: char) -> bool {
+        self.is_alpha(char) || self.is_number(char)
     }
 
     // advancing
@@ -348,27 +359,34 @@ impl Lexer {
     }
 
     // util
-    fn append_token(&mut self, token: &TType) {
+    fn append_token(&mut self, token: TType) {
         self.tokens.push(Token {
-            ttype: token.clone(),
+            ttype: token,
             lineinfo: self.info,
         });
     }
 
     // lookahead
     fn get(&mut self, char: char) -> bool {
-        if self.peek() != char { return false };
+        if self.peek() != char {
+            return false;
+        }
+
         self.i += 1;
         true
     }
 
     fn peek(&self) -> char {
-        if !self.is_valid() { return '\0' };
+        if !self.is_valid() {
+            return '\0';
+        }
         self.chars[self.i]
     }
 
     fn peek_n(&self, n: usize) -> char {
-        if self.i + n >= self.chars.len() { return '\0' };
+        if self.i + n >= self.chars.len() {
+            return '\0';
+        }
         self.chars[self.i + n]
     }
 
@@ -378,6 +396,7 @@ impl Lexer {
             string.push(self.peek());
             self.next();
         }
+
         string
     }
 
