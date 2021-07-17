@@ -30,6 +30,7 @@ impl Lexer {
                 "return".into() => TType::Return,
                 "var".into() => TType::Var,
                 "use".into() => TType::Use,
+                "do".into() => TType::Do,
                 "while".into() => TType::While,
                 "for".into() => TType::For,
                 "in".into() => TType::In,

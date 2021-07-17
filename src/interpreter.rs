@@ -104,6 +104,23 @@ impl Interpreter {
 
                 Ok(Type::Nil)
             }
+            Stmt::WhileStmt(cond, block) => {
+                loop {
+                    let cond = self.eval_expr(cond)?;
+                    if !self.is_truthy(&cond) {
+                        break;
+                    }
+
+                    self.eval_block(
+                        Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
+                        block,
+                        true,
+                    )?
+                    .unwrap();
+                }
+
+                Ok(Type::Nil)
+            }
         }
     }
 
@@ -157,9 +174,13 @@ impl Interpreter {
                 let lval = self.eval_expr(left)?;
 
                 if tok.ttype == TType::Or {
-                    if self.is_truthy(&lval) { return Ok(lval); }
+                    if self.is_truthy(&lval) {
+                        return Ok(lval);
+                    }
                 } else {
-                    if !self.is_truthy(&lval) { return Ok(lval); }
+                    if !self.is_truthy(&lval) {
+                        return Ok(lval);
+                    }
                 }
 
                 self.eval_expr(right)

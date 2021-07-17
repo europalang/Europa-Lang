@@ -34,6 +34,8 @@ impl Parser {
     fn stmt(&mut self) -> SResult {
         if self.get(&[TType::If]) { return self.if_stmt(); }
         if self.get(&[TType::Var]) { return self.var_decl(); }
+        if self.get(&[TType::While]) { return self.while_stmt(); }
+        if self.get(&[TType::Do]) { return self.dowhile_stmt(); }
         if self.get(&[TType::LeftBrace]) { return Ok(Stmt::Block(self.block()?)); }
 
         self.expr_stmt()
@@ -95,6 +97,24 @@ impl Parser {
                 ErrorType::SyntaxError,
             ));
         }
+    }
+
+    fn while_stmt(&mut self) -> SResult {
+        let cond = self.expr()?;
+        self.consume(TType::LeftBrace, "Expected '{' after while loop condition.".into())?;
+        let body = self.block()?;
+
+        Ok(Stmt::WhileStmt(cond, body))
+    }
+
+    fn dowhile_stmt(&mut self) -> SResult {
+        self.consume(TType::LeftBrace, "Expected '{' after do keyword.".into())?;
+        let body = self.block()?;
+        self.consume(TType::While, "Expected 'while' after do loop body.".into())?;
+        let condition = self.expr()?;
+        self.consume(TType::Semi, "Expected ';' after do while loop condition.".into())?;
+
+        Ok(Stmt::Block(vec![Stmt::Block(body.clone()), Stmt::WhileStmt(condition, body.clone())]))
     }
 
     // expressions

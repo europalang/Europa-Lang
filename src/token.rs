@@ -56,6 +56,7 @@ pub enum TType {
     Return,
     Var,
     Use,
+    Do,
     While,
     For,
     In,

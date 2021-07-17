@@ -1,5 +1,7 @@
 var a = {
-    5 + 6;
-} + {
-    9 + 2;
+    var e = 0;
+    do {
+        e = 1;
+    } while false;
+    e;
 };
