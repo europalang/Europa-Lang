@@ -22,48 +22,87 @@ use crate::error::Error;
 use crate::nodes::stmt::Stmt;
 use crate::token::Token;
 
+use clap::{App, Arg};
+
+const PROGRAM_NAME: &str    = env!("CARGO_PKG_NAME");
+const PROGRAM_VERSION: &str = env!("CARGO_PKG_VERSION");
+const PROGRAM_AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
+const PROGRAM_ABOUT: &str   = env!("CARGO_PKG_DESCRIPTION");
+
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    let matches = App::new(PROGRAM_NAME)
+        .version(PROGRAM_VERSION)
+        .author(PROGRAM_AUTHORS)
+        .about(PROGRAM_ABOUT)
+        .arg(Arg::with_name("verbose")
+            .short("v")
+            .long("verbose")
+            .help("Log extra information")
+        )
+        .arg(Arg::with_name("repl")
+            .short("r")
+            .long("repl")
+            .help("Run file and continue to REPL")
+        )
+        .arg(Arg::with_name("eval")
+            .short("e")
+            .long("eval")
+            .value_name("CODE")
+            .help("Evaluate CODE instead of a file")
+            .takes_value(true)
+            .conflicts_with("FILE")
+        )
+        .arg(Arg::with_name("FILE")
+            .help("File to run")
+            .index(1)
+        )
+        .get_matches();
+    
+    let verbose = matches.is_present("verbose");
+    
+    let code = if let Some(file) = matches.value_of("FILE") {
+        // run file contents
 
-    if args.len() < 2 {
-        println!(
-            "Welcome to the Europa Interactive Repl."
-        );
+        fs::read_to_string(file).unwrap_or_else(|err| {
+            eprintln!("Error reading file: {}", err);
+            process::exit(1)
+        })
+    } else if let Some(code) = matches.value_of("eval") {
+        // run argument value
 
+        String::from(code)
+    } else {
+        // no code to run, drop into repl
+
+        println!("Welcome to the Europa Interactive Repl.");
+
+        // start no-context repl
         let environ = Box::new(Environment::new());
-        init_repl(environ); // Start REPL with no context
+        init_repl(environ, verbose);
 
-        process::exit(0);
-    }
+        return
+    };
 
-    if args.len() == 2 && (args[1] == "--version" || args[1] == "-v") {
-        println!("Europa Lang {}", env!("CARGO_PKG_VERSION"));
-        process::exit(0);
-    }
-
-    let code = fs::read_to_string(&args[1]).unwrap_or_else(|err| {
-        println!("Error reading file: {}", err.to_string());
-        process::exit(1);
-    });
-
-    // Load code and create Environment
-    match init(code, Box::new(Environment::new())) {
+    // load and run code
+    match init(code, Box::new(Environment::new()), verbose) {
         Err(e) => e.display(),
         Ok(environ) => {
-            if args.len() == 3 && args.contains(&String::from("--repl")) {
-                init_repl(environ); // Start repl with context
+            if matches.is_present("repl") {
+                // drop into repl with environment
+                init_repl(environ, verbose);
             }
-        }
+        },
     }
 }
 
 // Loader for code, returns Environment mutated from environ
-fn init(code: String, environ: Box<Environment>) -> Result<Box<Environment>, Error> {
+fn init(code: String, environ: Box<Environment>, verbose: bool) -> Result<Box<Environment>, Error> {
     let mut time = Instant::now();
     let tokens: Vec<Token> = match Lexer::new(&code).init() {
         Err(e) => return Err(e),
         Ok(toks) => {
-            println!("lexer {:?}", time.elapsed());
+            if verbose { eprintln!("lexer {:?}", time.elapsed()); }
+
             toks
         }
     };
@@ -73,7 +112,7 @@ fn init(code: String, environ: Box<Environment>) -> Result<Box<Environment>, Err
     let tree: Vec<Stmt> = match Parser::new(tokens).init() {
         Err(e) => return Err(e),
         Ok(tree) => {
-            println!("parser {:?}", time.elapsed());
+            if verbose { eprintln!("parser {:?}", time.elapsed()); }
             tree
         }
     };
@@ -84,14 +123,15 @@ fn init(code: String, environ: Box<Environment>) -> Result<Box<Environment>, Err
     match interpreter.init() {
         Err(e) => return Err(e),
         Ok(_) => {
-            println!("interpreter {:?}", time.elapsed());
+            if verbose { eprintln!("interpreter {:?}", time.elapsed()); }
+
             Ok(interpreter.environ)
         }
     }
 }
 
 // Loops until exited
-fn init_repl(mut environ: Box<Environment>) {
+fn init_repl(mut environ: Box<Environment>, verbose: bool) {
     loop {
         // Same line print
         print!("\x1b[33m>\x1b[0m ");
@@ -119,7 +159,7 @@ fn init_repl(mut environ: Box<Environment>) {
         }
 
         // Attempt to run code
-        match init(input, environ.clone()) {
+        match init(input, environ.clone(), verbose) {
             Err(e) => e.display(),
             Ok(env) => {
                 // Change environ values if no errors
