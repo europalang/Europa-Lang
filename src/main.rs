@@ -8,11 +8,13 @@ mod nodes;
 mod parser;
 mod token;
 mod types;
+mod cli;
 
 use std::io::{stdin, stdout, Write};
 use std::time::Instant;
 use std::{env, fs, process};
 
+use cli::parse_arguments;
 use interpreter::Interpreter;
 use lexer::Lexer;
 use parser::Parser;
@@ -23,25 +25,20 @@ use crate::nodes::stmt::Stmt;
 use crate::token::Token;
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    let args = env::args().collect::<Vec<String>>()[1..].to_vec();
 
-    if args.len() < 2 {
-        println!(
-            "Welcome to the Europa Interactive Repl."
-        );
-
-        let environ = Box::new(Environment::new());
-        init_repl(environ); // Start REPL with no context
-
+    // Parse arguments into instruction
+    let instr = parse_arguments(&args);
+    if &instr.file[..] == "" {
+        if instr.run_repl {
+            println!("Welcome to the Europa Interactive Repl.");
+            init_repl(Box::new(Environment::new()));
+        }
         process::exit(0);
     }
 
-    if args.len() == 2 && (args[1] == "--version" || args[1] == "-v") {
-        println!("Europa Lang {}", env!("CARGO_PKG_VERSION"));
-        process::exit(0);
-    }
-
-    let code = fs::read_to_string(&args[1]).unwrap_or_else(|err| {
+    // Load file
+    let code = fs::read_to_string(instr.file).unwrap_or_else(|err| {
         println!("Error reading file: {}", err.to_string());
         process::exit(1);
     });
@@ -49,11 +46,7 @@ fn main() {
     // Load code and create Environment
     match init(code, Box::new(Environment::new())) {
         Err(e) => e.display(),
-        Ok(environ) => {
-            if args.len() == 3 && args.contains(&String::from("--repl")) {
-                init_repl(environ); // Start repl with context
-            }
-        }
+        Ok(environ) => if instr.run_repl { init_repl(environ) } // Start repl with context
     }
 }
 
