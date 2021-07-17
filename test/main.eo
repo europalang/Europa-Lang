@@ -11,4 +11,4 @@ multi comment
 
 "string" 'string' 12_56_6.4 1 true false nil
 ;
-fn return var use while for in break continue or and
+fn return var use while for in break continue do or and

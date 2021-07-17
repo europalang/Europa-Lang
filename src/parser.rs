@@ -32,11 +32,21 @@ impl Parser {
     // recursive descent
     // statements
     fn stmt(&mut self) -> SResult {
-        if self.get(&[TType::If]) { return self.if_stmt(); }
-        if self.get(&[TType::Var]) { return self.var_decl(); }
-        if self.get(&[TType::While]) { return self.while_stmt(); }
-        if self.get(&[TType::Do]) { return self.dowhile_stmt(); }
-        if self.get(&[TType::LeftBrace]) { return Ok(Stmt::Block(self.block()?)); }
+        if self.get(&[TType::If]) {
+            return self.if_stmt();
+        }
+        if self.get(&[TType::Var]) {
+            return self.var_decl();
+        }
+        if self.get(&[TType::While]) {
+            return self.while_stmt();
+        }
+        if self.get(&[TType::Do]) {
+            return self.dowhile_stmt();
+        }
+        if self.get(&[TType::LeftBrace]) {
+            return Ok(Stmt::Block(self.block()?));
+        }
 
         self.expr_stmt()
     }
@@ -49,7 +59,10 @@ impl Parser {
 
     fn if_stmt(&mut self) -> SResult {
         let cond = self.expr()?;
-        self.consume(TType::LeftBrace, "Expected '{' after if statement condition.".into())?;
+        self.consume(
+            TType::LeftBrace,
+            "Expected '{' after if statement condition.".into(),
+        )?;
         let true_br = self.block()?;
         let mut elif_brs: Vec<(Expr, Vec<Stmt>)> = Vec::new();
         let else_br: Option<Vec<Stmt>>;
@@ -57,9 +70,14 @@ impl Parser {
         if self.get(&[TType::Elif]) {
             loop {
                 let elif_cond = self.expr()?;
-                self.consume(TType::LeftBrace, "Expected '{' after elif statement condition.".into())?;
+                self.consume(
+                    TType::LeftBrace,
+                    "Expected '{' after elif statement condition.".into(),
+                )?;
                 elif_brs.push((elif_cond, self.block()?));
-                if !self.get(&[TType::Elif]) { break; }
+                if !self.get(&[TType::Elif]) {
+                    break;
+                }
             }
         }
 
@@ -101,7 +119,10 @@ impl Parser {
 
     fn while_stmt(&mut self) -> SResult {
         let cond = self.expr()?;
-        self.consume(TType::LeftBrace, "Expected '{' after while loop condition.".into())?;
+        self.consume(
+            TType::LeftBrace,
+            "Expected '{' after while loop condition.".into(),
+        )?;
         let body = self.block()?;
 
         Ok(Stmt::WhileStmt(cond, body))
@@ -112,9 +133,15 @@ impl Parser {
         let body = self.block()?;
         self.consume(TType::While, "Expected 'while' after do loop body.".into())?;
         let condition = self.expr()?;
-        self.consume(TType::Semi, "Expected ';' after do while loop condition.".into())?;
+        self.consume(
+            TType::Semi,
+            "Expected ';' after do while loop condition.".into(),
+        )?;
 
-        Ok(Stmt::Block(vec![Stmt::Block(body.clone()), Stmt::WhileStmt(condition, body.clone())]))
+        Ok(Stmt::Block(vec![
+            Stmt::Block(body.clone()),
+            Stmt::WhileStmt(condition, body.clone()),
+        ]))
     }
 
     // expressions
@@ -125,16 +152,81 @@ impl Parser {
     fn assign(&mut self) -> PResult {
         let expr = self.or()?;
 
-        if self.get(&[TType::Eq]) {
+        if self.get(&[
+            TType::Eq,
+            TType::PlusEq,
+            TType::MinusEq,
+            TType::TimesEq,
+            TType::DivideEq,
+            TType::PowEq,
+            TType::ModEq,
+        ]) {
             let eq = self.prev();
             let val = self.assign()?;
 
             if let Expr::Variable(var) = expr {
-                return Ok(Expr::Assign(var, Rc::new(val)));
+                if eq.ttype == TType::Eq {
+                    return Ok(Expr::Assign(var, Rc::new(val)));
+                } else {
+                    let tok = Token {
+                        ttype: match eq.ttype {
+                            TType::PlusEq => TType::Plus,
+                            TType::MinusEq => TType::Minus,
+                            TType::TimesEq => TType::Times,
+                            TType::DivideEq => TType::Divide,
+                            TType::PowEq => TType::Pow,
+                            TType::ModEq => TType::Mod,
+                            _ => panic!(),
+                        },
+                        ..eq
+                    };
+
+                    return Ok(Expr::Assign(
+                        var.clone(),
+                        Rc::new(Expr::Binary(
+                            Rc::new(Expr::Variable(var.clone())),
+                            tok,
+                            Rc::new(val),
+                        )),
+                    ));
+                }
             }
 
-            return Err(Error::new(eq.lineinfo, "Invalid assignment target.".into(), ErrorType::TypeError));
+            return Err(Error::new(
+                eq.lineinfo,
+                "Invalid assignment target.".into(),
+                ErrorType::TypeError,
+            ));
         }
+
+        // if self.get(&[
+        //     TType::PlusEq,
+        //     TType::MinusEq,
+        //     TType::TimesEq,
+        //     TType::DivideEq,
+        //     TType::PowEq,
+        //     TType::ModEq,
+        // ]) {
+        //     let prev = self.prev();
+        //     let val = self.assign()?;
+
+        //     let tok = Token {
+        //         ttype: match prev.ttype {
+        //             TType::PlusEq => TType::Plus,
+        //             TType::MinusEq => TType::Minus,
+        //             TType::TimesEq => TType::Times,
+        //             TType::DivideEq => TType::Divide,
+        //             TType::PowEq => TType::Pow,
+        //             TType::ModEq => TType::Mod,
+        //             _ => panic!(),
+        //         },
+        //         ..prev
+        //     };
+
+        //     if let Expr::Variable(var) = expr {
+        //         return Ok(Expr::Assign(var.clone(), Rc::new(Expr::Binary(Rc::new(expr), tok, Rc::new(val)))));
+        //     }
+        // }
 
         Ok(expr)
     }
@@ -263,12 +355,15 @@ impl Parser {
 
     fn block(&mut self) -> Result<Vec<Stmt>, Error> {
         let mut stmts: Vec<Stmt> = Vec::new();
-        
+
         while !self.check(TType::RightBrace) && self.is_valid() {
             stmts.push(self.stmt()?);
         }
 
-        self.consume(TType::RightBrace, "Expected '}' after block expression".into())?;
+        self.consume(
+            TType::RightBrace,
+            "Expected '}' after block expression".into(),
+        )?;
 
         Ok(stmts)
     }

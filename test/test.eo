@@ -1,7 +1,7 @@
 var a = {
     var e = 0;
-    do {
-        e = 1;
-    } while false;
+    while e < 10 {
+        e += 1;
+    }
     e;
 };

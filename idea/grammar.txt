@@ -14,7 +14,7 @@ doWhileStmt => "do" block "while" expr ";"
 # expressions
 expression => assignment
 
-assignment => ( IDENTIFIER "=" assignment ) | or
+assignment => ( IDENTIFIER ( "=" | "+=" | "-=" | "*=" | "/=" | "**=" | "%=" ) assignment ) | or
 
 or => and ( "or" and )*
 and => equality ( "and" equality )*
