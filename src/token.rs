@@ -43,6 +43,9 @@ pub enum TType {
     Pow,
     Mod,
 
+    Colon,
+    Question,
+
     // literals
     Identifier(String),
     String(String),

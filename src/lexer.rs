@@ -201,6 +201,10 @@ impl Lexer {
                 '.' => self.append_token(TType::Dot),
                 ';' => self.append_token(TType::Semi),
 
+                // ternary operator
+                '?' => self.append_token(TType::Question),
+                ':' => self.append_token(TType::Colon),
+
                 // operators
                 '+' => {
                     if self.get('=') {
