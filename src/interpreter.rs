@@ -184,19 +184,17 @@ impl Interpreter {
                 }
 
                 self.eval_expr(right)
-            },
+            }
             Expr::Ternary(condition, true_br, else_br) => {
                 let cond = self.eval_expr(condition)?;
+                
                 if self.is_truthy(&cond) {
                     return Ok(self.eval_expr(true_br)?);
                 }
+
                 Ok(self.eval_expr(else_br)?)
             }
-            Expr::Call(func, tok, args) => {
-                
-                
-                Ok(Type::Nil)
-            },
+            Expr::Call(func, tok, args) => Ok(Type::Nil),
         }
     }
 

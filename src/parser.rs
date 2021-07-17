@@ -146,20 +146,32 @@ impl Parser {
 
     // expressions
     fn expr(&mut self) -> PResult {
-        self.assign()
+        self.ternary()
     }
 
-    // Pass condition as parameter
-    fn tern_expr(&mut self, condition: Expr) -> PResult {
-        let true_br = self.expr()?;
-        self.consume(TType::Colon, "Expected ':' after statment.".into())?;
-        let else_br = self.expr()?;
+    fn ternary(&mut self) -> PResult {
+        let mut expr = self.assign()?;
 
-        Ok(Expr::Ternary(Rc::new(condition), Rc::new(true_br), Rc::new(else_br)))
+        if self.get(&[TType::Question]) {
+            let true_br = self.expr()?;
+            self.consume(
+                TType::Colon,
+                "Expected ':' after ternary if then expression.".into(),
+            )?;
+            let else_br = self.ternary()?;
+
+            expr = Expr::Ternary(
+                Rc::new(expr),
+                Rc::new(true_br),
+                Rc::new(else_br),
+            );
+        }
+
+        Ok(expr)
     }
 
     fn assign(&mut self) -> PResult {
-        let mut expr = self.or()?;
+        let expr = self.or()?;
 
         // Set equal
         if self.get(&[
@@ -208,11 +220,7 @@ impl Parser {
                 ErrorType::TypeError,
             ));
         }
-        
-        // Ternary
-        if self.get(&[TType::Question]) {
-            expr = self.tern_expr(expr)?;
-        }
+
         Ok(expr)
     }
 
@@ -374,7 +382,9 @@ impl Parser {
             loop {
                 args.push(self.expr()?);
 
-                if !self.get(&[TType::Comma]) { break; }
+                if !self.get(&[TType::Comma]) {
+                    break;
+                }
             }
         }
 

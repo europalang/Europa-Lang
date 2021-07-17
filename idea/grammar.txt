@@ -7,14 +7,14 @@ statement => exprStmt | varDecl | block | ifStmt | whileStmt | doWhileStmt
 exprStmt => ( expression ";" )
 varDecl => "var" IDENTIFIER ("=" expression )? ";"
 ifStmt => "if" expr block ( "elif" expr block )* ( "else" block )?
-ternStmt => expr "?" block ":" block ";"
 whileStmt => "while" expr block
 doWhileStmt => "do" block "while" expr ";"
 
 
 # expressions
-expression => assignment
+expression => ternary
 
+ternary => assignment ( "?" expression ":" ternary )?
 assignment => ( IDENTIFIER ( "=" | "+=" | "-=" | "*=" | "/=" | "**=" | "%=" ) assignment ) | or
 
 or => and ( "or" and )*
