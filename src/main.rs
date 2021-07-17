@@ -30,7 +30,7 @@ fn main() {
     // Parse arguments into instruction
     let instr = parse_arguments(&args);
     if &instr.file[..] == "" {
-        if instr.run_repl {
+        if args.len() == 0 {
             println!("Welcome to the Europa Interactive Repl.");
             init_repl(Box::new(Environment::new()));
         }
