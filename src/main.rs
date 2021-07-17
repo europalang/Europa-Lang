@@ -29,23 +29,16 @@ const PROGRAM_VERSION: &str = env!("CARGO_PKG_VERSION");
 const PROGRAM_AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
 const PROGRAM_ABOUT: &str   = env!("CARGO_PKG_DESCRIPTION");
 
-fn main() {    
-    if env::args().count() == 1 {
-        // no arguments, drop into repl
-
-        println!("Welcome to the Europa Interactive Repl.");
-
-        // start no-context repl
-        let environ = Box::new(Environment::new());
-        init_repl(environ);
-
-        return
-    }
-
+fn main() {
     let matches = App::new(PROGRAM_NAME)
         .version(PROGRAM_VERSION)
         .author(PROGRAM_AUTHORS)
         .about(PROGRAM_ABOUT)
+        .arg(Arg::with_name("verbose")
+            .short("v")
+            .long("verbose")
+            .help("Log extra information")
+        )
         .arg(Arg::with_name("repl")
             .short("r")
             .long("repl")
@@ -62,10 +55,10 @@ fn main() {
         .arg(Arg::with_name("FILE")
             .help("File to run")
             .index(1)
-            .required_unless("eval")
-            .required_unless("repl")
         )
         .get_matches();
+    
+    let verbose = matches.is_present("verbose");
     
     let code = if let Some(file) = matches.value_of("FILE") {
         // run file contents
@@ -85,30 +78,31 @@ fn main() {
 
         // start no-context repl
         let environ = Box::new(Environment::new());
-        init_repl(environ);
+        init_repl(environ, verbose);
 
         return
     };
 
     // load and run code
-    match init(code, Box::new(Environment::new())) {
+    match init(code, Box::new(Environment::new()), verbose) {
         Err(e) => e.display(),
         Ok(environ) => {
             if matches.is_present("repl") {
                 // drop into repl with environment
-                init_repl(environ);
+                init_repl(environ, verbose);
             }
         },
     }
 }
 
 // Loader for code, returns Environment mutated from environ
-fn init(code: String, environ: Box<Environment>) -> Result<Box<Environment>, Error> {
+fn init(code: String, environ: Box<Environment>, verbose: bool) -> Result<Box<Environment>, Error> {
     let mut time = Instant::now();
     let tokens: Vec<Token> = match Lexer::new(&code).init() {
         Err(e) => return Err(e),
         Ok(toks) => {
-            println!("lexer {:?}", time.elapsed());
+            if verbose { eprintln!("lexer {:?}", time.elapsed()); }
+
             toks
         }
     };
@@ -118,7 +112,7 @@ fn init(code: String, environ: Box<Environment>) -> Result<Box<Environment>, Err
     let tree: Vec<Stmt> = match Parser::new(tokens).init() {
         Err(e) => return Err(e),
         Ok(tree) => {
-            println!("parser {:?}", time.elapsed());
+            if verbose { eprintln!("parser {:?}", time.elapsed()); }
             tree
         }
     };
@@ -129,14 +123,15 @@ fn init(code: String, environ: Box<Environment>) -> Result<Box<Environment>, Err
     match interpreter.init() {
         Err(e) => return Err(e),
         Ok(_) => {
-            println!("interpreter {:?}", time.elapsed());
+            if verbose { eprintln!("interpreter {:?}", time.elapsed()); }
+
             Ok(interpreter.environ)
         }
     }
 }
 
 // Loops until exited
-fn init_repl(mut environ: Box<Environment>) {
+fn init_repl(mut environ: Box<Environment>, verbose: bool) {
     loop {
         // Same line print
         print!("\x1b[33m>\x1b[0m ");
@@ -164,7 +159,7 @@ fn init_repl(mut environ: Box<Environment>) {
         }
 
         // Attempt to run code
-        match init(input, environ.clone()) {
+        match init(input, environ.clone(), verbose) {
             Err(e) => e.display(),
             Ok(env) => {
                 // Change environ values if no errors
