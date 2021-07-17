@@ -1,4 +1,3 @@
-#[macro_use]
 extern crate maplit;
 
 mod environment;
@@ -105,7 +104,13 @@ fn init_repl(mut environ: Box<Environment>) {
                 println!("Unexpected REPL Error: {:?}", e);
                 process::exit(1);
             }
-            Ok(_) => input = input.trim().to_string(),
+            Ok(n) => {
+                if n == 0 {
+                    println!("\n");
+                    process::exit(0);
+                }
+                input = input.trim().to_string();
+            },
         }
 
         // Exit out of program

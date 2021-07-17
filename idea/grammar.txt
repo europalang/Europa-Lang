@@ -12,7 +12,10 @@ ifStmt => "if" expr block ( "elif" expr block )* ( "else" block )?
 # expressions
 expression => assignment
 
-assignment => ( IDENTIFIER "=" assignment ) | equality
+assignment => ( IDENTIFIER "=" assignment ) | or
+
+or => and ( "or" and )*
+and => equality ( "and" equality )*
 
 equality => comparison ( ( "==" | "!=" ) comparison )*
 comparison => addition ( ( ">" | "<" | ">=" | "<=" ) addition )*
