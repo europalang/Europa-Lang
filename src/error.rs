@@ -15,6 +15,7 @@ pub enum ErrorType {
     MathError,
     TypeError,
     SyntaxError,
+    RuntimeError,
 }
 
 #[derive(Clone, Debug)]

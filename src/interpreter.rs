@@ -1,14 +1,20 @@
 use std::rc::Rc;
 
 use crate::environment::Environment;
-use crate::error::{Error, ErrorType};
+use crate::error::{Error, ErrorType, LineInfo};
 use crate::functions::{Call, Func, FuncType};
 use crate::nodes::expr::Expr;
 use crate::nodes::stmt::Stmt;
 use crate::token::{TType, Token};
 use crate::types::Type;
 
-type IResult = Result<Type, Error>;
+enum Return {
+    Type(Type),
+    Break,
+    Continue
+}
+
+type IResult = Result<Return, Error>;
 // type SResult = Result<(), Error>;
 
 pub struct Interpreter {
@@ -41,8 +47,7 @@ impl Interpreter {
             Type::Float(n) => n.to_string(),
             Type::String(n) => n,
             Type::Bool(n) => n.to_string(),
-            Type::Func(n) => n.to_string(),
-            _ => "".into()
+            Type::Func(n) => n.to_string()
         }
     }
 
@@ -71,82 +76,116 @@ impl Interpreter {
             Stmt::ExprStmt(s) => self.eval_expr(s),
             Stmt::VarDecl(name, val) => {
                 let val = self.eval_expr(&val)?;
-                self.environ.define(&name, &val);
-                Ok(Type::Nil)
+                match val {
+                    Return::Type(val) => {
+                        self.environ.define(&name, &val);
+                        Ok(Return::Type(Type::Nil))
+                    },
+                    _ => Err(Error::new(
+                        LineInfo::new(0, 0),
+                        "Invalid variable assignment".into(),
+                        ErrorType::RuntimeError
+                    ))
+                }
+                
             }
             Stmt::Block(stmts) => {
                 self.eval_block(
                     Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
                     stmts,
                 )?;
-                Ok(Type::Nil)
+                Ok(Return::Type(Type::Nil))
             }
             Stmt::IfStmt(cond, true_br, elif_brs, else_br) => {
                 let cond_val = self.eval_expr(cond)?;
 
-                if self.is_truthy(&cond_val) {
-                    return Ok(self
-                        .eval_block(
-                            Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
-                            true_br,
-                        )?
-                        .unwrap());
-                }
-                if elif_brs.len() != 0 {
-                    for (cond, elif_block) in elif_brs {
-                        let cond_val = self.eval_expr(cond)?;
-                        if self.is_truthy(&cond_val) {
-                            return Ok(self
-                                .eval_block(
-                                    Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
-                                    elif_block,
-                                )?
-                                .unwrap());
+                match cond_val {
+                    Return::Type(val) => {
+                        if self.is_truthy(&val) {
+                            return self.eval_block(
+                                Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
+                                true_br,
+                            )
                         }
+                        if elif_brs.len() != 0 {
+                            for (cond, elif_block) in elif_brs {
+                                let cond_val = self.eval_expr(cond)?;
+                                match cond_val {
+                                    Return::Type(val) => if self.is_truthy(&val) {
+                                        return Ok(self.eval_block(
+                                            Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
+                                            elif_block,
+                                        )?);
+                                    },
+                                    _ => return Err(Error::new(
+                                        LineInfo::new(0, 0),
+                                        "Invalid condition in if statement".into(),
+                                        ErrorType::RuntimeError
+                                    ))
+                                }
+                                
+                            }
+                        }
+                        if let Some(else_block) = else_br {
+                            return self.eval_block(
+                                Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
+                                else_block,
+                            );
+                        }
+        
+                        Ok(Return::Type(Type::Nil))
                     }
+                    _ => Err(Error::new(
+                        LineInfo::new(0, 0),
+                        "Invalid condition in if statement".into(),
+                        ErrorType::RuntimeError
+                    ))
                 }
-                if let Some(else_block) = else_br {
-                    return Ok(self
-                        .eval_block(
-                            Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
-                            else_block,
-                        )?
-                        .unwrap());
-                }
-
-                Ok(Type::Nil)
             }
             Stmt::WhileStmt(cond, block) => {
                 loop {
                     let cond = self.eval_expr(cond)?;
-                    if !self.is_truthy(&cond) {
-                        break;
-                    }
+                    match cond {
+                        Return::Type(cond) => if !self.is_truthy(&cond) {
+                            break;
+                        }
+                        _ => ()
+                    };
 
                     let ret = self.eval_block(
                         Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
                         block,
-                    )?.unwrap();
+                    )?;
                     
                     match ret {
-                        Type::Break => break,
+                        Return::Break => break,
                         _ => ()
-                    }
+                    };
                 }
 
-                Ok(Type::Nil)
+                Ok(Return::Type(Type::Nil))
             },
-            _ => Ok(Type::Nil)
+            Stmt::Break => Ok(Return::Break),
+            Stmt::Continue => Ok(Return::Continue)
         }
     }
 
     fn eval_expr(&mut self, node: &Expr) -> IResult {
         match node {
             Expr::Binary(left, tok, right) => {
-                let lval = self.eval_expr(&left.as_ref())?;
-                let rval = self.eval_expr(&right.as_ref())?;
+                let l = self.eval_expr(&left.as_ref())?;
+                let r = self.eval_expr(&right.as_ref())?;
 
-                Ok(match tok.ttype {
+                let (lval, rval) = match (l, r) {
+                    (Return::Type(l), Return::Type(r)) => (l, r),
+                    _ => return Err(Error::new(
+                        LineInfo::new(0, 0),
+                        "Invalid value".into(),
+                        ErrorType::RuntimeError
+                    ))
+                };
+
+                Ok(Return::Type(match tok.ttype {
                     TType::Plus => self.out(&lval.add(&rval), &tok)?,
                     TType::Minus => self.out(&lval.sub(&rval), &tok)?,
                     TType::Times => self.out(&lval.mult(&rval), &tok)?,
@@ -161,63 +200,105 @@ impl Interpreter {
                     TType::LessEq => Type::Bool(lval <= rval),
                     TType::GreaterEq => Type::Bool(lval >= rval),
                     _ => panic!(),
-                })
+                }))
             }
             Expr::Grouping(expr) => Ok(self.eval_expr(&expr.as_ref())?),
-            Expr::Literal(val) => Ok(val.clone()),
+            Expr::Literal(val) => Ok(Return::Type(val.clone())),
             Expr::Unary(tok, right) => {
-                let rval = self.eval_expr(&right.as_ref())?;
+                let r = self.eval_expr(&right.as_ref())?;
+
+                let rval = match r {
+                    Return::Type(r) => r,
+                    _ => return Err(Error::new(
+                        LineInfo::new(0, 0),
+                        "Invalid value".into(),
+                        ErrorType::RuntimeError
+                    ))
+                };
 
                 match tok.ttype {
-                    TType::Not => Ok(Type::Bool(self.is_truthy(&rval))),
+                    TType::Not => Ok(Return::Type(
+                        Type::Bool(self.is_truthy(&rval))
+                    )),
                     _ => panic!(),
                 }
             }
-            Expr::Variable(v) => self.environ.get(v),
+            Expr::Variable(v) => Ok(Return::Type(self.environ.get(v)?)),
             Expr::Assign(k, v) => {
                 let val = self.eval_expr(&v)?;
-                self.environ.assign(k, &val)?;
-                Ok(val)
+                match val {
+                    Return::Type(v) => {
+                        self.environ.assign(k, &v)?;
+                        Ok(Return::Type(v))
+                    },
+                    _ => Err(Error::new(
+                        LineInfo::new(0, 0),
+                        "Invalid value".into(),
+                        ErrorType::RuntimeError
+                    ))
+                }
             }
-            Expr::Block(stmts) => Ok(self
-                .eval_block(
-                    Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
-                    stmts,
-                )?
-                .unwrap()),
+            Expr::Block(stmts) => Ok(self.eval_block(
+                Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
+                stmts,
+            )?),
             Expr::Logical(left, tok, right) => {
                 let lval = self.eval_expr(left)?;
+                
+                match lval {
+                    Return::Type(v) => {
+                        if tok.ttype == TType::Or {
+                            if self.is_truthy(&v) {
+                                return Ok(Return::Type(v));
+                            }
+                        } else {
+                            if !self.is_truthy(&v) {
+                                return Ok(Return::Type(v));
+                            }
+                        }
 
-                if tok.ttype == TType::Or {
-                    if self.is_truthy(&lval) {
-                        return Ok(lval);
-                    }
-                } else {
-                    if !self.is_truthy(&lval) {
-                        return Ok(lval);
-                    }
+                        self.eval_expr(right)
+                    },
+                    _ => Err(Error::new(
+                        LineInfo::new(0, 0),
+                        "Invalid condition in if statement".into(),
+                        ErrorType::RuntimeError
+                    ))
                 }
-
-                self.eval_expr(right)
             }
             Expr::Ternary(condition, true_br, else_br) => {
                 let cond = self.eval_expr(condition)?;
 
-                if self.is_truthy(&cond) {
-                    return Ok(self.eval_expr(true_br)?);
+                match cond {
+                    Return::Type(cond) => {
+                        if self.is_truthy(&cond) {
+                            return Ok(self.eval_expr(true_br)?);
+                        }
+                        Ok(self.eval_expr(else_br)?)
+                    },
+                    _ => Err(Error::new(
+                        LineInfo::new(0, 0),
+                        "Invalid condition in if statement".into(),
+                        ErrorType::RuntimeError
+                    ))
                 }
-
-                Ok(self.eval_expr(else_br)?)
             }
             Expr::Call(func, tok, args) => {
                 let callee = self.eval_expr(func)?;
 
                 let mut params: Vec<Type> = Vec::new();
                 for arg in args {
-                    params.push(self.eval_expr(arg)?);
+                    match self.eval_expr(arg)? {
+                        Return::Type(val) => params.push(val),
+                        _ => return Err(Error::new(
+                            LineInfo::new(0, 0),
+                            "Invalid condition in if statement".into(),
+                            ErrorType::RuntimeError
+                        ))
+                    }
                 }
 
-                if let Type::Func(func) = callee {
+                if let Return::Type(Type::Func(func)) = callee {
                     if params.len() != func.arity() {
                         return Err(Error::new(
                             tok.lineinfo,
@@ -240,7 +321,7 @@ impl Interpreter {
                     ));
                 }
 
-                Ok(Type::Nil)
+                Ok(Return::Type(Type::Nil))
             }
         }
     }
@@ -249,29 +330,29 @@ impl Interpreter {
         &mut self,
         env: Box<Environment>,
         block: &Vec<Stmt>,
-    ) -> Result<Option<Type>, Error> {
+    ) -> Result<Return, Error> {
         self.environ = env.clone();
-        let mut val = Type::Nil;
+        let mut val = Return::Type(Type::Nil);
 
         for stmt in block {
             match stmt {
                 Stmt::Break => {
-                    val = Type::Break;
+                    val = Return::Break;
                     break;
                 },
                 Stmt::Continue => {
-                    val = Type::Continue;
+                    val = Return::Continue;
                     break;
                 },
                 _ => {
                     let ret = self.eval_stmt(stmt)?;
                     match ret {
-                        Type::Break => {
-                            val = Type::Break;
+                        Return::Break => {
+                            val = Return::Break;
                             break;
                         },
-                        Type::Continue => {
-                            val = Type::Continue;
+                        Return::Continue => {
+                            val = Return::Continue;
                             break;
                         },
                         _ => val = ret
@@ -282,7 +363,7 @@ impl Interpreter {
 
         self.environ = self.environ.parent.clone().unwrap();
 
-        Ok(Some(val))
+        Ok(val)
     }
 
     // util

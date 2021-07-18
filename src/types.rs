@@ -12,8 +12,6 @@ pub enum Type {
     Array(Vec<Type>),
     Func(FuncType),
     Nil,
-    Break,
-    Continue,
 }
 
 impl Type {
