@@ -1,4 +1,4 @@
-use crate::error::ErrorType;
+use crate::{error::{Error, ErrorType}, functions::{Func, FuncType}};
 
 use std::cmp::Ordering;
 
@@ -10,6 +10,7 @@ pub enum Type {
     String(String),
     Bool(bool),
     Array(Vec<Type>),
+    Func(FuncType),
     Nil
 }
 

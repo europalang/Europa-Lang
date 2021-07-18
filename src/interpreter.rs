@@ -1,5 +1,8 @@
+use std::rc::Rc;
+
 use crate::environment::Environment;
 use crate::error::{Error, ErrorType};
+use crate::functions::{Call, Func, FuncType};
 use crate::nodes::expr::Expr;
 use crate::nodes::stmt::Stmt;
 use crate::token::{TType, Token};
@@ -38,10 +41,22 @@ impl Interpreter {
             Type::Float(n) => n.to_string(),
             Type::String(n) => n,
             Type::Bool(n) => n.to_string(),
+            Type::Func(n) => n.to_string(),
         }
     }
 
     pub fn init(&mut self) -> Result<(), Error> {
+        self.environ.define(
+            &String::from("println"),
+            &Type::Func(FuncType::Native(Func::new(
+                Rc::new(|_: &mut Interpreter, args: Vec<Type>| {
+                    println!("{}", Self::stringify(args[0].clone()));
+                    Ok(Type::Nil)
+                }),
+                1,
+            ))),
+        );
+
         for stmt in self.nodes.clone() {
             self.eval_stmt(&stmt.clone())?;
         }
@@ -187,14 +202,46 @@ impl Interpreter {
             }
             Expr::Ternary(condition, true_br, else_br) => {
                 let cond = self.eval_expr(condition)?;
-                
+
                 if self.is_truthy(&cond) {
                     return Ok(self.eval_expr(true_br)?);
                 }
 
                 Ok(self.eval_expr(else_br)?)
             }
-            Expr::Call(func, tok, args) => Ok(Type::Nil),
+            Expr::Call(func, tok, args) => {
+                let callee = self.eval_expr(func)?;
+
+                let mut params: Vec<Type> = Vec::new();
+                for arg in args {
+                    params.push(self.eval_expr(arg)?);
+                }
+
+                if let Type::Func(func) = callee {
+                    if params.len() != func.arity() {
+                        return Err(Error::new(
+                            tok.lineinfo,
+                            format!(
+                                "Expected {} arguments, but got {}.",
+                                func.arity(),
+                                params.len()
+                            )
+                            .into(),
+                            ErrorType::TypeError,
+                        ));
+                    }
+
+                    func.call(self, params)?;
+                } else {
+                    return Err(Error::new(
+                        tok.lineinfo,
+                        "Only functions can be called.".into(),
+                        ErrorType::TypeError,
+                    ));
+                }
+
+                Ok(Type::Nil)
+            }
         }
     }
 

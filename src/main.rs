@@ -2,6 +2,7 @@ extern crate maplit;
 
 mod environment;
 mod error;
+mod functions;
 mod interpreter;
 mod lexer;
 mod nodes;
@@ -24,42 +25,42 @@ use crate::token::Token;
 
 use clap::{App, Arg};
 
-const PROGRAM_NAME: &str    = env!("CARGO_PKG_NAME");
+const PROGRAM_NAME: &str = env!("CARGO_PKG_NAME");
 const PROGRAM_VERSION: &str = env!("CARGO_PKG_VERSION");
 const PROGRAM_AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
-const PROGRAM_ABOUT: &str   = env!("CARGO_PKG_DESCRIPTION");
+const PROGRAM_ABOUT: &str = env!("CARGO_PKG_DESCRIPTION");
 
 fn main() {
     let matches = App::new(PROGRAM_NAME)
         .version(PROGRAM_VERSION)
         .author(PROGRAM_AUTHORS)
         .about(PROGRAM_ABOUT)
-        .arg(Arg::with_name("verbose")
-            .short("v")
-            .long("verbose")
-            .help("Log extra information")
+        .arg(
+            Arg::with_name("verbose")
+                .short("v")
+                .long("verbose")
+                .help("Log extra information"),
         )
-        .arg(Arg::with_name("repl")
-            .short("r")
-            .long("repl")
-            .help("Run file and continue to REPL")
+        .arg(
+            Arg::with_name("repl")
+                .short("r")
+                .long("repl")
+                .help("Run file and continue to REPL"),
         )
-        .arg(Arg::with_name("eval")
-            .short("e")
-            .long("eval")
-            .value_name("CODE")
-            .help("Evaluate CODE instead of a file")
-            .takes_value(true)
-            .conflicts_with("FILE")
+        .arg(
+            Arg::with_name("eval")
+                .short("e")
+                .long("eval")
+                .value_name("CODE")
+                .help("Evaluate CODE instead of a file")
+                .takes_value(true)
+                .conflicts_with("FILE"),
         )
-        .arg(Arg::with_name("FILE")
-            .help("File to run")
-            .index(1)
-        )
+        .arg(Arg::with_name("FILE").help("File to run").index(1))
         .get_matches();
-    
+
     let verbose = matches.is_present("verbose");
-    
+
     let code = if let Some(file) = matches.value_of("FILE") {
         // run file contents
 
@@ -80,7 +81,7 @@ fn main() {
         let environ = Box::new(Environment::new());
         init_repl(environ, verbose);
 
-        return
+        return;
     };
 
     // load and run code
@@ -91,7 +92,7 @@ fn main() {
                 // drop into repl with environment
                 init_repl(environ, verbose);
             }
-        },
+        }
     }
 }
 
@@ -101,7 +102,9 @@ fn init(code: String, environ: Box<Environment>, verbose: bool) -> Result<Box<En
     let tokens: Vec<Token> = match Lexer::new(&code).init() {
         Err(e) => return Err(e),
         Ok(toks) => {
-            if verbose { eprintln!("lexer {:?}", time.elapsed()); }
+            if verbose {
+                eprintln!("lexer {:?}", time.elapsed());
+            }
 
             toks
         }
@@ -112,7 +115,9 @@ fn init(code: String, environ: Box<Environment>, verbose: bool) -> Result<Box<En
     let tree: Vec<Stmt> = match Parser::new(tokens).init() {
         Err(e) => return Err(e),
         Ok(tree) => {
-            if verbose { eprintln!("parser {:?}", time.elapsed()); }
+            if verbose {
+                eprintln!("parser {:?}", time.elapsed());
+            }
             tree
         }
     };
@@ -123,7 +128,9 @@ fn init(code: String, environ: Box<Environment>, verbose: bool) -> Result<Box<En
     match interpreter.init() {
         Err(e) => return Err(e),
         Ok(_) => {
-            if verbose { eprintln!("interpreter {:?}", time.elapsed()); }
+            if verbose {
+                eprintln!("interpreter {:?}", time.elapsed());
+            }
 
             Ok(interpreter.environ)
         }
@@ -150,7 +157,7 @@ fn init_repl(mut environ: Box<Environment>, verbose: bool) {
                     process::exit(0);
                 }
                 input = input.trim().to_string();
-            },
+            }
         }
 
         // Exit out of program
