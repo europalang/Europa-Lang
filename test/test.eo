@@ -1,5 +1,15 @@
-var a = 13 > 9 ? 11 > 10 ? {
-    8 * 6;
-} : 3 : 1;
+var n = 1.3;
 
-println(a);
+println({
+    var a = 0;
+    var b = 0;
+
+    while a != n * n {
+        b += 1;
+        if b % 2 == 0 { continue; }
+        a += b;
+        if a > 100000 { a = nil; break; }
+    }
+
+    a;
+});
