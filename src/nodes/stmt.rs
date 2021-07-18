@@ -6,5 +6,7 @@ pub enum Stmt {
     VarDecl(String, Expr),
     Block(Vec<Stmt>),
     IfStmt(Expr, Vec<Stmt>, Vec<(Expr, Vec<Stmt>)>, Option<Vec<Stmt>>),
-    WhileStmt(Expr, Vec<Stmt>)
+    WhileStmt(Expr, Vec<Stmt>),
+    Break,
+    Continue,
 }

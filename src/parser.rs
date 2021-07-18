@@ -52,9 +52,18 @@ impl Parser {
     }
 
     fn expr_stmt(&mut self) -> SResult {
-        let expr = self.expr()?;
+        let expr;
+        if self.check(TType::Break) {
+            expr = Stmt::Break;
+            self.next();
+        } else if self.check(TType::Continue) {
+            expr = Stmt::Continue;
+            self.next();
+        } else {
+            expr = Stmt::ExprStmt(self.expr()?);
+        }
         self.consume(TType::Semi, "Expected ';' after statement.".into())?;
-        Ok(Stmt::ExprStmt(expr))
+        Ok(expr)
     }
 
     fn if_stmt(&mut self) -> SResult {
@@ -184,7 +193,7 @@ impl Parser {
             TType::ModEq,
         ]) {
             let eq = self.prev();
-            let val = self.assign()?;
+            let val = self.expr()?;
 
             if let Expr::Variable(var) = expr {
                 if eq.ttype == TType::Eq {
