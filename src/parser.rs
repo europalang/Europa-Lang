@@ -193,7 +193,7 @@ impl Parser {
             TType::ModEq,
         ]) {
             let eq = self.prev();
-            let val = self.assign()?;
+            let val = self.expr()?;
 
             if let Expr::Variable(var) = expr {
                 if eq.ttype == TType::Eq {
