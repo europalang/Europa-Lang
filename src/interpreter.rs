@@ -42,7 +42,6 @@ impl Interpreter {
             Type::String(n) => n,
             Type::Bool(n) => n.to_string(),
             Type::Func(n) => n.to_string(),
-            _ => "".into()
         }
     }
 
@@ -78,6 +77,7 @@ impl Interpreter {
                 self.eval_block(
                     Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
                     stmts,
+                    false,
                 )?;
                 Ok(Type::Nil)
             }
@@ -89,6 +89,7 @@ impl Interpreter {
                         .eval_block(
                             Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
                             true_br,
+                            true,
                         )?
                         .unwrap());
                 }
@@ -100,6 +101,7 @@ impl Interpreter {
                                 .eval_block(
                                     Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
                                     elif_block,
+                                    true,
                                 )?
                                 .unwrap());
                         }
@@ -110,6 +112,7 @@ impl Interpreter {
                         .eval_block(
                             Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
                             else_block,
+                            true,
                         )?
                         .unwrap());
                 }
@@ -123,20 +126,16 @@ impl Interpreter {
                         break;
                     }
 
-                    let ret = self.eval_block(
+                    self.eval_block(
                         Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
                         block,
-                    )?.unwrap();
-                    
-                    match ret {
-                        Type::Break => break,
-                        _ => ()
-                    }
+                        true,
+                    )?
+                    .unwrap();
                 }
 
                 Ok(Type::Nil)
-            },
-            _ => Ok(Type::Nil)
+            }
         }
     }
 
@@ -183,6 +182,7 @@ impl Interpreter {
                 .eval_block(
                     Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
                     stmts,
+                    true,
                 )?
                 .unwrap()),
             Expr::Logical(left, tok, right) => {
@@ -249,40 +249,26 @@ impl Interpreter {
         &mut self,
         env: Box<Environment>,
         block: &Vec<Stmt>,
+        ret_val: bool,
     ) -> Result<Option<Type>, Error> {
         self.environ = env.clone();
         let mut val = Type::Nil;
 
         for stmt in block {
-            match stmt {
-                Stmt::Break => {
-                    val = Type::Break;
-                    break;
-                },
-                Stmt::Continue => {
-                    val = Type::Continue;
-                    break;
-                },
-                _ => {
-                    let ret = self.eval_stmt(stmt)?;
-                    match ret {
-                        Type::Break => {
-                            val = Type::Break;
-                            break;
-                        },
-                        Type::Continue => {
-                            val = Type::Continue;
-                            break;
-                        },
-                        _ => val = ret
-                    }
-                }
+            if ret_val {
+                val = self.eval_stmt(stmt)?;
+            } else {
+                self.eval_stmt(stmt)?;
             }
         }
 
         self.environ = self.environ.parent.clone().unwrap();
 
-        Ok(Some(val))
+        if ret_val {
+            Ok(Some(val))
+        } else {
+            Ok(None)
+        }
     }
 
     // util

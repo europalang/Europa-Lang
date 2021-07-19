@@ -52,18 +52,9 @@ impl Parser {
     }
 
     fn expr_stmt(&mut self) -> SResult {
-        let expr;
-        if self.check(TType::Break) {
-            expr = Stmt::Break;
-            self.next();
-        } else if self.check(TType::Continue) {
-            expr = Stmt::Continue;
-            self.next();
-        } else {
-            expr = Stmt::ExprStmt(self.expr()?);
-        }
+        let expr = self.expr()?;
         self.consume(TType::Semi, "Expected ';' after statement.".into())?;
-        Ok(expr)
+        Ok(Stmt::ExprStmt(expr))
     }
 
     fn if_stmt(&mut self) -> SResult {
