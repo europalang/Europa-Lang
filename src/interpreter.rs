@@ -126,16 +126,36 @@ impl Interpreter {
                         break;
                     }
 
-                    self.eval_block(
+                    let out = self.eval_block(
                         Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
                         block,
-                        true,
-                    )?
-                    .unwrap();
+                        false,
+                    );
+
+                    if let Err(e) = out {
+                        if e.error_type == ErrorType::Break {
+                            break;
+                        }
+
+                        if e.error_type == ErrorType::Continue {
+                            continue;
+                        }
+                    }
                 }
 
                 Ok(Type::Nil)
             }
+            Stmt::Break(t) => Err(Error::new(
+                t.lineinfo,
+                "Break statements can only be inside loops.".into(),
+                ErrorType::Break,
+            )),
+            Stmt::Continue(t) => Err(Error::new(
+                t.lineinfo,
+                "Continue statements can only be inside loops.".into(),
+                ErrorType::Continue,
+            )),
+            Stmt::Return(_, _) => todo!(),
         }
     }
 

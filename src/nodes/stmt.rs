@@ -1,4 +1,4 @@
-use crate::nodes::expr::Expr;
+use crate::{nodes::expr::Expr, token::Token};
 
 #[derive(Clone)]
 pub enum Stmt {
@@ -6,5 +6,8 @@ pub enum Stmt {
     VarDecl(String, Expr),
     Block(Vec<Stmt>),
     IfStmt(Expr, Vec<Stmt>, Vec<(Expr, Vec<Stmt>)>, Option<Vec<Stmt>>),
-    WhileStmt(Expr, Vec<Stmt>)
+    WhileStmt(Expr, Vec<Stmt>),
+    Break(Token),
+    Continue(Token),
+    Return(Option<Expr>, Token),
 }

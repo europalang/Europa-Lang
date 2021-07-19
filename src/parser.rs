@@ -47,6 +47,9 @@ impl Parser {
         if self.get(&[TType::LeftBrace]) {
             return Ok(Stmt::Block(self.block()?));
         }
+        if self.get(&[TType::Break, TType::Continue]) {
+            return self.controlflow_stmt();
+        }
 
         self.expr_stmt()
     }
@@ -144,6 +147,30 @@ impl Parser {
         ]))
     }
 
+    fn controlflow_stmt(&mut self) -> SResult {
+        let tok = self.prev();
+        let stype: String;
+
+        let out = match tok.ttype {
+            TType::Break => {
+                stype = "break keyword".into();
+                Stmt::Break(tok)
+            },
+            TType::Continue => {
+                stype = "continue keyword".into();
+                Stmt::Continue(tok)
+            },
+            /* TType::Return => {
+                // todo: actually do stuff
+                Stmt::Return(None, tok)
+            } */
+            _ => panic!()
+        };
+
+        self.consume(TType::Semi, format!("Expected ';' after {}", stype).into())?;
+        Ok(out)
+    }
+
     // expressions
     fn expr(&mut self) -> PResult {
         self.ternary()
@@ -160,11 +187,7 @@ impl Parser {
             )?;
             let else_br = self.ternary()?;
 
-            expr = Expr::Ternary(
-                Rc::new(expr),
-                Rc::new(true_br),
-                Rc::new(else_br),
-            );
+            expr = Expr::Ternary(Rc::new(expr), Rc::new(true_br), Rc::new(else_br));
         }
 
         Ok(expr)

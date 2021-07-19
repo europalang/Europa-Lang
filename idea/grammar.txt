@@ -2,13 +2,15 @@ program => statement* EOF
 
 
 # statements
-statement => exprStmt | varDecl | block | ifStmt | whileStmt | doWhileStmt
+statement => exprStmt | varDecl | block | ifStmt | whileStmt | doWhileStmt | breakStmt | continueStmt
 
 exprStmt => ( expression ";" )
 varDecl => "var" IDENTIFIER ("=" expression )? ";"
 ifStmt => "if" expr block ( "elif" expr block )* ( "else" block )?
 whileStmt => "while" expr block
 doWhileStmt => "do" block "while" expr ";"
+breakStmt => "break" ";"
+continueStmt => "continue" ";"
 
 
 # expressions
