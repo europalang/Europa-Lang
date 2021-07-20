@@ -16,4 +16,5 @@ pub enum Expr {
     Logical(Rc<Expr>, Token, Rc<Expr>),
     Ternary(Rc<Expr>, Rc<Expr>, Rc<Expr>),
     Call(Rc<Expr>, Token, Vec<Expr>),
+    IfExpr(Rc<Expr>, Vec<Stmt>, Vec<(Expr, Vec<Stmt>)>, Option<Vec<Stmt>>),
 }

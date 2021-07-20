@@ -32,7 +32,7 @@ times => unary ( ( "*" | "/" | "%" ) unary )*
 unary => ( ( "!" | "-" ) unary ) | call
 call => primary ( "(" args? ")" )*
 
-primary => NUMBER | STRING | IDENTIFIER | "true" | "false" | "nil" | "(" expression ")" | block
+primary => NUMBER | STRING | IDENTIFIER | "true" | "false" | "nil" | "(" expression ")" | block | ifStmt
 
 block => "{" statement* "}"
 

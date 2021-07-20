@@ -85,42 +85,7 @@ impl Interpreter {
                 Ok(Type::Nil)
             }
             Stmt::IfStmt(cond, true_br, elif_brs, else_br) => {
-                let cond_val = self.eval_expr(cond)?;
-
-                if self.is_truthy(&cond_val) {
-                    return Ok(self
-                        .eval_block(
-                            Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
-                            true_br,
-                            true,
-                        )?
-                        .unwrap());
-                }
-                if elif_brs.len() != 0 {
-                    for (cond, elif_block) in elif_brs {
-                        let cond_val = self.eval_expr(cond)?;
-                        if self.is_truthy(&cond_val) {
-                            return Ok(self
-                                .eval_block(
-                                    Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
-                                    elif_block,
-                                    true,
-                                )?
-                                .unwrap());
-                        }
-                    }
-                }
-                if let Some(else_block) = else_br {
-                    return Ok(self
-                        .eval_block(
-                            Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
-                            else_block,
-                            true,
-                        )?
-                        .unwrap());
-                }
-
-                Ok(Type::Nil)
+                Ok(self.eval_if(cond, true_br, elif_brs, else_br)?)
             }
             Stmt::WhileStmt(cond, block) => {
                 loop {
@@ -167,7 +132,11 @@ impl Interpreter {
 
                 self.environ.define(
                     &var_name,
-                    &Type::Func(FuncType::User(FuncCallable::new(name.clone(), args.clone(), block.clone()))),
+                    &Type::Func(FuncType::User(FuncCallable::new(
+                        name.clone(),
+                        args.clone(),
+                        block.clone(),
+                    ))),
                 );
 
                 Ok(Type::Nil)
@@ -277,6 +246,9 @@ impl Interpreter {
                 }
 
                 Ok(Type::Nil)
+            },
+            Expr::IfExpr(cond, true_br, elif_brs, else_br) => {
+                Ok(self.eval_if(cond, true_br, elif_brs, else_br)?)
             }
         }
     }
@@ -305,6 +277,51 @@ impl Interpreter {
         } else {
             Ok(None)
         }
+    }
+
+    fn eval_if(
+        &mut self,
+        cond: &Expr,
+        true_br: &Vec<Stmt>,
+        elif_brs: &Vec<(Expr, Vec<Stmt>)>,
+        else_br: &Option<Vec<Stmt>>,
+    ) -> IResult {
+        let cond_val = self.eval_expr(cond)?;
+
+        if self.is_truthy(&cond_val) {
+            return Ok(self
+                .eval_block(
+                    Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
+                    true_br,
+                    true,
+                )?
+                .unwrap());
+        }
+        if elif_brs.len() != 0 {
+            for (cond, elif_block) in elif_brs {
+                let cond_val = self.eval_expr(cond)?;
+                if self.is_truthy(&cond_val) {
+                    return Ok(self
+                        .eval_block(
+                            Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
+                            elif_block,
+                            true,
+                        )?
+                        .unwrap());
+                }
+            }
+        }
+        if let Some(else_block) = else_br {
+            return Ok(self
+                .eval_block(
+                    Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
+                    else_block,
+                    true,
+                )?
+                .unwrap());
+        }
+
+        Ok(Type::Nil)
     }
 
     // util

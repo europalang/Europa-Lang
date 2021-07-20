@@ -33,7 +33,8 @@ impl Parser {
     // statements
     fn stmt(&mut self) -> SResult {
         if self.get(&[TType::If]) {
-            return self.if_stmt();
+            let (cond, if_br, elif_brs, else_br) = self.if_stmt()?;
+            return Ok(Stmt::IfStmt(cond, if_br, elif_brs, else_br));
         }
         if self.get(&[TType::Var]) {
             return self.var_decl();
@@ -63,7 +64,7 @@ impl Parser {
         Ok(Stmt::ExprStmt(expr))
     }
 
-    fn if_stmt(&mut self) -> SResult {
+    fn if_stmt(&mut self) -> Result<(Expr, Vec<Stmt>, Vec<(Expr, Vec<Stmt>)>, Option<Vec<Stmt>>), Error> {
         let cond = self.expr()?;
         self.consume(
             TType::LeftBrace,
@@ -94,7 +95,7 @@ impl Parser {
             else_br = None;
         }
 
-        Ok(Stmt::IfStmt(cond, true_br, elif_brs, else_br))
+        Ok((cond, true_br, elif_brs, else_br))
     }
 
     fn var_decl(&mut self) -> SResult {
@@ -383,6 +384,11 @@ impl Parser {
         }
         if self.get(&[TType::LeftBrace]) {
             return Ok(Expr::Block(self.block()?));
+        }
+
+        if self.get(&[TType::If]) {
+            let (cond, if_br, elif_brs, else_br) = self.if_stmt()?;
+            return Ok(Expr::IfExpr(Rc::new(cond), if_br, elif_brs, else_br));
         }
 
         if self.get(&[TType::LeftParen]) {

@@ -1,13 +1,2 @@
-fn test(a) {
-    if a > 0 {
-        println(a);
-        test(a - 1);
-    }
-}
-
-test(3);
-println(test);
-
-var alias = test;
-println(alias);
-alias(6);
+var a = if false {5;};
+println(a);
