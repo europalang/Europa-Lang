@@ -1,0 +1,11 @@
+var a = 0;
+var b = 1;
+var c = 0;
+
+while a + b < 1000000 {
+	println(b);
+	c = b;
+	b = a + b;
+	a = c;
+}
+
