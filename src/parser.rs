@@ -98,29 +98,37 @@ impl Parser {
     }
 
     fn var_decl(&mut self) -> SResult {
-        if let TType::Identifier(name) = self.peek().ttype {
-            self.next();
+        let mut vars = Vec::new();
 
-            let value;
-            if self.get(&[TType::Eq]) {
-                value = self.expr()?;
+        loop {
+            if let TType::Identifier(name) = self.next().ttype {
+                let value = if self.get(&[TType::Eq]) {
+                    self.expr()?
+                } else {
+                    Expr::Literal(Type::Nil)
+                };
+
+                vars.push((name, value));
+
+                match self.next().ttype {
+                    TType::Semi => break,
+                    TType::Comma => continue,
+                    _ => return Err(Error::new(
+                        self.prev().lineinfo,
+                        "Expected ',' or ';' after variable declaration.".into(),
+                        ErrorType::SyntaxError,
+                    )),
+                }
             } else {
-                value = Expr::Literal(Type::Nil);
+                return Err(Error::new(
+                    self.prev().lineinfo,
+                    "Expected variable name".into(),
+                    ErrorType::SyntaxError,
+                ))
             }
-
-            self.consume(
-                TType::Semi,
-                "Expected ';' after variable declaration.".into(),
-            )?;
-
-            Ok(Stmt::VarDecl(name, value))
-        } else {
-            return Err(Error::new(
-                self.peek().lineinfo,
-                "Expected variable name after 'var'".into(),
-                ErrorType::SyntaxError,
-            ));
         }
+
+        Ok(Stmt::VarDecl(vars))
     }
 
     fn while_stmt(&mut self) -> SResult {
@@ -513,7 +521,7 @@ impl Parser {
         }
     }
 
-    // lookahead
+    /// consume if the current token is in `tokens`
     fn get(&mut self, tokens: &[TType]) -> bool {
         for i in tokens.iter() {
             if self.check(i.clone()) {
@@ -525,6 +533,7 @@ impl Parser {
         false
     }
 
+    /// check if the current token is `token`
     fn check(&self, token: TType) -> bool {
         if !self.is_valid() {
             return false;
@@ -533,15 +542,17 @@ impl Parser {
         self.peek().ttype == token
     }
 
+    /// get the current token
     fn peek(&self) -> Token {
         self.tokens[self.i].clone()
     }
 
+    /// get the previous token
     fn prev(&self) -> Token {
         self.tokens[self.i - 1].clone()
     }
 
-    // other
+    /// consume the current token
     fn next(&mut self) -> Token {
         if self.is_valid() {
             self.i += 1;
@@ -550,6 +561,7 @@ impl Parser {
         self.prev()
     }
 
+    /// check if the current token is EOF
     fn is_valid(&self) -> bool {
         self.peek().ttype != TType::EOF
     }
