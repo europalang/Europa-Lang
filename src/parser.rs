@@ -98,29 +98,37 @@ impl Parser {
     }
 
     fn var_decl(&mut self) -> SResult {
-        if let TType::Identifier(name) = self.peek().ttype {
-            self.next();
+        let mut vars = Vec::new();
 
-            let value;
-            if self.get(&[TType::Eq]) {
-                value = self.expr()?;
+        loop {
+            if let TType::Identifier(name) = self.next().ttype {
+                let value = if self.get(&[TType::Eq]) {
+                    self.expr()?
+                } else {
+                    Expr::Literal(Type::Nil)
+                };
+
+                vars.push((name, value));
+
+                match self.next().ttype {
+                    TType::Semi => break,
+                    TType::Comma => continue,
+                    _ => return Err(Error::new(
+                        self.prev().lineinfo,
+                        "Expected ',' or ';' after variable declaration.".into(),
+                        ErrorType::SyntaxError,
+                    )),
+                }
             } else {
-                value = Expr::Literal(Type::Nil);
+                return Err(Error::new(
+                    self.prev().lineinfo,
+                    "Expected variable name".into(),
+                    ErrorType::SyntaxError,
+                ))
             }
-
-            self.consume(
-                TType::Semi,
-                "Expected ';' after variable declaration.".into(),
-            )?;
-
-            Ok(Stmt::VarDecl(vec![ (name, value) ]))
-        } else {
-            return Err(Error::new(
-                self.peek().lineinfo,
-                "Expected variable name after 'var'".into(),
-                ErrorType::SyntaxError,
-            ));
         }
+
+        Ok(Stmt::VarDecl(vars))
     }
 
     fn while_stmt(&mut self) -> SResult {
