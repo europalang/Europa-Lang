@@ -113,7 +113,7 @@ impl Parser {
                 "Expected ';' after variable declaration.".into(),
             )?;
 
-            Ok(Stmt::VarDecl(name, value))
+            Ok(Stmt::VarDecl(vec![ (name, value) ]))
         } else {
             return Err(Error::new(
                 self.peek().lineinfo,
