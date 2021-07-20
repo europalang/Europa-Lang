@@ -7,6 +7,7 @@ mod interpreter;
 mod lexer;
 mod nodes;
 mod parser;
+mod tests;
 mod token;
 mod types;
 
@@ -85,7 +86,7 @@ fn main() {
     };
 
     // load and run code
-    match init(code, Box::new(Environment::new()), verbose) {
+    match run_string(code, Box::new(Environment::new()), verbose) {
         Err(e) => e.display(),
         Ok(environ) => {
             if matches.is_present("repl") {
@@ -97,7 +98,11 @@ fn main() {
 }
 
 // Loader for code, returns Environment mutated from environ
-fn init(code: String, environ: Box<Environment>, verbose: bool) -> Result<Box<Environment>, Error> {
+fn run_string(
+    code: String,
+    environ: Box<Environment>,
+    verbose: bool,
+) -> Result<Box<Environment>, Error> {
     let mut time = Instant::now();
     let tokens: Vec<Token> = match Lexer::new(&code).init() {
         Err(e) => return Err(e),
@@ -166,7 +171,7 @@ fn init_repl(mut environ: Box<Environment>, verbose: bool) {
         }
 
         // Attempt to run code
-        match init(input, environ.clone(), verbose) {
+        match run_string(input, environ.clone(), verbose) {
             Err(e) => e.display(),
             Ok(env) => {
                 // Change environ values if no errors
