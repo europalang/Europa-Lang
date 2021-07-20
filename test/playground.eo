@@ -1,2 +1,10 @@
-var a = if false {5;};
+var a = {
+    var i = 0;
+    while i < 10 {
+        i += 1
+    }
+
+    i
+};
+
 println(a);

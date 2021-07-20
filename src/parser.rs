@@ -60,7 +60,14 @@ impl Parser {
 
     fn expr_stmt(&mut self) -> SResult {
         let expr = self.expr()?;
-        self.consume(TType::Semi, "Expected ';' after statement.".into())?;
+
+        if !self.get(&[TType::Semi]) {
+            let semi = self.peek();
+            if semi.ttype != TType::RightBrace {
+                return Err(Error::new(self.peek().lineinfo, "Expected ';' after statement.".into(), ErrorType::SyntaxError));
+            }
+        }
+
         Ok(Stmt::ExprStmt(expr))
     }
 
@@ -417,6 +424,7 @@ impl Parser {
         })
     }
 
+    // todo: add arg: func to change final stmt to return
     fn block(&mut self) -> Result<Vec<Stmt>, Error> {
         let mut stmts: Vec<Stmt> = Vec::new();
 
