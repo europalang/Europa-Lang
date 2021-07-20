@@ -6,3 +6,8 @@ fn test(a) {
 }
 
 test(3);
+println(test);
+
+var alias = test;
+println(alias);
+alias(6);
