@@ -86,7 +86,10 @@ fn main() {
 
     // load and run code
     match init(code, Box::new(Environment::new()), verbose) {
-        Err(e) => e.display(),
+        Err(e) => {
+            e.display();
+            process::exit(1);
+        },
         Ok(environ) => {
             if matches.is_present("repl") {
                 // drop into repl with environment
