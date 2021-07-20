@@ -69,9 +69,11 @@ impl Interpreter {
     fn eval_stmt(&mut self, node: &Stmt) -> IResult {
         match node {
             Stmt::ExprStmt(s) => self.eval_expr(s),
-            Stmt::VarDecl(name, val) => {
-                let val = self.eval_expr(&val)?;
-                self.environ.define(&name, &val);
+            Stmt::VarDecl(decls) => {
+                for (name, val) in decls {
+                    let val = self.eval_expr(&val)?;
+                    self.environ.define(&name, &val);
+                }
                 Ok(Type::Nil)
             }
             Stmt::Block(stmts) => {
