@@ -513,7 +513,7 @@ impl Parser {
         }
     }
 
-    // lookahead
+    /// consume if the current token is in `tokens`
     fn get(&mut self, tokens: &[TType]) -> bool {
         for i in tokens.iter() {
             if self.check(i.clone()) {
@@ -525,6 +525,7 @@ impl Parser {
         false
     }
 
+    /// check if the current token is `token`
     fn check(&self, token: TType) -> bool {
         if !self.is_valid() {
             return false;
@@ -533,15 +534,17 @@ impl Parser {
         self.peek().ttype == token
     }
 
+    /// get the current token
     fn peek(&self) -> Token {
         self.tokens[self.i].clone()
     }
 
+    /// get the previous token
     fn prev(&self) -> Token {
         self.tokens[self.i - 1].clone()
     }
 
-    // other
+    /// consume the current token
     fn next(&mut self) -> Token {
         if self.is_valid() {
             self.i += 1;
@@ -550,6 +553,7 @@ impl Parser {
         self.prev()
     }
 
+    /// check if the current token is EOF
     fn is_valid(&self) -> bool {
         self.peek().ttype != TType::EOF
     }
