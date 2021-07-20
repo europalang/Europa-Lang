@@ -1,4 +1,4 @@
-use crate::{error::{Error, ErrorType}, functions::{Func, FuncType}};
+use crate::{error::ErrorType, functions::FuncType};
 
 use std::cmp::Ordering;
 
@@ -25,6 +25,10 @@ impl Type {
         }
 
         if let (Self::Float(a), Self::String(b)) = (self, other) {
+            return Ok(Self::String(format!("{}{}", a, b)));
+        }
+
+        if let (Self::String(a), Self::String(b)) = (self, other) {
             return Ok(Self::String(format!("{}{}", a, b)));
         }
 
