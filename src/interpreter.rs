@@ -1,12 +1,13 @@
 use std::rc::Rc;
 
-use crate::environment::Environment;
-use crate::error::{Error, ErrorType};
-use crate::functions::{Call, Func, FuncType};
-use crate::nodes::expr::Expr;
-use crate::nodes::stmt::Stmt;
-use crate::token::{TType, Token};
-use crate::types::Type;
+use crate::{
+    environment::Environment,
+    error::{Error, ErrorType},
+    functions::{Call, Func, FuncCallable, FuncType},
+    nodes::{expr::Expr, stmt::Stmt},
+    token::{TType, Token},
+    types::Type,
+};
 
 type IResult = Result<Type, Error>;
 // type SResult = Result<(), Error>;
@@ -156,6 +157,19 @@ impl Interpreter {
                 ErrorType::Continue,
             )),
             Stmt::Return(_, _) => todo!(),
+            Stmt::Function(name, args, block) => {
+                let var_name = match &name.ttype {
+                    TType::Identifier(x) => x,
+                    _ => panic!(),
+                };
+
+                self.environ.define(
+                    &var_name,
+                    &Type::Func(FuncType::User(FuncCallable::new(name.clone(), args.clone(), block.clone()))),
+                );
+
+                Ok(Type::Nil)
+            }
         }
     }
 
@@ -265,7 +279,7 @@ impl Interpreter {
         }
     }
 
-    fn eval_block(
+    pub fn eval_block(
         &mut self,
         env: Box<Environment>,
         block: &Vec<Stmt>,

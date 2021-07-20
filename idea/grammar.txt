@@ -2,7 +2,7 @@ program => statement* EOF
 
 
 # statements
-statement => exprStmt | varDecl | block | ifStmt | whileStmt | doWhileStmt | breakStmt | continueStmt
+statement => exprStmt | varDecl | block | ifStmt | whileStmt | doWhileStmt | breakStmt | continueStmt | fnDecl
 
 exprStmt => ( expression ";" )
 varDecl => "var" IDENTIFIER ("=" expression )? ";"
@@ -11,6 +11,7 @@ whileStmt => "while" expr block
 doWhileStmt => "do" block "while" expr ";"
 breakStmt => "break" ";"
 continueStmt => "continue" ";"
+fnDecl => "fn" IDENTIFIER function
 
 
 # expressions
@@ -34,4 +35,8 @@ call => primary ( "(" args? ")" )*
 primary => NUMBER | STRING | IDENTIFIER | "true" | "false" | "nil" | "(" expression ")" | block
 
 block => "{" statement* "}"
+
 args => expr ( "," expr )*
+params => IDENTIFIER ( "," IDENTIFIER )*
+
+function => "(" params? ")" block

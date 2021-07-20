@@ -10,4 +10,5 @@ pub enum Stmt {
     Break(Token),
     Continue(Token),
     Return(Option<Expr>, Token),
+    Function(Token, Vec<Token>, Vec<Stmt>),
 }

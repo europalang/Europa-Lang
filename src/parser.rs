@@ -50,6 +50,9 @@ impl Parser {
         if self.get(&[TType::Break, TType::Continue]) {
             return self.controlflow_stmt();
         }
+        if self.get(&[TType::Fn]) {
+            return self.fn_stmt();
+        }
 
         self.expr_stmt()
     }
@@ -155,20 +158,37 @@ impl Parser {
             TType::Break => {
                 stype = "break keyword".into();
                 Stmt::Break(tok)
-            },
+            }
             TType::Continue => {
                 stype = "continue keyword".into();
                 Stmt::Continue(tok)
-            },
+            }
             /* TType::Return => {
                 // todo: actually do stuff
                 Stmt::Return(None, tok)
             } */
-            _ => panic!()
+            _ => panic!(),
         };
 
         self.consume(TType::Semi, format!("Expected ';' after {}", stype).into())?;
         Ok(out)
+    }
+
+    fn fn_stmt(&mut self) -> SResult {
+        let name = self.peek();
+
+        if let TType::Identifier(_) = name.ttype {
+            self.next();
+            let (params, block) = self.finish_fn("function name".into())?;
+
+            return Ok(Stmt::Function(name, params, block));
+        } else {
+            return Err(Error::new(
+                name.lineinfo,
+                "Expected function name after 'fn' keyword.".into(),
+                ErrorType::SyntaxError,
+            ));
+        }
     }
 
     // expressions
@@ -413,6 +433,45 @@ impl Parser {
 
         let tok = self.consume(TType::RightParen, "Expected ')' after arguments.".into())?;
         Ok(Expr::Call(Rc::new(expr.clone()), tok, args))
+    }
+
+    fn finish_fn(&mut self, kind: String) -> Result<(Vec<Token>, Vec<Stmt>), Error> {
+        self.consume(
+            TType::LeftParen,
+            format!("Expected '(' after {}", kind).into(),
+        )?;
+
+        let mut params: Vec<Token> = Vec::new();
+        if !self.check(TType::RightParen) {
+            loop {
+                let tok = self.peek();
+
+                if let TType::Identifier(_) = tok.ttype {
+                    self.next();
+                    params.push(tok);
+                } else {
+                    return Err(Error::new(
+                        tok.lineinfo,
+                        "Expected paramater name.".into(),
+                        ErrorType::SyntaxError,
+                    ));
+                }
+
+                if !self.get(&[TType::Comma]) {
+                    break;
+                }
+            }
+        }
+
+        self.consume(
+            TType::RightParen,
+            "Expected ')' after function paramaters.".into(),
+        )?;
+        self.consume(TType::LeftBrace, "Expected '{' after ')'".into())?;
+
+        let body = self.block()?;
+
+        Ok((params, body))
     }
 
     // errors
