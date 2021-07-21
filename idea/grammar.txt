@@ -2,22 +2,23 @@ program => statement* EOF
 
 
 # statements
-statement => exprStmt | varDecl | block | ifStmt | whileStmt | doWhileStmt | breakStmt | continueStmt | fnDecl
+statement => exprStmt | varDecl | block | ifStmt | whileStmt | doWhileStmt | breakStmt | continueStmt | fnDecl | returnStmt
 
-exprStmt => ( expression ";" )
-varDecl => "var" IDENTIFIER ("=" expression )? ";"
+exprStmt => ( expr ";" )
+varDecl => "var" IDENTIFIER ("=" expr )? ";"
 ifStmt => "if" expr block ( "elif" expr block )* ( "else" block )?
 whileStmt => "while" expr block
 doWhileStmt => "do" block "while" expr ";"
 breakStmt => "break" ";"
 continueStmt => "continue" ";"
 fnDecl => "fn" IDENTIFIER function
+returnStmt => "return" expr? ";"
 
 
 # expressions
-expression => ternary
+expr => ternary
 
-ternary => assignment ( "?" expression ":" ternary )?
+ternary => assignment ( "?" expr ":" ternary )?
 assignment => ( IDENTIFIER ( "=" | "+=" | "-=" | "*=" | "/=" | "**=" | "%=" ) assignment ) | or
 
 or => and ( "or" and )*
@@ -32,7 +33,7 @@ times => unary ( ( "*" | "/" | "%" ) unary )*
 unary => ( ( "!" | "-" ) unary ) | call
 call => primary ( "(" args? ")" )*
 
-primary => NUMBER | STRING | IDENTIFIER | "true" | "false" | "nil" | "(" expression ")" | block | ifStmt
+primary => NUMBER | STRING | IDENTIFIER | "true" | "false" | "nil" | "(" expr ")" | block | ifStmt
 
 block => "{" statement* "}"
 

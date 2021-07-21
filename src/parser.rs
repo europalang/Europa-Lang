@@ -48,7 +48,7 @@ impl Parser {
         if self.get(&[TType::LeftBrace]) {
             return Ok(Stmt::Block(self.block()?));
         }
-        if self.get(&[TType::Break, TType::Continue]) {
+        if self.get(&[TType::Break, TType::Continue, TType::Return]) {
             return self.controlflow_stmt();
         }
         if self.get(&[TType::Fn]) {
@@ -179,10 +179,18 @@ impl Parser {
                 stype = "continue keyword".into();
                 Stmt::Continue(tok)
             }
-            /* TType::Return => {
-                // todo: actually do stuff
-                Stmt::Return(None, tok)
-            } */
+            TType::Return => {
+                stype = "return keyword".into();
+                let val;
+
+                if !self.check(TType::Semi) {
+                    val = Some(self.expr()?);
+                } else {
+                    val = None;
+                }
+
+                Stmt::Return(tok, val)
+            }
             _ => panic!(),
         };
 

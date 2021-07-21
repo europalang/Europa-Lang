@@ -123,7 +123,20 @@ impl Interpreter {
                 "Continue statements can only be inside loops.".into(),
                 ErrorType::Continue,
             )),
-            Stmt::Return(_, _) => todo!(),
+            Stmt::Return(t, val) => {
+                let expr;
+                if let Some(v) = val {
+                    expr = self.eval_expr(v)?;
+                } else {
+                    expr = Type::Nil;
+                }
+
+                Err(Error::new(
+                    t.lineinfo,
+                    "Return statements can only be inside functions.".into(),
+                    ErrorType::Return(expr),
+                ))
+            }
             Stmt::Function(name, args, block) => {
                 let var_name = match &name.ttype {
                     TType::Identifier(x) => x,
@@ -236,7 +249,7 @@ impl Interpreter {
                         ));
                     }
 
-                    func.call(self, params)?;
+                    return func.call(self, params);
                 } else {
                     return Err(Error::new(
                         tok.lineinfo,
@@ -244,9 +257,7 @@ impl Interpreter {
                         ErrorType::TypeError,
                     ));
                 }
-
-                Ok(Type::Nil)
-            },
+            }
             Expr::IfExpr(cond, true_br, elif_brs, else_br) => {
                 Ok(self.eval_if(cond, true_br, elif_brs, else_br)?)
             }

@@ -6,6 +6,7 @@ use crate::{
     nodes::stmt::Stmt,
     token::{TType, Token},
     types::Type,
+    error::ErrorType
 };
 
 use super::traits::{Call, FResult};
@@ -39,7 +40,15 @@ impl Call for FuncCallable {
             }
         }
 
-        interpreter.eval_block(Box::new(env.clone()), &self.block, true)?;
+        let out = interpreter.eval_block(Box::new(env.clone()), &self.block, false);
+
+        if let Err(e) = out {
+            if let ErrorType::Return(v) = e.error_type {
+                return Ok(v)
+            }
+
+            return Err(e)
+        }
 
         Ok(Type::Nil)
     }

@@ -9,6 +9,6 @@ pub enum Stmt {
     WhileStmt(Expr, Vec<Stmt>),
     Break(Token),
     Continue(Token),
-    Return(Option<Expr>, Token),
+    Return(Token, Option<Expr>),
     Function(Token, Vec<Token>, Vec<Stmt>),
 }
