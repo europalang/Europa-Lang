@@ -1,11 +1,6 @@
-var a = "hi";
-
-fn show_a() {
-    println(a);
-}
+var a = 5;
 
 {
-    show_a();
-    var a = "hello";
-    show_a();
+    var a = a + 5;
+    println(a);
 }

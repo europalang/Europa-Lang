@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
 use crate::{
     environment::Environment,
@@ -12,15 +12,21 @@ use crate::{
 type IResult = Result<Type, Error>;
 // type SResult = Result<(), Error>;
 
+#[derive(Clone)]
 pub struct Interpreter {
     nodes: Vec<Stmt>,
+    locals: HashMap<Expr, usize>,
     pub environ: Box<Environment>,
 }
 
 impl Interpreter {
     // static methods
     pub fn new(nodes: Vec<Stmt>, environ: Box<Environment>) -> Self {
-        Self { nodes, environ }
+        Self {
+            nodes,
+            environ,
+            locals: HashMap::new(),
+        }
     }
 
     pub fn stringify(value: Type) -> String {
@@ -190,7 +196,14 @@ impl Interpreter {
                     _ => panic!(),
                 }
             }
-            Expr::Variable(v) => self.environ.get(v),
+            Expr::Variable(v) => {
+                if self.locals.contains_key(node) {
+                    let dist = self.locals.get(node);
+                    self.environ.getAt(dist)
+                } else {
+                    self.environ.get(v)
+                }
+            }
             Expr::Assign(k, v) => {
                 let val = self.eval_expr(&v)?;
                 self.environ.assign(k, &val)?;
@@ -349,5 +362,9 @@ impl Interpreter {
             Type::Bool(v) => *v,
             _ => true,
         }
+    }
+
+    pub fn resolve(&mut self, expr: &Expr, depth: usize) {
+        self.locals.insert(expr, depth);
     }
 }

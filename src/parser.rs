@@ -64,7 +64,7 @@ impl Parser {
         if !self.get(&[TType::Semi]) {
             let semi = self.peek();
             if semi.ttype != TType::RightBrace {
-                return Err(Error::new(self.peek().lineinfo, "Expected ';' after statement.".into(), ErrorType::SyntaxError));
+                return Err(Error::new(self.peek().lineinfo, "Expected ';' or '}' after statement.".into(), ErrorType::SyntaxError));
             }
         }
 

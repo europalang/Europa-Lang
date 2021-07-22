@@ -7,6 +7,7 @@ mod interpreter;
 mod lexer;
 mod nodes;
 mod parser;
+mod resolver;
 mod tests;
 mod token;
 mod types;
@@ -90,7 +91,7 @@ fn main() {
         Err(e) => {
             e.display();
             process::exit(1);
-        },
+        }
         Ok(environ) => {
             if matches.is_present("repl") {
                 // drop into repl with environment

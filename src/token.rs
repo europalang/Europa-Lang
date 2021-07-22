@@ -74,14 +74,6 @@ pub enum TType {
     EOF,
 }
 
-// #[derive(Debug, Clone)]
-// pub enum Value {
-//     String(String),
-//     Ident(String),
-//     Float(f32),
-//     Nil,
-// }
-
 #[derive(Debug, Clone)]
 pub struct Token {
     pub ttype: TType,
