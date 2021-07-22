@@ -6,17 +6,27 @@ use crate::{
     token::{TType, Token},
 };
 
-struct Resolver {
+pub struct Resolver {
     scopes: Vec<HashMap<String, bool>>,
     interpreter: Interpreter,
 }
 
 impl Resolver {
-    fn new(interpreter: &Interpreter) -> Self {
+    pub fn new(interpreter: Interpreter) -> Self {
         Self {
-            interpreter: interpreter.clone(),
-            scopes: Vec::new(),
+            interpreter,
+            scopes: vec![HashMap::new()],
         }
+    }
+
+    pub fn init(&mut self) -> Interpreter {
+        let nodes = self.interpreter.nodes.clone();
+
+        for stmt in nodes {
+            self.resolve_stmt(&stmt);
+        }
+
+        self.interpreter.clone()
     }
 
     // resolve
@@ -49,7 +59,7 @@ impl Resolver {
                 }
             }
             Stmt::Function(name, args, block) => {
-                let func_name = match name.ttype {
+                let func_name = match &name.ttype {
                     TType::Identifier(s) => s,
                     _ => panic!(),
                 };
@@ -58,7 +68,7 @@ impl Resolver {
 
                 self.begin_scope();
                 for param in args {
-                    let name = match param.ttype {
+                    let name = match &param.ttype {
                         TType::Identifier(x) => x,
                         _ => panic!(),
                     };
@@ -76,7 +86,7 @@ impl Resolver {
     fn resolve_expr(&mut self, expr: &Expr) {
         match expr {
             Expr::Assign(var, val) => {
-                self.resolve_local(expr, var);
+                self.resolve_local(var.clone());
                 self.resolve_expr(val);
             }
             Expr::Binary(left, _, right) => {
@@ -88,7 +98,7 @@ impl Resolver {
                 self.resolve_expr(expr);
             }
             Expr::Variable(var) => {
-                self.resolve_local(expr, var);
+                self.resolve_local(var.clone());
             }
             Expr::Block(stmts) => {
                 self.resolves(stmts);
@@ -132,15 +142,16 @@ impl Resolver {
         }
     }
     // resolve_local resolves a variable
-    fn resolve_local(&mut self, expr: &Expr, name: &Token) {
+    fn resolve_local(&mut self, name: Token) {
         let var = match &name.ttype {
             TType::Identifier(v) => v,
             _ => panic!(),
         };
 
-        for i in (0..self.scopes.len() - 1).rev() {
+        for i in (0..self.scopes.len()).rev() {
             if self.scopes[i].contains_key(var) {
-                self.interpreter.resolve(expr, self.scopes.len() - 1 - i);
+                self.interpreter
+                    .resolve(name.clone(), self.scopes.len() - 1 - i);
             }
         }
     }
@@ -167,9 +178,6 @@ impl Resolver {
 
     // define
     fn define(&mut self, name: &String) {
-        if self.scopes.is_empty() {
-            return;
-        }
         let len = self.scopes.len();
         self.scopes[len - 1].insert(name.clone(), true);
     }

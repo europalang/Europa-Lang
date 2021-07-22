@@ -46,6 +46,19 @@ impl Environment {
         }
     }
 
+    pub fn get_at(&self, distance: usize, name: &Token) -> Type {
+        return self.ancestor(distance).get(name).unwrap();
+    }
+
+    fn ancestor(&self, distance: usize) -> Box<Self> {
+        let mut env: Box<Self> = Box::new(self.clone());
+        for _ in 0..distance {
+            env = env.parent.unwrap();
+        }
+
+        env
+    }
+
     pub fn define(&mut self, name: &String, val: &Type) {
         self.values.insert(name.clone(), val.clone());
     }

@@ -1,6 +1,11 @@
-var a = 5;
+var a = "no bug!";
 
 {
-    var a = a + 5;
-    println(a);
+    fn show_a() {
+        println(a);
+    }
+
+    show_a();
+    var a = "big bug!";
+    show_a();
 }

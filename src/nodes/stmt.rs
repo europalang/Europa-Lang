@@ -1,6 +1,6 @@
 use crate::{nodes::expr::Expr, token::Token};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Stmt {
     ExprStmt(Expr),
     VarDecl(Vec<(String, Expr)>),

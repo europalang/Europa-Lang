@@ -1,6 +1,6 @@
 use crate::types::Type;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct LineInfo {
     pub line: i32,
     pub col: i32,

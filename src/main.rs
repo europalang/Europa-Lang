@@ -19,6 +19,7 @@ use std::{env, fs, process};
 use interpreter::Interpreter;
 use lexer::Lexer;
 use parser::Parser;
+use resolver::Resolver;
 
 use crate::environment::Environment;
 use crate::error::Error;
@@ -131,9 +132,19 @@ fn run_string(
         }
     };
 
-    // Interpret and return environment
-    time = Instant::now();
+    // Create interpreter
     let mut interpreter = Interpreter::new(tree, environ.clone());
+
+    // Resolve variables
+    time = Instant::now();
+    let mut resolver = Resolver::new(interpreter);
+    interpreter = resolver.init();
+    if verbose {
+        eprintln!("resolver {:?}", time.elapsed());
+    }
+
+    // Run interpreter
+    time = Instant::now();
     match interpreter.init() {
         Err(e) => return Err(e),
         Ok(_) => {

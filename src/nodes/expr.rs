@@ -4,7 +4,7 @@ use crate::nodes::stmt::Stmt;
 use crate::token::Token;
 use crate::types::Type;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Expr {
     Assign(Token, Rc<Expr>),
     Binary(Rc<Expr>, Token, Rc<Expr>),

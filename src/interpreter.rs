@@ -12,11 +12,11 @@ use crate::{
 type IResult = Result<Type, Error>;
 // type SResult = Result<(), Error>;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Interpreter {
-    nodes: Vec<Stmt>,
-    locals: HashMap<Expr, usize>,
+    pub nodes: Vec<Stmt>,
     pub environ: Box<Environment>,
+    locals: HashMap<(i32, i32), usize>,
 }
 
 impl Interpreter {
@@ -197,9 +197,11 @@ impl Interpreter {
                 }
             }
             Expr::Variable(v) => {
-                if self.locals.contains_key(node) {
-                    let dist = self.locals.get(node);
-                    self.environ.getAt(dist)
+                let tup = &(v.lineinfo.col, v.lineinfo.line);
+                let some_key = self.locals.get(tup);
+
+                if let Some(key) = some_key {
+                    Ok(self.environ.get_at(*key, v))
                 } else {
                     self.environ.get(v)
                 }
@@ -364,7 +366,7 @@ impl Interpreter {
         }
     }
 
-    pub fn resolve(&mut self, expr: &Expr, depth: usize) {
-        self.locals.insert(expr, depth);
+    pub fn resolve(&mut self, tok: Token, depth: usize) {
+        self.locals.insert((tok.lineinfo.col, tok.lineinfo.line), depth);
     }
 }
