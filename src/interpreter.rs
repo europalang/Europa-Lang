@@ -2,7 +2,7 @@ use std::{collections::HashMap, rc::Rc};
 
 use crate::{
     environment::Environment,
-    error::{Error, ErrorType},
+    error::{Error, ErrorType, LineInfo},
     functions::{Call, Func, FuncCallable, FuncType},
     nodes::{expr::Expr, stmt::Stmt},
     token::{TType, Token},
@@ -12,11 +12,11 @@ use crate::{
 type IResult = Result<Type, Error>;
 // type SResult = Result<(), Error>;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Interpreter {
     pub nodes: Vec<Stmt>,
     pub environ: Box<Environment>,
-    locals: HashMap<(i32, i32), usize>,
+    locals: HashMap<LineInfo, usize>,
 }
 
 impl Interpreter {
@@ -197,8 +197,7 @@ impl Interpreter {
                 }
             }
             Expr::Variable(v) => {
-                let tup = &(v.lineinfo.col, v.lineinfo.line);
-                let some_key = self.locals.get(tup);
+                let some_key = self.locals.get(&v.lineinfo);
 
                 if let Some(key) = some_key {
                     Ok(self.environ.get_at(*key, v))
@@ -367,6 +366,6 @@ impl Interpreter {
     }
 
     pub fn resolve(&mut self, tok: Token, depth: usize) {
-        self.locals.insert((tok.lineinfo.col, tok.lineinfo.line), depth);
+        self.locals.insert(tok.lineinfo, depth);
     }
 }

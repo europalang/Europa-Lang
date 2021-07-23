@@ -15,11 +15,14 @@ Io.println("You said: " + input);
 
 Io.println("Random Number 0..1: " + Math.random());
 
-var struct = {{
-    a_sruct = 'strings can look like this too'
+var map = {{
+    a_map = 'strings can look like this too';
+    [1 + 1] = 'expression keys';
 }};
 
-Io.println(struct.a_struct);
+Io.println(map['a_map']);
+Io.println(map.a_map);
+Io.println(map[2]);
 
 fn add_two(a, b) {
     return a + b;
