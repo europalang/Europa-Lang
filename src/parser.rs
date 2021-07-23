@@ -479,7 +479,7 @@ impl Parser {
             }
         }
 
-        self.next();
+        self.consume(TType::RightBrack, "Expected ']' after array.".into())?;
 
         Ok(Expr::Literal(Type::Array(vals)))
     }

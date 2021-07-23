@@ -1,6 +1,7 @@
-var a = [], b = [,], c = [1], d = [1,];
+var a = [], b = [1], c = [1,];
 
 println(a);
 println(b);
 println(c);
-println(d);
+
+var a = [1, 2
