@@ -462,24 +462,26 @@ impl Parser {
     }
 
     fn array(&mut self) -> PResult {
-        // [] and [,]
-        if self.get(&[TType::RightBrack])
-            || (self.get(&[TType::Comma]) && self.get(&[TType::RightBrack]))
-        {
-            return Ok(Expr::Literal(Type::Array(vec![])));
+        let mut vals = Vec::new();
+
+        while self.peek().ttype != TType::RightBrack {
+            vals.push(self.expr()?);
+
+            if
+                !self.get(&[TType::Comma])
+                && self.peek().ttype != TType::RightBrack
+            {
+                return Err(Error::new(
+                    self.peek().lineinfo,
+                    "Expected ',' after array value".into(),
+                    ErrorType::SyntaxError,
+                ));
+            }
         }
 
-        let mut val: Vec<Expr> = vec![self.expr()?];
+        self.next();
 
-        // confirm its not a trailing comma
-        while self.get(&[TType::Comma]) && self.peek().ttype != TType::RightBrack {
-            val.push(self.expr()?);
-        }
-
-        self.get(&[TType::Comma]); // optional ','
-        self.consume(TType::RightBrack, "Expected ']' after array.".into())?;
-
-        Ok(Expr::Literal(Type::Array(val)))
+        Ok(Expr::Literal(Type::Array(vals)))
     }
 
     // util
