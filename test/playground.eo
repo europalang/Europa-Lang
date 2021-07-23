@@ -1,11 +1,6 @@
-var a = "no bug!";
+var a = [], b = [,], c = [1], d = [1,];
 
-{
-    fn show_a() {
-        println(a);
-    }
-
-    show_a();
-    var a = "big bug!";
-    show_a();
-}
+println(a);
+println(b);
+println(c);
+println(d);

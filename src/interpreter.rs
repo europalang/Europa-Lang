@@ -29,13 +29,14 @@ impl Interpreter {
         }
     }
 
-    pub fn stringify(value: Type) -> String {
-        match value {
+    pub fn stringify(&mut self, value: Type) -> Result<String, Error> {
+        Ok(match value {
             Type::Array(v) => {
                 let mut out = String::from('[');
 
                 for (idx, i) in v.iter().enumerate() {
-                    out += Self::stringify(i.clone()).as_str();
+                    let val = self.eval_expr(i)?;
+                    out += self.stringify(val)?.as_str();
 
                     if idx < v.len() - 1 {
                         out += ", ";
@@ -49,15 +50,15 @@ impl Interpreter {
             Type::String(n) => n,
             Type::Bool(n) => n.to_string(),
             Type::Func(n) => n.to_string(),
-        }
+        })
     }
 
     pub fn init(&mut self) -> Result<(), Error> {
         self.environ.define(
             &String::from("println"),
             &Type::Func(FuncType::Native(Func::new(
-                Rc::new(|_: &mut Interpreter, args: Vec<Type>| {
-                    println!("{}", Self::stringify(args[0].clone()));
+                Rc::new(|i: &mut Interpreter, args: Vec<Type>| {
+                    println!("{}", i.stringify(args[0].clone())?);
                     Ok(Type::Nil)
                 }),
                 1,

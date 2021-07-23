@@ -64,14 +64,20 @@ impl Parser {
         if !self.get(&[TType::Semi]) {
             let semi = self.peek();
             if semi.ttype != TType::RightBrace {
-                return Err(Error::new(self.peek().lineinfo, "Expected ';' or '}' after statement.".into(), ErrorType::SyntaxError));
+                return Err(Error::new(
+                    self.peek().lineinfo,
+                    "Expected ';' or '}' after statement.".into(),
+                    ErrorType::SyntaxError,
+                ));
             }
         }
 
         Ok(Stmt::ExprStmt(expr))
     }
 
-    fn if_stmt(&mut self) -> Result<(Expr, Vec<Stmt>, Vec<(Expr, Vec<Stmt>)>, Option<Vec<Stmt>>), Error> {
+    fn if_stmt(
+        &mut self,
+    ) -> Result<(Expr, Vec<Stmt>, Vec<(Expr, Vec<Stmt>)>, Option<Vec<Stmt>>), Error> {
         let cond = self.expr()?;
         self.consume(
             TType::LeftBrace,
@@ -121,18 +127,20 @@ impl Parser {
                 match self.next().ttype {
                     TType::Semi => break,
                     TType::Comma => continue,
-                    _ => return Err(Error::new(
-                        self.prev().lineinfo,
-                        "Expected ',' or ';' after variable declaration.".into(),
-                        ErrorType::SyntaxError,
-                    )),
+                    _ => {
+                        return Err(Error::new(
+                            self.prev().lineinfo,
+                            "Expected ',' or ';' after variable declaration.".into(),
+                            ErrorType::SyntaxError,
+                        ))
+                    }
                 }
             } else {
                 return Err(Error::new(
                     self.prev().lineinfo,
                     "Expected variable name".into(),
                     ErrorType::SyntaxError,
-                ))
+                ));
             }
         }
 
@@ -397,6 +405,11 @@ impl Parser {
         if self.get(&[TType::Nil]) {
             return Ok(Expr::Literal(Type::Nil));
         }
+        if self.get(&[TType::LeftBrack]) {
+            return self.array();
+        }
+
+        // 'statement-like'
         if self.get(&[TType::LeftBrace]) {
             return Ok(Expr::Block(self.block()?));
         }
@@ -415,6 +428,7 @@ impl Parser {
             return Ok(Expr::Grouping(Rc::new(expr)));
         }
 
+        // literal-like
         self.next();
 
         let tok = self.prev();
@@ -432,7 +446,6 @@ impl Parser {
         })
     }
 
-    // todo: add arg: func to change final stmt to return
     fn block(&mut self) -> Result<Vec<Stmt>, Error> {
         let mut stmts: Vec<Stmt> = Vec::new();
 
@@ -446,6 +459,27 @@ impl Parser {
         )?;
 
         Ok(stmts)
+    }
+
+    fn array(&mut self) -> PResult {
+        // [] and [,]
+        if self.get(&[TType::RightBrack])
+            || (self.get(&[TType::Comma]) && self.get(&[TType::RightBrack]))
+        {
+            return Ok(Expr::Literal(Type::Array(vec![])));
+        }
+
+        let mut val: Vec<Expr> = vec![self.expr()?];
+
+        // confirm its not a trailing comma
+        while self.get(&[TType::Comma]) && self.peek().ttype != TType::RightBrack {
+            val.push(self.expr()?);
+        }
+
+        self.get(&[TType::Comma]); // optional ','
+        self.consume(TType::RightBrack, "Expected ']' after array.".into())?;
+
+        Ok(Expr::Literal(Type::Array(val)))
     }
 
     // util

@@ -1,4 +1,4 @@
-use crate::{error::ErrorType, functions::FuncType};
+use crate::{error::ErrorType, functions::FuncType, nodes::expr::Expr};
 
 use std::cmp::Ordering;
 
@@ -9,9 +9,9 @@ pub enum Type {
     Float(f32),
     String(String),
     Bool(bool),
-    Array(Vec<Type>),
+    Array(Vec<Expr>),
     Func(FuncType),
-    Nil
+    Nil,
 }
 
 impl Type {
@@ -62,7 +62,9 @@ impl Type {
 
     pub fn div(&self, other: &Type) -> TResult {
         if let (Self::Float(a), Self::Float(b)) = (self, other) {
-            if *b == 0f32 { return Err(("Division by 0.".into(), ErrorType::MathError)) }
+            if *b == 0f32 {
+                return Err(("Division by 0.".into(), ErrorType::MathError));
+            }
             return Ok(Self::Float(a / b));
         }
 
@@ -74,7 +76,9 @@ impl Type {
 
     pub fn modulo(&self, other: &Type) -> TResult {
         if let (Self::Float(a), Self::Float(b)) = (self, other) {
-            if *b == 0f32 { return Err(("Division by 0.".into(), ErrorType::MathError)) }
+            if *b == 0f32 {
+                return Err(("Division by 0.".into(), ErrorType::MathError));
+            }
             return Ok(Self::Float(a % b));
         }
 
@@ -92,7 +96,7 @@ impl PartialEq for Type {
             (Type::Float(a), Type::Float(b)) => a == b,
             (Type::Nil, Type::Nil) => true,
             (Type::Bool(a), Type::Bool(b)) => a == b,
-            _ => false
+            _ => false,
         }
     }
 }
@@ -102,7 +106,7 @@ impl PartialOrd for Type {
         match (self, other) {
             (Type::String(a), Type::String(b)) => a.len().partial_cmp(&b.len()),
             (Type::Float(a), Type::Float(b)) => a.partial_cmp(b),
-            _ => None
+            _ => None,
         }
     }
 }

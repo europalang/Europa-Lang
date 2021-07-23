@@ -33,9 +33,10 @@ times => unary ( ( "*" | "/" | "%" ) unary )*
 unary => ( ( "!" | "-" ) unary ) | call
 call => primary ( "(" args? ")" )*
 
-primary => NUMBER | STRING | IDENTIFIER | "true" | "false" | "nil" | "(" expr ")" | block | ifStmt
+primary => NUMBER | STRING | IDENTIFIER | "true" | "false" | "nil" | "(" expr ")" | block | ifStmt | array
 
 block => "{" statement* "}"
+array => "[" ( expr ( "," expr )* ","? )? "]"
 
 args => expr ( "," expr )*
 params => IDENTIFIER ( "," IDENTIFIER )*
