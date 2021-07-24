@@ -161,6 +161,36 @@ impl Interpreter {
 
                 Ok(Type::Nil)
             }
+            Stmt::ForStmt(name, arr, block) => {
+                let val = self.eval_expr(arr)?;
+                match val {
+                    Type::Array(exprs) => {
+                        for expr in exprs {
+                            let v = self.eval_expr(&expr)?;
+                            let name_str = match &name.ttype {
+                                TType::Identifier(v) => v,
+                                _ => panic!(),
+                            };
+
+                            self.environ.define(name_str, &v);
+                            self.eval_block(
+                                Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
+                                block,
+                                false,
+                            )?;
+                        }
+
+                        Ok(Type::Nil)
+                    }
+                    _ => {
+                        return Err(Error::new(
+                            name.lineinfo,
+                            "Only arrays can be iterated over.".into(),
+                            ErrorType::TypeError,
+                        ))
+                    }
+                }
+            }
         }
     }
 
@@ -208,7 +238,13 @@ impl Interpreter {
             }
             Expr::Assign(k, v) => {
                 let val = self.eval_expr(&v)?;
-                self.environ.assign(k, &val)?;
+                let some_key = self.locals.get(&k.lineinfo);
+
+                if let Some(key) = some_key {
+                    self.environ.assign_at(*key, k, &val)?;
+                } else {
+                    self.environ.assign(k, &val)?;
+                }
                 Ok(val)
             }
             Expr::Block(stmts) => Ok(self

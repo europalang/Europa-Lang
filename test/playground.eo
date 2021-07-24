@@ -1,7 +1,7 @@
-var a = [], b = [1], c = [1,];
+var a = [1, 2, 3];
 
-println(a);
-println(b);
-println(c);
+for i in a {
+    println(i);
+}
 
-var a = [1, 2
+println(i);

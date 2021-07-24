@@ -4,6 +4,7 @@ use crate::{
     interpreter::Interpreter,
     nodes::{expr::Expr, stmt::Stmt},
     token::{TType, Token},
+    types::Type,
 };
 
 pub struct Resolver {
@@ -79,14 +80,25 @@ impl Resolver {
                 self.resolves(block);
                 self.end_scope();
             }
-            _ => {}
+            Stmt::ForStmt(name, val, block) => {
+                let str = match &name.ttype {
+                    TType::Identifier(x) => x,
+                    _ => panic!()
+                };
+
+                self.define(str);
+                self.resolve_expr(val);
+                self.resolves(block);
+            },
+            Stmt::Break(_) => {}
+            Stmt::Continue(_) => {}
         }
     }
 
     fn resolve_expr(&mut self, expr: &Expr) {
         match expr {
             Expr::Assign(var, val) => {
-                self.resolve_local(var.clone());
+                self.resolve_local(var);
                 self.resolve_expr(val);
             }
             Expr::Binary(left, _, right) => {
@@ -98,7 +110,7 @@ impl Resolver {
                 self.resolve_expr(expr);
             }
             Expr::Variable(var) => {
-                self.resolve_local(var.clone());
+                self.resolve_local(var);
             }
             Expr::Block(stmts) => {
                 self.resolves(stmts);
@@ -122,7 +134,16 @@ impl Resolver {
             Expr::IfExpr(cond, true_br, elif_brs, else_br) => {
                 self.resolve_if(cond, true_br, elif_brs, else_br);
             }
-            _ => {}
+            Expr::Literal(val) => {
+                match val {
+                    Type::Array(itms) => {
+                        for itm in itms {
+                            self.resolve_expr(itm);
+                        }
+                    }
+                    _ => {}
+                };
+            }
         }
     }
 
@@ -142,7 +163,7 @@ impl Resolver {
         }
     }
     // resolve_local resolves a variable
-    fn resolve_local(&mut self, name: Token) {
+    fn resolve_local(&mut self, name: &Token) {
         let var = match &name.ttype {
             TType::Identifier(v) => v,
             _ => panic!(),

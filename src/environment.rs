@@ -84,4 +84,8 @@ impl Environment {
             _ => panic!(),
         }
     }
+
+    pub fn assign_at(&mut self, distance: usize, name: &Token, val: &Type) -> Result<(), Error> {
+        self.ancestor(distance).assign(name, val)
+    }
 }

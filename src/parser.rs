@@ -45,6 +45,9 @@ impl Parser {
         if self.get(&[TType::Do]) {
             return self.dowhile_stmt();
         }
+        if self.get(&[TType::For]) {
+            return self.for_stmt();
+        }
         if self.get(&[TType::LeftBrace]) {
             return Ok(Stmt::Block(self.block()?));
         }
@@ -172,6 +175,41 @@ impl Parser {
             Stmt::Block(body.clone()),
             Stmt::WhileStmt(condition, body.clone()),
         ]))
+    }
+
+    fn for_stmt(&mut self) -> SResult {
+        let parens;
+
+        if self.get(&[TType::LeftParen]) {
+            parens = true;
+        } else {
+            parens = false;
+        }
+
+        let name = self.next();
+        if !matches!(name.ttype, TType::Identifier(_)) {
+            return Err(Error::new(
+                name.lineinfo,
+                "Expected variable name after 'for' keyword".into(),
+                ErrorType::SyntaxError,
+            ));
+        }
+
+        self.consume(TType::In, "Expected 'in' after for loop variable.".into())?;
+
+        let val = self.expr()?;
+
+        if parens {
+            self.consume(
+                TType::RightParen,
+                "Expected ')' after for expression.".into(),
+            )?;
+        }
+
+        self.consume(TType::LeftBrace, "Expected '{' after for expression".into())?;
+        let block = self.block()?;
+
+        Ok(Stmt::ForStmt(name, val, block))
     }
 
     fn controlflow_stmt(&mut self) -> SResult {
@@ -467,10 +505,7 @@ impl Parser {
         while self.peek().ttype != TType::RightBrack {
             vals.push(self.expr()?);
 
-            if
-                !self.get(&[TType::Comma])
-                && self.peek().ttype != TType::RightBrack
-            {
+            if !self.get(&[TType::Comma]) && self.peek().ttype != TType::RightBrack {
                 return Err(Error::new(
                     self.peek().lineinfo,
                     "Expected ',' after array value".into(),
@@ -479,7 +514,7 @@ impl Parser {
             }
         }
 
-        self.consume(TType::RightBrack, "Expected ']' after array.".into())?;
+        self.next();
 
         Ok(Expr::Literal(Type::Array(vals)))
     }
