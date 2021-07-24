@@ -47,6 +47,7 @@ impl Environment {
     }
 
     pub fn get_at(&self, distance: usize, name: &Token) -> Type {
+        println!("{} {:#?} {:#?}", distance, self, self.ancestor(0));
         return self.ancestor(distance).get(name).unwrap();
     }
 

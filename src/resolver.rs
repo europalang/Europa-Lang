@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::{
     interpreter::Interpreter,
     nodes::{expr::Expr, stmt::Stmt},
@@ -8,7 +6,7 @@ use crate::{
 };
 
 pub struct Resolver {
-    scopes: Vec<HashMap<String, bool>>,
+    scopes: Vec<Vec<String>>,
     interpreter: Interpreter,
 }
 
@@ -16,16 +14,14 @@ impl Resolver {
     pub fn new(interpreter: Interpreter) -> Self {
         Self {
             interpreter,
-            scopes: vec![HashMap::new()],
+            scopes: vec![vec![]],
         }
     }
 
     pub fn init(&mut self) -> Interpreter {
         let nodes = self.interpreter.nodes.clone();
-
-        for stmt in nodes {
-            self.resolve_stmt(&stmt);
-        }
+        
+        self.resolves(&nodes);
 
         self.interpreter.clone()
     }
@@ -52,7 +48,9 @@ impl Resolver {
             }
             Stmt::WhileStmt(cond, body) => {
                 self.resolve_expr(cond);
+                self.begin_scope();
                 self.resolves(body);
+                self.end_scope();
             }
             Stmt::Return(_, val) => {
                 if let Some(v) = val {
@@ -149,7 +147,7 @@ impl Resolver {
 
     // util
     fn begin_scope(&mut self) {
-        self.scopes.push(HashMap::new());
+        self.scopes.push(Vec::new());
     }
 
     fn end_scope(&mut self) {
@@ -170,7 +168,8 @@ impl Resolver {
         };
 
         for i in (0..self.scopes.len()).rev() {
-            if self.scopes[i].contains_key(var) {
+            if self.scopes[i].contains(var) {
+                // println!("depth: {} {:?} {:?}", self.scopes.len() - 1 - i, name.ttype, self.scopes);
                 self.interpreter
                     .resolve(name.clone(), self.scopes.len() - 1 - i);
             }
@@ -199,7 +198,9 @@ impl Resolver {
 
     // define
     fn define(&mut self, name: &String) {
+        if self.scopes.is_empty() { return; }
+
         let len = self.scopes.len();
-        self.scopes[len - 1].insert(name.clone(), true);
+        self.scopes[len - 1].push(name.clone());
     }
 }

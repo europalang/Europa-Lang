@@ -1,8 +1,36 @@
-var count = 99;
+var count = 10;
 while count > 0 {
     var bottle = "bottle" + (count == 1 ? "" : "s");
     println(count + " " + bottle + " of beer on the wall, " + count + " " + bottle + " of beer.");
     count -= 1;
-    var bottle2 = "bottle" + (count == 1 ? "" : "s");
-    println("Take one down, pass it around, " + count + " " + bottle2 + " of beer on the wall.");
+    break;
+    // var bottle2 = "bottle" + (count == 1 ? "" : "s");
+    // println("Take one down, pass it around, " + count + " " + bottle2 + " of beer on the wall.");
 }
+
+// var a = "no";
+
+// {
+//     fn ae() {
+//         println(a);
+//     }
+
+//     ae();
+//     var a = ":";
+//     ae();
+// }
+
+
+// var count = 10;
+
+// while true {
+//     fn show_count() {
+//         println(count);
+//     }
+
+//     show_count();
+//     var count = 5;
+//     show_count();
+
+//     break;
+// }

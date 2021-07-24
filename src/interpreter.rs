@@ -16,7 +16,7 @@ type IResult = Result<Type, Error>;
 pub struct Interpreter {
     pub nodes: Vec<Stmt>,
     pub environ: Box<Environment>,
-    locals: HashMap<LineInfo, usize>,
+    pub locals: HashMap<LineInfo, usize>,
 }
 
 impl Interpreter {
@@ -115,6 +115,8 @@ impl Interpreter {
                         if e.error_type == ErrorType::Continue {
                             continue;
                         }
+
+                        return Err(e);
                     }
                 }
 
@@ -229,6 +231,8 @@ impl Interpreter {
             }
             Expr::Variable(v) => {
                 let some_key = self.locals.get(&v.lineinfo);
+
+                // println!("{:?} {} {:?}", v.ttype, v.lineinfo.line, some_key);
 
                 if let Some(key) = some_key {
                     Ok(self.environ.get_at(*key, v))
