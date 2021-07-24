@@ -209,7 +209,7 @@ impl Parser {
         self.consume(TType::LeftBrace, "Expected '{' after for expression".into())?;
         let block = self.block()?;
 
-        Ok(Stmt::ForStmt(name, val, block))
+        Ok(Stmt::Block(vec![Stmt::ForStmt(name, val, block)]))
     }
 
     fn controlflow_stmt(&mut self) -> SResult {
