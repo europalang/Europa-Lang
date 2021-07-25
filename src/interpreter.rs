@@ -232,7 +232,7 @@ impl Interpreter {
             Expr::Variable(v) => {
                 let some_key = self.locals.get(&v.lineinfo);
 
-                // println!("{:?} {} {:?}", v.ttype, v.lineinfo.line, some_key);
+                println!("name: {:?} line: {} depth: {:?}", v.ttype, v.lineinfo.line, some_key);
 
                 if let Some(key) = some_key {
                     Ok(self.environ.get_at(*key, v))
@@ -243,6 +243,8 @@ impl Interpreter {
             Expr::Assign(k, v) => {
                 let val = self.eval_expr(&v)?;
                 let some_key = self.locals.get(&k.lineinfo);
+
+                println!("env: {:#?}", self.environ);
 
                 if let Some(key) = some_key {
                     self.environ.assign_at(*key, k, &val)?;

@@ -9,7 +9,7 @@
             "request": "launch",
             "name": "Debug",
             "program": "${workspaceFolder}/target/debug/europa-lang.exe",
-            "args": [],
+            "args": ["test/programs/99bottles.eo"],
             "preLaunchTask": "rust: cargo build",
             "cwd": "${workspaceFolder}"
         }
