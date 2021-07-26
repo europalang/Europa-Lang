@@ -1,0 +1,8 @@
+var count = 99;
+while count > 0 {
+    var bottle = "bottle" + (count == 1 ? "" : "s");
+    println(count + " " + bottle + " of beer on the wall, " + count + " " + bottle + " of beer.");
+    count -= 1;
+    var bottle2 = "bottle" + (count == 1 ? "" : "s");
+    println("Take one down, pass it around, " + count + " " + bottle2 + " of beer on the wall.");
+}
