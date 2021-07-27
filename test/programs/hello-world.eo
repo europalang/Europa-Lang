@@ -1,4 +1,0 @@
-use Io; // When IO modules is out
-
-Io.println("Hello, world!");
-
