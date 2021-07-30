@@ -81,14 +81,14 @@ fn main() {
         println!("Welcome to the Europa Interactive Repl.");
 
         // start no-context repl
-        let environ = Box::new(Environment::new());
+        let environ = Environment::new();
         init_repl(environ, verbose);
 
         return;
     };
 
     // load and run code
-    match run_string(code, Box::new(Environment::new()), verbose) {
+    match run_string(code, Environment::new(), verbose) {
         Err(e) => {
             e.display();
             process::exit(1);
@@ -105,9 +105,9 @@ fn main() {
 // Loader for code, returns Environment mutated from environ
 fn run_string(
     code: String,
-    environ: Box<Environment>,
+    environ: Environment,
     verbose: bool,
-) -> Result<Box<Environment>, Error> {
+) -> Result<Environment, Error> {
     let mut time = Instant::now();
     let tokens: Vec<Token> = match Lexer::new(&code).init() {
         Err(e) => return Err(e),
@@ -158,7 +158,7 @@ fn run_string(
 }
 
 // Loops until exited
-fn init_repl(mut environ: Box<Environment>, verbose: bool) {
+fn init_repl(mut environ: Environment, verbose: bool) {
     loop {
         // Same line print
         print!("\x1b[33m>\x1b[0m ");
@@ -191,7 +191,6 @@ fn init_repl(mut environ: Box<Environment>, verbose: bool) {
             Ok(env) => {
                 // Change environ values if no errors
                 environ = env;
-                println!("{:?}", environ);
             }
         };
     }

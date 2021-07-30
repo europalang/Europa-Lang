@@ -15,13 +15,13 @@ type IResult = Result<Type, Error>;
 #[derive(Clone)]
 pub struct Interpreter {
     pub nodes: Vec<Stmt>,
-    pub environ: Box<Environment>,
+    pub environ: Environment,
     pub locals: HashMap<LineInfo, usize>,
 }
 
 impl Interpreter {
     // static methods
-    pub fn new(nodes: Vec<Stmt>, environ: Box<Environment>) -> Self {
+    pub fn new(nodes: Vec<Stmt>, environ: Environment) -> Self {
         Self {
             nodes,
             environ,
@@ -84,11 +84,7 @@ impl Interpreter {
                 Ok(Type::Nil)
             }
             Stmt::Block(stmts) => {
-                self.eval_block(
-                    Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
-                    stmts,
-                    false,
-                )?;
+                self.eval_block(stmts, false)?;
                 Ok(Type::Nil)
             }
             Stmt::IfStmt(cond, true_br, elif_brs, else_br) => {
@@ -101,11 +97,7 @@ impl Interpreter {
                         break;
                     }
 
-                    let out = self.eval_block(
-                        Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
-                        block,
-                        false,
-                    );
+                    let out = self.eval_block(block, false);
 
                     if let Err(e) = out {
                         if e.error_type == ErrorType::Break {
@@ -175,11 +167,7 @@ impl Interpreter {
                             };
 
                             self.environ.define(name_str, &v);
-                            self.eval_block(
-                                Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
-                                block,
-                                false,
-                            )?;
+                            self.eval_block(block, false)?;
                         }
 
                         Ok(Type::Nil)
@@ -232,8 +220,6 @@ impl Interpreter {
             Expr::Variable(v) => {
                 let some_key = self.locals.get(&v.lineinfo);
 
-                println!("name: {:?} line: {} depth: {:?}", v.ttype, v.lineinfo.line, some_key);
-
                 if let Some(key) = some_key {
                     Ok(self.environ.get_at(*key, v))
                 } else {
@@ -244,8 +230,6 @@ impl Interpreter {
                 let val = self.eval_expr(&v)?;
                 let some_key = self.locals.get(&k.lineinfo);
 
-                println!("env: {:#?}", self.environ);
-
                 if let Some(key) = some_key {
                     self.environ.assign_at(*key, k, &val)?;
                 } else {
@@ -253,13 +237,7 @@ impl Interpreter {
                 }
                 Ok(val)
             }
-            Expr::Block(stmts) => Ok(self
-                .eval_block(
-                    Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
-                    stmts,
-                    true,
-                )?
-                .unwrap()),
+            Expr::Block(stmts) => Ok(self.eval_block(stmts, true)?.unwrap()),
             Expr::Logical(left, tok, right) => {
                 let lval = self.eval_expr(left)?;
 
@@ -321,15 +299,10 @@ impl Interpreter {
         }
     }
 
-    pub fn eval_block(
-        &mut self,
-        env: Box<Environment>,
-        block: &Vec<Stmt>,
-        ret_val: bool,
-    ) -> Result<Option<Type>, Error> {
-        self.environ = env.clone();
-        let mut val = Type::Nil;
+    pub fn eval_block(&mut self, block: &Vec<Stmt>, ret_val: bool) -> Result<Option<Type>, Error> {
+        self.environ.push_scope();
 
+        let mut val = Type::Nil;
         for stmt in block {
             if ret_val {
                 val = self.eval_stmt(stmt)?;
@@ -338,7 +311,7 @@ impl Interpreter {
             }
         }
 
-        self.environ = self.environ.parent.clone().unwrap();
+        self.environ.pop_scope();
 
         if ret_val {
             Ok(Some(val))
@@ -357,36 +330,18 @@ impl Interpreter {
         let cond_val = self.eval_expr(cond)?;
 
         if self.is_truthy(&cond_val) {
-            return Ok(self
-                .eval_block(
-                    Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
-                    true_br,
-                    true,
-                )?
-                .unwrap());
+            return Ok(self.eval_block(true_br, true)?.unwrap());
         }
         if elif_brs.len() != 0 {
             for (cond, elif_block) in elif_brs {
                 let cond_val = self.eval_expr(cond)?;
                 if self.is_truthy(&cond_val) {
-                    return Ok(self
-                        .eval_block(
-                            Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
-                            elif_block,
-                            true,
-                        )?
-                        .unwrap());
+                    return Ok(self.eval_block(elif_block, true)?.unwrap());
                 }
             }
         }
         if let Some(else_block) = else_br {
-            return Ok(self
-                .eval_block(
-                    Box::new(Environment::new_enclosing(Box::clone(&self.environ))),
-                    else_block,
-                    true,
-                )?
-                .unwrap());
+            return Ok(self.eval_block(else_block, true)?.unwrap());
         }
 
         Ok(Type::Nil)

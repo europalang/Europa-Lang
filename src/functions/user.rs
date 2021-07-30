@@ -31,6 +31,8 @@ impl Call for FuncCallable {
     }
 
     fn call(&self, interpreter: &mut Interpreter, args: Vec<Type>) -> FResult {
+        // here we imply that any variables changed outside of the function will silently be ignored
+        // todo: fix!
         let mut env = Environment::new_enclosing(interpreter.environ.clone());
 
         for (i, name) in self.args.iter().enumerate() {
@@ -40,7 +42,7 @@ impl Call for FuncCallable {
             }
         }
 
-        let out = interpreter.eval_block(Box::new(env.clone()), &self.block, false);
+        let out = interpreter.eval_block(&self.block, false);
 
         if let Err(e) = out {
             if let ErrorType::Return(v) = e.error_type {

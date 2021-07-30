@@ -17,6 +17,8 @@ pub enum ErrorType {
     MathError,
     TypeError,
     SyntaxError,
+    ReferenceError,
+    
     Break,
     Continue,
     Return(Type),

@@ -169,7 +169,6 @@ impl Resolver {
 
         for i in (0..self.scopes.len()).rev() {
             if self.scopes[i].contains(var) {
-                // println!("depth: {} {:?} {:?}", self.scopes.len() - 1 - i, name.ttype, self.scopes);
                 self.interpreter
                     .resolve(name.clone(), self.scopes.len() - 1 - i);
             }

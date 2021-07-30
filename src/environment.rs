@@ -8,85 +8,99 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct Environment {
-    pub parent: Option<Box<Environment>>,
-    values: HashMap<String, Type>,
+    scopes: Vec<HashMap<String, Type>>,
 }
 
 impl Environment {
     pub fn new() -> Self {
-        Self {
-            parent: None,
-            values: HashMap::new(),
-        }
+        Self { scopes: vec![HashMap::new()] }
     }
 
-    pub fn new_enclosing(parent: Box<Environment>) -> Self {
-        Self {
-            parent: Some(parent),
-            values: HashMap::new(),
-        }
+    pub fn new_enclosing(scopes: Environment) -> Self {
+        Self { scopes: scopes.scopes }
+    }
+
+    pub fn push_scope(&mut self) {
+        self.scopes.push(HashMap::new());
+    }
+
+    pub fn pop_scope(&mut self) {
+        self.scopes.pop();
     }
 
     pub fn get(&self, tok: &Token) -> Result<Type, Error> {
-        match &tok.ttype {
-            TType::Identifier(name) => {
-                if self.values.contains_key(name) {
-                    return Ok(self.values[name].clone());
-                } else if let Some(parent) = &self.parent {
-                    return parent.get(tok);
+        if let TType::Identifier(name) = &tok.ttype {
+            let mut scopes = self.scopes.clone();
+            scopes.reverse();
+
+            for scope in scopes {
+                if scope.contains_key(name) {
+                    return Ok(scope[name].clone());
                 }
-
-                Err(Error::new(
-                    tok.lineinfo,
-                    format!("Undefined variable {}", name),
-                    ErrorType::TypeError,
-                ))
             }
-            _ => panic!(),
+
+            Err(Error::new(
+                tok.lineinfo,
+                format!("Undefined variable {}", name),
+                ErrorType::TypeError,
+            ))
+        } else {
+            panic!();
         }
     }
 
-    pub fn get_at(&self, distance: usize, name: &Token) -> Type {
-        println!("{} {:#?} {:#?}", distance, self, self.ancestor(0));
-        return self.ancestor(distance).get(name).unwrap();
+    pub fn get_at(&mut self, distance: usize, name: &Token) -> Type {
+        if let TType::Identifier(n) = &name.ttype {
+            self.ancestor(distance).get(n).unwrap().clone()
+        } else {
+            panic!()
+        }
     }
 
-    fn ancestor(&self, distance: usize) -> Box<Self> {
-        let mut env: Box<Self> = Box::new(self.clone());
-        for _ in 0..distance {
-            env = env.parent.unwrap();
-        }
+    fn ancestor(&mut self, distance: usize) -> &mut HashMap<String, Type> {
+        let distance = self.scopes.len() - 1 - distance;
 
-        env
+        &mut self.scopes[distance]
     }
 
     pub fn define(&mut self, name: &String, val: &Type) {
-        self.values.insert(name.clone(), val.clone());
+        self.scopes
+            .last_mut()
+            .unwrap()
+            .insert(name.clone(), val.clone());
     }
 
     pub fn assign(&mut self, name: &Token, val: &Type) -> Result<(), Error> {
-        let ttype = name.ttype.clone();
+        if let TType::Identifier(n) = name.ttype.clone() {
+            let mut scopes = self.scopes.clone();
+            scopes.reverse();
 
-        match ttype {
-            TType::Identifier(k) => {
-                if self.values.contains_key(&k) {
-                    self.values.insert(k, val.clone());
+            for (i, scope) in scopes.iter().enumerate() {
+                if scope.contains_key(&n) {
+                    let mut scope = self.scopes[i].clone();
+                    scope.insert(n, val.clone());
+                    self.scopes[i] = scope;
                     return Ok(());
-                } else if let Some(parent) = &mut self.parent {
-                    return parent.assign(name, val);
                 }
-
-                Err(Error::new(
-                    name.lineinfo,
-                    format!("Undefined variable {}", k).into(),
-                    ErrorType::TypeError,
-                ))
             }
-            _ => panic!(),
+
+            Err(Error::new(
+                name.lineinfo,
+                format!("Undefined variable {}", n),
+                ErrorType::ReferenceError,
+            ))
+        } else {
+            panic!();
         }
     }
 
     pub fn assign_at(&mut self, distance: usize, name: &Token, val: &Type) -> Result<(), Error> {
-        self.ancestor(distance).assign(name, val)
+        if let TType::Identifier(n) = &name.ttype {
+            self.ancestor(distance).insert(n.clone(), val.clone());
+        } else {
+            panic!();
+        }
+
+        Ok(())
     }
 }
