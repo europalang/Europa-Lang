@@ -224,11 +224,13 @@ impl Interpreter {
 
                 match tok.ttype {
                     TType::Not => Ok(Type::Bool(self.is_truthy(&rval))),
-                    TType::Minus => {
-                        match rval {
-                            Type::Float(v) => Ok(Type::Float(-v)),
-                            _ => Err(Error::new(tok.lineinfo, "Only numbers can be negated.".into(), ErrorType::TypeError))
-                        }
+                    TType::Minus => match rval {
+                        Type::Float(v) => Ok(Type::Float(-v)),
+                        _ => Err(Error::new(
+                            tok.lineinfo,
+                            "Only numbers can be negated.".into(),
+                            ErrorType::TypeError,
+                        )),
                     },
                     _ => panic!(),
                 }
@@ -320,29 +322,43 @@ impl Interpreter {
                     Type::Array(v) => {
                         let val = &v[match k {
                             Type::Float(i) => {
-                                if i.is_sign_negative() || // negative
-                                    i.is_infinite() || i.is_nan() || // infinite
+                                if i.is_infinite() || i.is_nan() || // infinite
                                     i.round() != i
                                 // not whole
                                 {
                                     return Err(Error::new(
                                         tok.lineinfo,
-                                        format!("Only positive whole numbers are valid index ranges (got {}).", i)
-                                            .into(),
+                                        format!(
+                                            "Only whole numbers are valid index ranges (got {}).",
+                                            i
+                                        )
+                                        .into(),
                                         ErrorType::TypeError,
                                     ));
                                 }
 
-                                if i as usize >= v.len() {
+                                let idx;
+
+                                if i < 0f32 {
+                                    idx = v.len() - (-i as usize);
+                                } else {
+                                    idx = i as usize;
+                                }
+
+                                if idx >= v.len() {
                                     return Err(Error::new(
                                         tok.lineinfo,
-                                        format!("Index {} out of array range 0-{}.", i, v.len() - 1)
-                                            .into(),
+                                        format!(
+                                            "Index {} out of array range 0-{}.",
+                                            i,
+                                            v.len() - 1
+                                        )
+                                        .into(),
                                         ErrorType::TypeError,
                                     ));
                                 }
 
-                                i as usize
+                                idx
                             }
                             _ => {
                                 return Err(Error::new(
