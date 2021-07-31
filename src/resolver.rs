@@ -71,11 +71,14 @@ impl Resolver {
                         TType::Identifier(x) => x,
                         _ => panic!(),
                     };
-
+                    
                     self.define(&name);
                 }
-
+                
+                // we need to add another block here because eval_block creates another block.
+                self.begin_scope();
                 self.resolves(block);
+                self.end_scope();
                 self.end_scope();
             }
             Stmt::ForStmt(name, val, block) => {
@@ -86,7 +89,10 @@ impl Resolver {
 
                 self.define(str);
                 self.resolve_expr(val);
+
+                self.begin_scope();
                 self.resolves(block);
+                self.end_scope();
             },
             Stmt::Break(_) => {}
             Stmt::Continue(_) => {}
@@ -183,15 +189,23 @@ impl Resolver {
         else_br: &Option<Vec<Stmt>>,
     ) {
         self.resolve_expr(cond);
+
+        self.begin_scope();
         self.resolves(true_br);
+        self.end_scope();
 
         for (cond, block) in elif_brs {
             self.resolve_expr(cond);
+
+            self.begin_scope();
             self.resolves(block);
+            self.end_scope();
         }
 
         if let Some(br) = else_br {
+            self.begin_scope();
             self.resolves(br);
+            self.end_scope();
         }
     }
 

@@ -1,7 +1,6 @@
 use std::fmt::Debug;
 
 use crate::{
-    environment::Environment,
     interpreter::Interpreter,
     nodes::stmt::Stmt,
     token::{TType, Token},
@@ -31,13 +30,11 @@ impl Call for FuncCallable {
     }
 
     fn call(&self, interpreter: &mut Interpreter, args: Vec<Type>) -> FResult {
-        // here we imply that any variables changed outside of the function will silently be ignored
-        // todo: fix!
-        let mut env = Environment::new_enclosing(interpreter.environ.clone());
+        interpreter.environ.push_scope();
 
         for (i, name) in self.args.iter().enumerate() {
             match &name.ttype {
-                TType::Identifier(n) => env.define(&n, &args[i]),
+                TType::Identifier(n) => interpreter.environ.define(&n, &args[i]),
                 _ => panic!(),
             }
         }
@@ -51,6 +48,8 @@ impl Call for FuncCallable {
 
             return Err(e)
         }
+
+        interpreter.environ.pop_scope();
 
         Ok(Type::Nil)
     }

@@ -1,7 +1,18 @@
-var a = [1, 2, 3];
+// fn access(arr, index) {
+//     var out = nil;
 
-for i in a {
-    println(i);
-}
+//     var i = 0;
+//     for itm in arr {
+//         if i == index {
+//             var b = 5;
 
-println(i);
+//             out = itm;
+//             break;
+//         }
+//         i += 1;
+//     }
+
+//     return out;
+// }
+
+// println(access([1, 2, 3], 1));

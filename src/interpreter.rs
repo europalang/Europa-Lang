@@ -159,6 +159,7 @@ impl Interpreter {
                 let val = self.eval_expr(arr)?;
                 match val {
                     Type::Array(exprs) => {
+                        // for i in itm {
                         for expr in exprs {
                             let v = self.eval_expr(&expr)?;
                             let name_str = match &name.ttype {
@@ -167,8 +168,18 @@ impl Interpreter {
                             };
 
                             self.environ.define(name_str, &v);
-                            self.eval_block(block, false)?;
+                            match self.eval_block(block, false) {
+                                Err(e) => match e.error_type {
+                                    ErrorType::Break => break,
+                                    ErrorType::Continue => continue,
+                                    _ => return Err(e),
+                                },
+                                _ => {}
+                            };
                         }
+                        
+                        self.environ.pop_scope();
+                        self.environ.pop_scope();
 
                         Ok(Type::Nil)
                     }

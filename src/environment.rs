@@ -16,10 +16,6 @@ impl Environment {
         Self { scopes: vec![HashMap::new()] }
     }
 
-    pub fn new_enclosing(scopes: Environment) -> Self {
-        Self { scopes: scopes.scopes }
-    }
-
     pub fn push_scope(&mut self) {
         self.scopes.push(HashMap::new());
     }
