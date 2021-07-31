@@ -14,7 +14,7 @@ impl Resolver {
     pub fn new(interpreter: Interpreter) -> Self {
         Self {
             interpreter,
-            scopes: vec![vec![]],
+            scopes: vec![],
         }
     }
 
@@ -39,18 +39,14 @@ impl Resolver {
                 }
             }
             Stmt::Block(stmts) => {
-                self.begin_scope();
                 self.resolves(stmts);
-                self.end_scope();
             }
             Stmt::IfStmt(cond, true_br, elif_brs, else_br) => {
                 self.resolve_if(cond, true_br, elif_brs, else_br);
             }
             Stmt::WhileStmt(cond, body) => {
                 self.resolve_expr(cond);
-                self.begin_scope();
                 self.resolves(body);
-                self.end_scope();
             }
             Stmt::Return(_, val) => {
                 if let Some(v) = val {
@@ -75,10 +71,7 @@ impl Resolver {
                     self.define(&name);
                 }
                 
-                // we need to add another block here because eval_block creates another block.
-                self.begin_scope();
                 self.resolves(block);
-                self.end_scope();
                 self.end_scope();
             }
             Stmt::ForStmt(name, val, block) => {
@@ -90,9 +83,7 @@ impl Resolver {
                 self.define(str);
                 self.resolve_expr(val);
 
-                self.begin_scope();
                 self.resolves(block);
-                self.end_scope();
             },
             Stmt::Break(_) => {}
             Stmt::Continue(_) => {}
@@ -162,9 +153,11 @@ impl Resolver {
 
     // resolve
     fn resolves(&mut self, stmts: &Vec<Stmt>) {
+        self.begin_scope();
         for stmt in stmts {
             self.resolve_stmt(stmt);
         }
+        self.end_scope();
     }
     // resolve_local resolves a variable
     fn resolve_local(&mut self, name: &Token) {
@@ -190,22 +183,16 @@ impl Resolver {
     ) {
         self.resolve_expr(cond);
 
-        self.begin_scope();
         self.resolves(true_br);
-        self.end_scope();
 
         for (cond, block) in elif_brs {
             self.resolve_expr(cond);
 
-            self.begin_scope();
             self.resolves(block);
-            self.end_scope();
         }
 
         if let Some(br) = else_br {
-            self.begin_scope();
             self.resolves(br);
-            self.end_scope();
         }
     }
 
