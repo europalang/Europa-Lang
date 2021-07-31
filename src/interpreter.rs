@@ -34,9 +34,8 @@ impl Interpreter {
             Type::Array(v) => {
                 let mut out = String::from('[');
 
-                for (idx, i) in v.iter().enumerate() {
-                    let val = self.eval_expr(i)?;
-                    out += self.stringify(val)?.as_str();
+                for (idx, val) in v.iter().enumerate() {
+                    out += self.stringify(val.clone())?.as_str();
 
                     if idx < v.len() - 1 {
                         out += ", ";
@@ -161,7 +160,7 @@ impl Interpreter {
                     Type::Array(exprs) => {
                         // for i in itm {
                         for expr in exprs {
-                            let v = self.eval_expr(&expr)?;
+                            let v = &expr;
                             let name_str = match &name.ttype {
                                 TType::Identifier(v) => v,
                                 _ => panic!(),
@@ -225,6 +224,12 @@ impl Interpreter {
 
                 match tok.ttype {
                     TType::Not => Ok(Type::Bool(self.is_truthy(&rval))),
+                    TType::Minus => {
+                        match rval {
+                            Type::Float(v) => Ok(Type::Float(-v)),
+                            _ => Err(Error::new(tok.lineinfo, "Only numbers can be negated.".into(), ErrorType::TypeError))
+                        }
+                    },
                     _ => panic!(),
                 }
             }
@@ -313,20 +318,42 @@ impl Interpreter {
 
                 return match v {
                     Type::Array(v) => {
-                        let val = self.eval_expr(
-                            &v[match k {
-                                Type::Float(v) => v as usize,
-                                _ => {
+                        let val = &v[match k {
+                            Type::Float(i) => {
+                                if i.is_sign_negative() || // negative
+                                    i.is_infinite() || i.is_nan() || // infinite
+                                    i.round() != i
+                                // not whole
+                                {
                                     return Err(Error::new(
                                         tok.lineinfo,
-                                        "Arrays can only be indexed with numbers.".into(),
+                                        format!("Only positive whole numbers are valid index ranges (got {}).", i)
+                                            .into(),
                                         ErrorType::TypeError,
-                                    ))
+                                    ));
                                 }
-                            }],
-                        )?;
 
-                        Ok(val)
+                                if i as usize >= v.len() {
+                                    return Err(Error::new(
+                                        tok.lineinfo,
+                                        format!("Index {} out of array range 0-{}.", i, v.len() - 1)
+                                            .into(),
+                                        ErrorType::TypeError,
+                                    ));
+                                }
+
+                                i as usize
+                            }
+                            _ => {
+                                return Err(Error::new(
+                                    tok.lineinfo,
+                                    "Arrays can only be indexed with numbers.".into(),
+                                    ErrorType::TypeError,
+                                ))
+                            }
+                        }];
+
+                        Ok(val.clone())
                     }
                     _ => Err(Error::new(
                         tok.lineinfo,
@@ -334,6 +361,15 @@ impl Interpreter {
                         ErrorType::TypeError,
                     )),
                 };
+            }
+            Expr::Array(itms) => {
+                let mut out: Vec<Type> = Vec::new();
+
+                for itm in itms {
+                    out.push(self.eval_expr(itm)?);
+                }
+
+                Ok(Type::Array(out))
             }
         }
     }

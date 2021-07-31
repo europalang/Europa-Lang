@@ -524,7 +524,7 @@ impl Parser {
 
         self.next();
 
-        Ok(Expr::Literal(Type::Array(vals)))
+        Ok(Expr::Array(vals))
     }
 
     // util

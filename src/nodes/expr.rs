@@ -18,4 +18,5 @@ pub enum Expr {
     Call(Rc<Expr>, Token, Vec<Expr>),
     IfExpr(Rc<Expr>, Vec<Stmt>, Vec<(Expr, Vec<Stmt>)>, Option<Vec<Stmt>>),
     Get(Rc<Expr>, Token, Rc<Expr>),
+    Array(Vec<Expr>),
 }

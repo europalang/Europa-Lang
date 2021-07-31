@@ -1,4 +1,4 @@
-use crate::{error::ErrorType, functions::FuncType, nodes::expr::Expr};
+use crate::{error::ErrorType, functions::FuncType};
 
 use std::cmp::Ordering;
 
@@ -9,7 +9,7 @@ pub enum Type {
     Float(f32),
     String(String),
     Bool(bool),
-    Array(Vec<Expr>),
+    Array(Vec<Type>),
     Func(FuncType),
     Nil,
 }

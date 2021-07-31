@@ -1,8 +1,7 @@
 use crate::{
     interpreter::Interpreter,
     nodes::{expr::Expr, stmt::Stmt},
-    token::{TType, Token},
-    types::Type,
+    token::{TType, Token}
 };
 
 pub struct Resolver {
@@ -20,7 +19,7 @@ impl Resolver {
 
     pub fn init(&mut self) -> Interpreter {
         let nodes = self.interpreter.nodes.clone();
-        
+
         self.resolves(&nodes);
 
         self.interpreter.clone()
@@ -67,24 +66,24 @@ impl Resolver {
                         TType::Identifier(x) => x,
                         _ => panic!(),
                     };
-                    
+
                     self.define(&name);
                 }
-                
+
                 self.resolves(block);
                 self.end_scope();
             }
             Stmt::ForStmt(name, val, block) => {
                 let str = match &name.ttype {
                     TType::Identifier(x) => x,
-                    _ => panic!()
+                    _ => panic!(),
                 };
 
                 self.define(str);
                 self.resolve_expr(val);
 
                 self.resolves(block);
-            },
+            }
             Stmt::Break(_) => {}
             Stmt::Continue(_) => {}
         }
@@ -129,19 +128,15 @@ impl Resolver {
             Expr::IfExpr(cond, true_br, elif_brs, else_br) => {
                 self.resolve_if(cond, true_br, elif_brs, else_br);
             }
-            Expr::Literal(val) => {
-                match val {
-                    Type::Array(itms) => {
-                        for itm in itms {
-                            self.resolve_expr(itm);
-                        }
-                    }
-                    _ => {}
-                };
-            }
+            Expr::Literal(_) => {}
             Expr::Get(val, _, key) => {
                 self.resolve_expr(val);
                 self.resolve_expr(key);
+            }
+            Expr::Array(itms) => {
+                for itm in itms {
+                    self.resolve_expr(itm);
+                }
             }
         }
     }
@@ -202,7 +197,9 @@ impl Resolver {
 
     // define
     fn define(&mut self, name: &String) {
-        if self.scopes.is_empty() { return; }
+        if self.scopes.is_empty() {
+            return;
+        }
 
         let len = self.scopes.len();
         self.scopes[len - 1].push(name.clone());
