@@ -36,7 +36,7 @@ addition => times ( ( "-" | "+" ) times )*
 times => unary ( ( "*" | "/" | "%" ) unary )*
 
 unary => ( ( "!" | "-" ) unary ) | call
-call => primary ( "(" args? ")" )*
+call => primary ( "(" args? ")" | "[" expr "]" )*
 
 primary => NUMBER | STRING | IDENTIFIER | "true" | "false" | "nil" | "(" expr ")" | block | ifStmt | array
 

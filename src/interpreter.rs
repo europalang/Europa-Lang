@@ -177,7 +177,7 @@ impl Interpreter {
                                 _ => {}
                             };
                         }
-                        
+
                         self.environ.pop_scope();
                         self.environ.pop_scope();
 
@@ -306,6 +306,34 @@ impl Interpreter {
             }
             Expr::IfExpr(cond, true_br, elif_brs, else_br) => {
                 Ok(self.eval_if(cond, true_br, elif_brs, else_br)?)
+            }
+            Expr::Get(val, tok, key) => {
+                let v = self.eval_expr(val)?;
+                let k = self.eval_expr(key)?;
+
+                return match v {
+                    Type::Array(v) => {
+                        let val = self.eval_expr(
+                            &v[match k {
+                                Type::Float(v) => v as usize,
+                                _ => {
+                                    return Err(Error::new(
+                                        tok.lineinfo,
+                                        "Arrays can only be indexed with numbers.".into(),
+                                        ErrorType::TypeError,
+                                    ))
+                                }
+                            }],
+                        )?;
+
+                        Ok(val)
+                    }
+                    _ => Err(Error::new(
+                        tok.lineinfo,
+                        "Only arrays and maps can be indexed.".into(),
+                        ErrorType::TypeError,
+                    )),
+                };
             }
         }
     }

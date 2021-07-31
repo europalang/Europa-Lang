@@ -425,6 +425,14 @@ impl Parser {
         loop {
             if self.get(&[TType::LeftParen]) {
                 expr = self.finish_call(&mut expr)?;
+            } else if self.get(&[TType::LeftBrack]) {
+                let tok = self.prev();
+                let val = self.expr()?;
+                self.consume(
+                    TType::RightBrack,
+                    "Expected ']' after accessor value.".into(),
+                )?;
+                expr = Expr::Get(Rc::new(expr), tok, Rc::new(val));
             } else {
                 break;
             }

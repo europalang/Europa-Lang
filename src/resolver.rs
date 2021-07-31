@@ -139,6 +139,10 @@ impl Resolver {
                     _ => {}
                 };
             }
+            Expr::Get(val, _, key) => {
+                self.resolve_expr(val);
+                self.resolve_expr(key);
+            }
         }
     }
 
