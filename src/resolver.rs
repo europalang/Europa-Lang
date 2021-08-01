@@ -142,6 +142,11 @@ impl Resolver {
                 self.resolve_expr(left);
                 self.resolve_expr(right);
             }
+            Expr::Set(var, _, i, val) => {
+                self.resolve_expr(var);
+                self.resolve_expr(i);
+                self.resolve_expr(val);
+            }
         }
     }
 

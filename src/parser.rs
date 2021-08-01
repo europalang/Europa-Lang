@@ -276,7 +276,7 @@ impl Parser {
             let inclusive = match tok.ttype {
                 TType::DotDot => false,
                 TType::DotEq => true,
-                _ => panic!()
+                _ => panic!(),
             };
 
             expr = Expr::Range(Rc::new(expr), tok, Rc::new(right), inclusive);
@@ -318,32 +318,48 @@ impl Parser {
             let eq = self.prev();
             let val = self.expr()?;
 
-            if let Expr::Variable(var) = expr {
-                if eq.ttype == TType::Eq {
-                    return Ok(Expr::Assign(var, Rc::new(val)));
-                } else {
-                    let tok = Token {
-                        ttype: match eq.ttype {
-                            TType::PlusEq => TType::Plus,
-                            TType::MinusEq => TType::Minus,
-                            TType::TimesEq => TType::Times,
-                            TType::DivideEq => TType::Divide,
-                            TType::PowEq => TType::Pow,
-                            TType::ModEq => TType::Mod,
-                            _ => panic!(),
-                        },
-                        ..eq
-                    };
+            let tok = if eq.ttype == TType::Eq {
+                None
+            } else {
+                Some(Token {
+                    ttype: match eq.ttype {
+                        TType::PlusEq => TType::Plus,
+                        TType::MinusEq => TType::Minus,
+                        TType::TimesEq => TType::Times,
+                        TType::DivideEq => TType::Divide,
+                        TType::PowEq => TType::Pow,
+                        TType::ModEq => TType::Mod,
+                        _ => panic!(),
+                    },
+                    ..eq
+                })
+            };
 
-                    return Ok(Expr::Assign(
-                        var.clone(),
+            if let Expr::Variable(var) = expr {
+                return Ok(Expr::Assign(
+                    var.clone(),
+                    if let Some(t) = tok {
                         Rc::new(Expr::Binary(
                             Rc::new(Expr::Variable(var.clone())),
-                            tok,
+                            t,
                             Rc::new(val),
-                        )),
-                    ));
-                }
+                        ))
+                    } else {
+                        Rc::new(val)
+                    },
+                ));
+            } else if let Expr::Get(var, brack, i) = expr {
+                // var[idx] = val
+                Expr::Set(
+                    var,
+                    brack,
+                    i,
+                    if let Some(t) = tok {
+                        Rc::new(Expr::Binary(Rc::new(expr.clone()), t, Rc::new(val)))
+                    } else {
+                        Rc::new(val)
+                    },
+                );
             }
 
             return Err(Error::new(

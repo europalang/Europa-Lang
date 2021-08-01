@@ -318,65 +318,7 @@ impl Interpreter {
                 let v = self.eval_expr(val)?;
                 let k = self.eval_expr(key)?;
 
-                return match v {
-                    Type::Array(v) => {
-                        let val = &v[match k {
-                            Type::Float(i) => {
-                                if i.is_infinite() || i.is_nan() || // infinite
-                                    i.round() != i
-                                // not whole
-                                {
-                                    return Err(Error::new(
-                                        tok.lineinfo,
-                                        format!(
-                                            "Only whole numbers are valid index ranges (got {}).",
-                                            i
-                                        )
-                                        .into(),
-                                        ErrorType::TypeError,
-                                    ));
-                                }
-
-                                let idx;
-
-                                if i < 0f32 {
-                                    idx = v.len() as f32 + i;
-                                } else {
-                                    idx = i;
-                                }
-
-                                if idx < 0f32 || idx as usize >= v.len() {
-                                    return Err(Error::new(
-                                        tok.lineinfo,
-                                        format!(
-                                            "Index {} out of array range 0-{}.",
-                                            i,
-                                            v.len() - 1
-                                        )
-                                        .into(),
-                                        ErrorType::ReferenceError,
-                                    ));
-                                }
-
-                                idx as usize
-                            }
-                            _ => {
-                                return Err(Error::new(
-                                    tok.lineinfo,
-                                    "Arrays can only be indexed with numbers.".into(),
-                                    ErrorType::TypeError,
-                                ))
-                            }
-                        }];
-
-                        Ok(val.clone())
-                    }
-                    _ => Err(Error::new(
-                        tok.lineinfo,
-                        "Only arrays and maps can be indexed.".into(),
-                        ErrorType::TypeError,
-                    )),
-                };
+                self.out(&v.index(k), &tok)
             }
             Expr::Array(itms) => {
                 let mut out: Vec<Type> = Vec::new();
@@ -425,6 +367,16 @@ impl Interpreter {
                         ErrorType::TypeError,
                     ))
                 }
+            }
+            Expr::Set(var, brack, i, val) => {
+                // todo: maps
+                // todo: validate
+
+                let mut collection = self.eval_expr(var)?;
+                let value = self.eval_expr(val)?;
+                let idx = self.eval_expr(i)?;
+
+                self.out(&mut collection.assign(idx, value), brack)
             }
         }
     }

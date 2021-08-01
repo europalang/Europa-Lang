@@ -87,6 +87,75 @@ impl Type {
             ErrorType::TypeError,
         ))
     }
+
+    pub fn index(&self, num: Type) -> TResult {
+        match self {
+            Self::Array(v) => {
+                let val = &v[self.validate_index(num, v.len())?];
+
+                Ok(val.clone())
+            }
+
+            _ => Err((
+                "The [...] operator can only be applied to arrays and maps.".into(),
+                ErrorType::TypeError,
+            )),
+        }
+    }
+
+    pub fn assign(&mut self, i: Type, value: Type) -> TResult {
+        match self {
+            Type::Array(v) => {
+                let len = v.len();
+                v[self.validate_index(i, len)?] = value;
+                Ok(value)
+            }
+            _ => Err((
+                "The [...]= operator can only be applied to arrays and maps.".into(),
+                ErrorType::ReferenceError,
+            )),
+        }
+    }
+
+    // private
+    fn validate_index(&self, num: Type, len: usize) -> Result<usize, (String, ErrorType)> {
+        match num {
+            Type::Float(i) => {
+                if i.is_infinite() || i.is_nan() || // infinite
+                                    i.round() != i
+                // not whole
+                {
+                    return Err((
+                        format!("Only whole numbers are valid index ranges (got {}).", i).into(),
+                        ErrorType::TypeError,
+                    ));
+                }
+
+                let idx;
+
+                if i < 0f32 {
+                    idx = len as f32 + i;
+                } else {
+                    idx = i;
+                }
+
+                if idx < 0f32 || idx as usize >= len {
+                    return Err((
+                        format!("Index {} out of array range 0-{}.", i, len - 1).into(),
+                        ErrorType::ReferenceError,
+                    ));
+                }
+
+                Ok(idx as usize)
+            }
+            _ => {
+                return Err((
+                    "Arrays can only be indexed with numbers.".into(),
+                    ErrorType::TypeError,
+                ))
+            }
+        }
+    }
 }
 
 impl PartialEq for Type {
