@@ -340,12 +340,12 @@ impl Interpreter {
                                 let idx;
 
                                 if i < 0f32 {
-                                    idx = v.len() - (-i as usize);
+                                    idx = v.len() as f32 + i;
                                 } else {
-                                    idx = i as usize;
+                                    idx = i;
                                 }
 
-                                if idx >= v.len() {
+                                if idx < 0f32 || idx as usize >= v.len() {
                                     return Err(Error::new(
                                         tok.lineinfo,
                                         format!(
@@ -354,11 +354,11 @@ impl Interpreter {
                                             v.len() - 1
                                         )
                                         .into(),
-                                        ErrorType::TypeError,
+                                        ErrorType::ReferenceError,
                                     ));
                                 }
 
-                                idx
+                                idx as usize
                             }
                             _ => {
                                 return Err(Error::new(
