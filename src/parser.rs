@@ -263,7 +263,26 @@ impl Parser {
 
     // expressions
     fn expr(&mut self) -> PResult {
-        self.ternary()
+        self.range()
+    }
+
+    fn range(&mut self) -> PResult {
+        let mut expr = self.ternary()?;
+
+        if self.get(&[TType::DotDot, TType::DotEq]) {
+            let tok = self.prev();
+            let right = self.expr()?;
+
+            let inclusive = match tok.ttype {
+                TType::DotDot => false,
+                TType::DotEq => true,
+                _ => panic!()
+            };
+
+            expr = Expr::Range(Rc::new(expr), tok, Rc::new(right), inclusive);
+        }
+
+        Ok(expr)
     }
 
     fn ternary(&mut self) -> PResult {

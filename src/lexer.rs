@@ -1,8 +1,8 @@
 use crate::error::{Error, ErrorType, LineInfo};
 use crate::token::{TType, Token};
 
-use std::char::from_u32 as char_from_u32;
 use maplit::hashmap;
+use std::char::from_u32 as char_from_u32;
 use std::collections::HashMap;
 
 pub struct Lexer {
@@ -198,7 +198,15 @@ impl Lexer {
                 }
 
                 ',' => self.append_token(TType::Comma),
-                '.' => self.append_token(TType::Dot),
+                '.' => {
+                    if self.get('.') {
+                        self.append_token(TType::DotDot)
+                    } else if self.get('=') {
+                        self.append_token(TType::DotEq)
+                    } else {
+                        self.append_token(TType::Dot)
+                    }
+                }
                 ';' => self.append_token(TType::Semi),
 
                 // ternary operator
@@ -304,7 +312,7 @@ impl Lexer {
                             self.next();
                         }
 
-                        if self.peek() == '.' {
+                        if self.peek() == '.' && (self.peek_n(1) != '.' && self.peek_n(1) != '=') {
                             num += &self.peek().to_string();
                             self.next(); // .
 

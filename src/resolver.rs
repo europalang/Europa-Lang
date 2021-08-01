@@ -138,6 +138,10 @@ impl Resolver {
                     self.resolve_expr(itm);
                 }
             }
+            Expr::Range(left, _, right, _) => {
+                self.resolve_expr(left);
+                self.resolve_expr(right);
+            }
         }
     }
 

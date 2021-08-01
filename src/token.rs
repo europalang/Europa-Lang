@@ -15,6 +15,8 @@ pub enum TType {
     RightBrack,
     Comma,
     Dot,
+    DotDot,
+    DotEq,
     Semi,
 
     // comparison

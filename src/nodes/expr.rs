@@ -19,4 +19,5 @@ pub enum Expr {
     IfExpr(Rc<Expr>, Vec<Stmt>, Vec<(Expr, Vec<Stmt>)>, Option<Vec<Stmt>>),
     Get(Rc<Expr>, Token, Rc<Expr>),
     Array(Vec<Expr>),
+    Range(Rc<Expr>, Token, Rc<Expr>, bool),
 }

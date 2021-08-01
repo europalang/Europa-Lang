@@ -387,6 +387,45 @@ impl Interpreter {
 
                 Ok(Type::Array(out))
             }
+            Expr::Range(left, tok, right, inclusive) => {
+                let left = self.eval_expr(left)?;
+                let right = self.eval_expr(right)?;
+
+                if let (Type::Float(l), Type::Float(r)) = (left, right) {
+                    let mut out: Vec<Type> = Vec::new();
+                    let (l, r) = (l.floor() as i32, r.floor() as i32);
+
+                    if l > r {
+                        if *inclusive {
+                            for i in (r..=l).rev() {
+                                out.push(Type::Float(i as f32));
+                            }
+                        } else {
+                            for i in (r + 1..=l).rev() {
+                                out.push(Type::Float(i as f32));
+                            }
+                        }
+                    } else {
+                        if *inclusive {
+                            for i in l..=r {
+                                out.push(Type::Float(i as f32));
+                            }
+                        } else {
+                            for i in l..r {
+                                out.push(Type::Float(i as f32));
+                            }
+                        }
+                    }
+
+                    return Ok(Type::Array(out));
+                } else {
+                    Err(Error::new(
+                        tok.lineinfo,
+                        "Ranges can only contain numbers.".into(),
+                        ErrorType::TypeError,
+                    ))
+                }
+            }
         }
     }
 

@@ -21,7 +21,8 @@ returnStmt => "return" expr? ";"
 
 
 # expressions
-expr => ternary
+expr => range
+range => ternary ( ( ".." | ".=" ) ternary )?
 
 ternary => assignment ( "?" expr ":" ternary )?
 assignment => ( IDENTIFIER ( "=" | "+=" | "-=" | "*=" | "/=" | "**=" | "%=" ) assignment ) | or
