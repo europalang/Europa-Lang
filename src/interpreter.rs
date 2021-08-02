@@ -32,7 +32,7 @@ impl Interpreter {
 
     pub fn init(&mut self) -> Result<(), Error> {
         self.environ.define(
-            &String::from("println"),
+            &"println".into(),
             &Type::Func(FuncType::Native(Func::new(
                 Rc::new(|_: &mut Interpreter, args: Vec<Type>| {
                     println!("{}", args[0].to_string());
@@ -261,12 +261,15 @@ impl Interpreter {
                 }
 
                 if let Type::Func(func) = callee {
-                    if params.len() != func.arity() {
+                    let ar = func.arity();
+
+                    if params.len() != ar {
                         return Err(Error::new(
                             tok.lineinfo,
                             format!(
-                                "Expected {} arguments, but got {}.",
-                                func.arity(),
+                                "Expected {} argument{}, but got {}.",
+                                ar,
+                                if ar == 1 { "" } else { "s" },
                                 params.len()
                             )
                             .into(),

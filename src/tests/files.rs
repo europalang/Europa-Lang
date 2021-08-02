@@ -9,7 +9,7 @@ mod programs {
             process::exit(1)
         });
 
-        run_string(code, Environment::new(), false)?;
+        run_string(&code, Environment::new(), false)?;
 
         Ok(())
     }

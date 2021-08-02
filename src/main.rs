@@ -88,9 +88,9 @@ fn main() {
     };
 
     // load and run code
-    match run_string(code, Environment::new(), verbose) {
+    match run_string(&code, Environment::new(), verbose) {
         Err(e) => {
-            e.display();
+            e.display(&code);
             process::exit(1);
         }
         Ok(environ) => {
@@ -104,7 +104,7 @@ fn main() {
 
 // Loader for code, returns Environment mutated from environ
 fn run_string(
-    code: String,
+    code: &String,
     environ: Environment,
     verbose: bool,
 ) -> Result<Environment, Error> {
@@ -186,8 +186,8 @@ fn init_repl(mut environ: Environment, verbose: bool) {
         }
 
         // Attempt to run code
-        match run_string(input, environ.clone(), verbose) {
-            Err(e) => e.display(),
+        match run_string(&input, environ.clone(), verbose) {
+            Err(e) => e.display(&input),
             Ok(env) => {
                 // Change environ values if no errors
                 environ = env;

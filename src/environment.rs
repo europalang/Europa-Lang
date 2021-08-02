@@ -37,7 +37,7 @@ impl Environment {
 
             Err(Error::new(
                 tok.lineinfo,
-                format!("Undefined variable {}", name),
+                format!("Undefined variable {}.", name),
                 ErrorType::TypeError,
             ))
         } else {
@@ -82,7 +82,7 @@ impl Environment {
 
             Err(Error::new(
                 name.lineinfo,
-                format!("Undefined variable {}", n),
+                format!("Undefined variable {}.", n),
                 ErrorType::ReferenceError,
             ))
         } else {

@@ -40,10 +40,22 @@ impl Error {
         }
     }
 
-    pub fn display(&self) {
+    pub fn display(&self, code: &String) {
+        let line = self.info.line as usize;
+        let col = self.info.col as usize;
+        
+        let message = format!("[\x1b[1m{}\x1b[0m:\x1b[1m{}\x1b[0m] \x1b[1m{:?}\x1b[0m: \x1b[31m\x1b[1m{}\x1b[0m", line, col, self.error_type, self.error);
+        let gutter = format!("\x1b[1m{}\x1b[0m | ", line);
+        let editor = format!("{}{}", gutter, code.split('\n').collect::<Vec<&str>>()[line - 1]);
+
         eprintln!(
-            "[{}:{}] {:?}: {}",
-            self.info.line, self.info.col, self.error_type, self.error,
+            "{msg}
+{edt}
+\x1b[94m{arrow:->length$} here\x1b[0m",
+            msg = message,
+            edt = editor,
+            length = col + gutter.len() - 8, // - \x1b[1m\x1b[0m
+            arrow = '^',
         );
     }
 }
