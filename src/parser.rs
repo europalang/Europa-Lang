@@ -348,23 +348,23 @@ impl Parser {
                         Rc::new(val)
                     },
                 ));
-            } else if let Expr::Get(var, brack, i) = expr {
+            } else if let Expr::Get(ref var, ref brack, ref i) = expr {
                 // var[idx] = val
-                Expr::Set(
-                    var,
-                    brack,
-                    i,
+                return Ok(Expr::Set(
+                    var.clone(),
+                    brack.clone(),
+                    i.clone(),
                     if let Some(t) = tok {
                         Rc::new(Expr::Binary(Rc::new(expr.clone()), t, Rc::new(val)))
                     } else {
                         Rc::new(val)
                     },
-                );
+                ));
             }
 
             return Err(Error::new(
                 eq.lineinfo,
-                "Invalid assignment target.".into(),
+                "Only variables and indices of arrays or maps can be assigned to.".into(),
                 ErrorType::TypeError,
             ));
         }

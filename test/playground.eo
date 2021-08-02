@@ -1,5 +1,9 @@
-fn return_array() {
+var a = [1, 2, 3];
+a[1] = 3;
+println(a);
+
+fn ae() {
     return [1, 2, 3];
 }
 
-println(return_array()[1]);
+ae()[1] = 5;

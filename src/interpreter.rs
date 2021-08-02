@@ -6,6 +6,7 @@ use crate::{
     functions::{Call, Func, FuncCallable, FuncType},
     nodes::{expr::Expr, stmt::Stmt},
     token::{TType, Token},
+    types::array::Array,
     types::Type,
 };
 
@@ -29,35 +30,12 @@ impl Interpreter {
         }
     }
 
-    pub fn stringify(&mut self, value: Type) -> Result<String, Error> {
-        Ok(match value {
-            Type::Array(v) => {
-                let mut out = String::from('[');
-
-                for (idx, val) in v.iter().enumerate() {
-                    out += self.stringify(val.clone())?.as_str();
-
-                    if idx < v.len() - 1 {
-                        out += ", ";
-                    }
-                }
-
-                out + "]"
-            }
-            Type::Nil => "nil".into(),
-            Type::Float(n) => n.to_string(),
-            Type::String(n) => n,
-            Type::Bool(n) => n.to_string(),
-            Type::Func(n) => n.to_string(),
-        })
-    }
-
     pub fn init(&mut self) -> Result<(), Error> {
         self.environ.define(
             &String::from("println"),
             &Type::Func(FuncType::Native(Func::new(
-                Rc::new(|i: &mut Interpreter, args: Vec<Type>| {
-                    println!("{}", i.stringify(args[0].clone())?);
+                Rc::new(|_: &mut Interpreter, args: Vec<Type>| {
+                    println!("{}", args[0].to_string());
                     Ok(Type::Nil)
                 }),
                 1,
@@ -159,7 +137,7 @@ impl Interpreter {
                 match val {
                     Type::Array(exprs) => {
                         // for i in itm {
-                        for expr in exprs {
+                        for expr in exprs.arr {
                             let v = &expr;
                             let name_str = match &name.ttype {
                                 TType::Identifier(v) => v,
@@ -246,14 +224,8 @@ impl Interpreter {
             }
             Expr::Assign(k, v) => {
                 let val = self.eval_expr(&v)?;
-                let some_key = self.locals.get(&k.lineinfo);
 
-                if let Some(key) = some_key {
-                    self.environ.assign_at(*key, k, &val)?;
-                } else {
-                    self.environ.assign(k, &val)?;
-                }
-                Ok(val)
+                self.assign(k, &val)
             }
             Expr::Block(stmts) => Ok(self.eval_block(stmts, true)?.unwrap()),
             Expr::Logical(left, tok, right) => {
@@ -327,7 +299,7 @@ impl Interpreter {
                     out.push(self.eval_expr(itm)?);
                 }
 
-                Ok(Type::Array(out))
+                Ok(Type::Array(Array::new(out)))
             }
             Expr::Range(left, tok, right, inclusive) => {
                 let left = self.eval_expr(left)?;
@@ -359,7 +331,7 @@ impl Interpreter {
                         }
                     }
 
-                    return Ok(Type::Array(out));
+                    return Ok(Type::Array(Array::new(out)));
                 } else {
                     Err(Error::new(
                         tok.lineinfo,
@@ -376,7 +348,19 @@ impl Interpreter {
                 let value = self.eval_expr(val)?;
                 let idx = self.eval_expr(i)?;
 
-                self.out(&mut collection.assign(idx, value), brack)
+                let val = self.out(&mut collection.assign(idx, value.clone()), brack)?;
+                self.assign(
+                    match &**var {
+                        Expr::Variable(t) => Ok(t),
+                        _ => Err(Error::new(
+                            brack.lineinfo,
+                            "Only variables and indices of arrays or maps can be assigned to."
+                                .into(),
+                            ErrorType::TypeError,
+                        )),
+                    }?,
+                    &val,
+                )
             }
         }
     }
@@ -443,6 +427,18 @@ impl Interpreter {
             Type::Bool(v) => *v,
             _ => true,
         }
+    }
+
+    fn assign(&mut self, var: &Token, val: &Type) -> Result<Type, Error> {
+        let some_key = self.locals.get(&var.lineinfo);
+
+        if let Some(key) = some_key {
+            self.environ.assign_at(*key, var, val)?;
+        } else {
+            self.environ.assign(var, val)?;
+        }
+
+        Ok(val.clone())
     }
 
     pub fn resolve(&mut self, tok: Token, depth: usize) {
