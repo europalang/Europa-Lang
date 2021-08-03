@@ -160,6 +160,30 @@ impl Interpreter {
 
                         Ok(Type::Nil)
                     }
+                    Type::String(str) => {
+                        for i in str.chars() {
+                            let v = Type::String(String::from(i));
+                            let name_str = match &name.ttype {
+                                TType::Identifier(v) => v,
+                                _ => panic!(),
+                            };
+
+                            self.environ.define(name_str, &v);
+                            match self.eval_block(block, false) {
+                                Err(e) => match e.error_type {
+                                    ErrorType::Break => break,
+                                    ErrorType::Continue => continue,
+                                    _ => return Err(e),
+                                },
+                                _ => {}
+                            };
+                        }
+
+                        self.environ.pop_scope();
+                        self.environ.pop_scope();
+
+                        Ok(Type::Nil)
+                    }
                     _ => {
                         return Err(Error::new(
                             name.lineinfo,
