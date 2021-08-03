@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::error::{Error, ErrorType};
+use crate::error::{Error, ErrorNote, ErrorType, LineInfo};
 use crate::nodes::expr::Expr;
 use crate::nodes::stmt::Stmt;
 use crate::token::{TType, Token};
@@ -67,10 +67,13 @@ impl Parser {
         if !self.get(&[TType::Semi]) {
             let semi = self.peek();
             if semi.ttype != TType::RightBrace {
-                return Err(Error::new(
-                    self.peek().lineinfo,
-                    "Expected ';' or '}' after statement.".into(),
+                return Err(Error::new_n(
+                    self.prev().lineinfo,
+                    "Expected ';' after statement.".into(),
                     ErrorType::SyntaxError,
+                    vec![ErrorNote::Note(
+                        "The ';' is optional only if it is the last statement of a block.".into(),
+                    )],
                 ));
             }
         }
@@ -178,12 +181,12 @@ impl Parser {
     }
 
     fn for_stmt(&mut self) -> SResult {
-        let parens;
+        let parens: Option<LineInfo>;
 
         if self.get(&[TType::LeftParen]) {
-            parens = true;
+            parens = Some(self.prev().lineinfo);
         } else {
-            parens = false;
+            parens = None;
         }
 
         let name = self.next();
@@ -199,11 +202,18 @@ impl Parser {
 
         let val = self.expr()?;
 
-        if parens {
-            self.consume(
-                TType::RightParen,
-                "Expected ')' after for expression.".into(),
-            )?;
+        match parens {
+            Some(lineinfo) => {
+                self.consume_n(
+                    TType::RightParen,
+                    "Expected ')' after for expression.".into(),
+                    vec![ErrorNote::Expect(
+                        lineinfo,
+                        "Expected ')' to match this.".into(),
+                    )],
+                )?;
+            }
+            _ => {}
         }
 
         self.consume(TType::LeftBrace, "Expected '{' after for expression".into())?;
@@ -463,9 +473,13 @@ impl Parser {
             } else if self.get(&[TType::LeftBrack]) {
                 let tok = self.prev();
                 let val = self.expr()?;
-                self.consume(
+                self.consume_n(
                     TType::RightBrack,
                     "Expected ']' after accessor value.".into(),
+                    vec![ErrorNote::Expect(
+                        tok.lineinfo,
+                        "Expected the ']' to match this.".into(),
+                    )],
                 )?;
                 expr = Expr::Get(Rc::new(expr), tok, Rc::new(val));
             } else {
@@ -501,10 +515,15 @@ impl Parser {
         }
 
         if self.get(&[TType::LeftParen]) {
+            let tok = self.prev();
             let expr = self.expr()?;
-            self.consume(
+            self.consume_n(
                 TType::RightParen,
                 String::from("Expected ')' after grouping expression."),
+                vec![ErrorNote::Expect(
+                    tok.lineinfo,
+                    "Expected the ')' to match this.".into(),
+                )],
             )?;
             return Ok(Expr::Grouping(Rc::new(expr)));
         }
@@ -528,15 +547,20 @@ impl Parser {
     }
 
     fn block(&mut self) -> Result<Vec<Stmt>, Error> {
+        let tok = self.prev();
         let mut stmts: Vec<Stmt> = Vec::new();
 
         while !self.check(TType::RightBrace) && self.is_valid() {
             stmts.push(self.stmt()?);
         }
 
-        self.consume(
+        self.consume_n(
             TType::RightBrace,
             "Expected '}' after block expression".into(),
+            vec![ErrorNote::Expect(
+                tok.lineinfo,
+                "Expected '}' to match this.".into(),
+            )],
         )?;
 
         Ok(stmts)
@@ -580,10 +604,10 @@ impl Parser {
     }
 
     fn finish_fn(&mut self, kind: String) -> Result<(Vec<Token>, Vec<Stmt>), Error> {
-        self.consume(
+        let lineinfo = self.consume(
             TType::LeftParen,
             format!("Expected '(' after {}", kind).into(),
-        )?;
+        )?.lineinfo;
 
         let mut params: Vec<Token> = Vec::new();
         if !self.check(TType::RightParen) {
@@ -607,9 +631,10 @@ impl Parser {
             }
         }
 
-        self.consume(
+        self.consume_n(
             TType::RightParen,
             "Expected ')' after function paramaters.".into(),
+            vec![ErrorNote::Expect(lineinfo, "Expected ')' to match this.".into())]
         )?;
         self.consume(TType::LeftBrace, "Expected '{' after ')'".into())?;
 
@@ -629,6 +654,25 @@ impl Parser {
             self.peek().lineinfo,
             error_message,
             ErrorType::SyntaxError,
+        ))
+    }
+
+    fn consume_n(
+        &mut self,
+        token: TType,
+        error_message: String,
+        notes: Vec<ErrorNote>,
+    ) -> Result<Token, Error> {
+        if self.check(token) {
+            return Ok(self.next());
+        }
+
+        self.synchronize();
+        Err(Error::new_n(
+            self.peek().lineinfo,
+            error_message,
+            ErrorType::SyntaxError,
+            notes,
         ))
     }
 

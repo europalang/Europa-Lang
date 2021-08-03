@@ -1,6 +1,6 @@
-fn a(x) {
-    x = 3;
-}
+var a = "1 2, 3;
 
-var e = 5;
-a(e);
+if true {
+    println("wow something was true!"
+    );
+}

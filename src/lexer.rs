@@ -1,4 +1,4 @@
-use crate::error::{Error, ErrorType, LineInfo};
+use crate::error::{Error, ErrorNote, ErrorType, LineInfo};
 use crate::token::{TType, Token};
 
 use maplit::hashmap;
@@ -101,6 +101,7 @@ impl Lexer {
                 }
 
                 '"' | '\'' => {
+                    let lf = LineInfo { col: self.info.col - 1, ..self.info };
                     let str_type = char; // " or '
                     let mut str = String::new();
 
@@ -182,10 +183,11 @@ impl Lexer {
                     }
 
                     if !self.is_valid() {
-                        return Err(Error::new(
+                        return Err(Error::new_n(
                             self.info,
                             String::from("Unterminated string."),
                             ErrorType::SyntaxError,
+                            vec![ErrorNote::Expect(lf, "String starts here.".into())]
                         ));
                     }
 
@@ -256,6 +258,8 @@ impl Lexer {
                             self.next();
                         }
                     } else if self.get('*') {
+                        let lf = self.info;
+
                         while self.is_valid() && (self.peek() != '*' && self.peek_n(1) != '/') {
                             if self.peek() == '\n' {
                                 self.newline();
@@ -265,10 +269,11 @@ impl Lexer {
                         }
 
                         if !self.is_valid() {
-                            return Err(Error::new(
+                            return Err(Error::new_n(
                                 self.info,
                                 String::from("Unterminated multiline comment."),
                                 ErrorType::SyntaxError,
+                                vec![ErrorNote::Expect(lf, "Expected '*/' to match this.".into())]
                             ));
                         }
 
@@ -334,7 +339,7 @@ impl Lexer {
                     } else {
                         return Err(Error::new(
                             self.info,
-                            format!("Invalid token {}", char),
+                            format!("Invalid token '{}'.", char),
                             ErrorType::SyntaxError,
                         ));
                     }
