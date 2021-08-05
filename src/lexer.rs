@@ -101,7 +101,7 @@ impl Lexer {
                 }
 
                 '"' | '\'' => {
-                    let lf = LineInfo { col: self.info.col - 1, ..self.info };
+                    let lf = self.info;
                     let str_type = char; // " or '
                     let mut str = String::new();
 

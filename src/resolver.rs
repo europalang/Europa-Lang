@@ -176,7 +176,7 @@ impl Resolver {
 
         for i in (0..self.scopes.len()).rev() {
             if self.scopes[i].contains(var) {
-                self.interpreter
+                return self.interpreter
                     .resolve(name.clone(), self.scopes.len() - 1 - i);
             }
         }

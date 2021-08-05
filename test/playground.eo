@@ -1,3 +1,5 @@
-for i in "abc123" {
-    println(i);
+var a = 5;
+{
+    var a = a + 6;
+    println(a);
 }
