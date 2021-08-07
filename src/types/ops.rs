@@ -77,6 +77,21 @@ impl Type {
         ))
     }
 
+    pub fn pow(&self, other: &Type) -> TResult {
+        if let (Self::Float(a), Self::Float(b)) = (self, other) {
+            if *b == 0f32 {
+                return Err(("Division by 0.".into(), ErrorType::MathError));
+            }
+            return Ok(Self::Float(a.powf(*b)));
+        }
+
+        Err((
+            "Operator '%' can only be applied to numbers.".into(),
+            ErrorType::TypeError,
+        ))
+    }
+
+    // arrays and maps
     pub fn index(&self, num: Type) -> TResult {
         match self {
             Self::Array(v) => {

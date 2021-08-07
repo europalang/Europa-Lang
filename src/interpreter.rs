@@ -208,6 +208,7 @@ impl Interpreter {
                     TType::Times => self.out(&lval.mult(&rval), &tok)?,
                     TType::Divide => self.out(&lval.div(&rval), &tok)?,
                     TType::Mod => self.out(&lval.modulo(&rval), &tok)?,
+                    TType::Pow => self.out(&lval.pow(&rval), &tok)?,
 
                     TType::EqEq => Type::Bool(lval == rval),
                     TType::NotEq => Type::Bool(lval != rval),
@@ -379,6 +380,7 @@ impl Interpreter {
                 self.assign(
                     match &**var {
                         Expr::Variable(t) => Ok(t),
+                        Expr::Array(_) => return Ok(value),
                         _ => Err(Error::new(
                             brack.lineinfo,
                             "Only variables and indices of arrays or maps can be assigned to."
