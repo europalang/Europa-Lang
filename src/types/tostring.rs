@@ -8,10 +8,10 @@ impl Type {
             Type::Array(v) => {
                 let mut out = String::from('[');
 
-                for (idx, val) in v.arr.iter().enumerate() {
+                for (idx, val) in v.borrow().arr.iter().enumerate() {
                     out += &val.to_string();
 
-                    if idx < v.arr.len() - 1 {
+                    if idx < v.borrow().arr.len() - 1 {
                         out += ", ";
                     }
                 }

@@ -17,10 +17,10 @@ impl Array {
         Ok(self.arr[i].clone())
     }
 
-    pub fn set(&mut self, i: Type, v: Type) -> Result<Type, (String, ErrorType)> {
+    pub fn set(&mut self, i: Type, v: Type) -> Result<(), (String, ErrorType)> {
         let i = self.check_index(i)?;
         self.arr[i] = v.clone();
-        Ok(Type::Array(self.clone()))
+        Ok(())
     }
 
     fn check_index(&self, num: Type) -> Result<usize, (String, ErrorType)> {

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::{
     environment::Environment,
@@ -137,14 +137,14 @@ impl Interpreter {
                 match val {
                     Type::Array(exprs) => {
                         // for i in itm {
-                        for expr in exprs.arr {
-                            let v = &expr;
+                        for expr in &exprs.borrow().arr {
+                            let v = expr;
                             let name_str = match &name.ttype {
                                 TType::Identifier(v) => v,
                                 _ => panic!(),
                             };
 
-                            self.environ.define(name_str, &v);
+                            self.environ.define(name_str, v);
                             match self.eval_block(block, false) {
                                 Err(e) => match e.error_type {
                                     ErrorType::Break => break,
@@ -327,7 +327,7 @@ impl Interpreter {
                     out.push(self.eval_expr(itm)?);
                 }
 
-                Ok(Type::Array(Array::new(out)))
+                Ok(Type::Array(Rc::new(RefCell::new(Array::new(out)))))
             }
             Expr::Range(left, tok, right, inclusive) => {
                 let left = self.eval_expr(left)?;
@@ -359,7 +359,7 @@ impl Interpreter {
                         }
                     }
 
-                    return Ok(Type::Array(Array::new(out)));
+                    return Ok(Type::Array(Rc::new(RefCell::new(Array::new(out)))));
                 } else {
                     Err(Error::new(
                         tok.lineinfo,
@@ -369,27 +369,11 @@ impl Interpreter {
                 }
             }
             Expr::Set(var, brack, i, val) => {
-                // todo: maps
-                // todo: validate
+                let collection = self.eval_expr(var)?;
+                let i = self.eval_expr(i)?;
+                let val = self.eval_expr(val)?;
 
-                let mut collection = self.eval_expr(var)?;
-                let value = self.eval_expr(val)?;
-                let idx = self.eval_expr(i)?;
-
-                let val = self.out(&mut collection.assign(idx, value.clone()), brack)?;
-                self.assign(
-                    match &**var {
-                        Expr::Variable(t) => Ok(t),
-                        Expr::Array(_) => return Ok(value),
-                        _ => Err(Error::new(
-                            brack.lineinfo,
-                            "Only variables and indices of arrays or maps can be assigned to."
-                                .into(),
-                            ErrorType::TypeError,
-                        )),
-                    }?,
-                    &val,
-                )
+                self.out(&collection.assign(i, val), brack)
             }
         }
     }

@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::functions::FuncType;
 use array::Array;
 
@@ -12,7 +14,7 @@ pub enum Type {
     Float(f32),
     String(String),
     Bool(bool),
-    Array(Array),
+    Array(Rc<RefCell<Array>>),
     Func(FuncType),
     Nil,
 }

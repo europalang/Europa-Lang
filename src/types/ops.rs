@@ -95,7 +95,7 @@ impl Type {
     pub fn index(&self, num: Type) -> TResult {
         match self {
             Self::Array(v) => {
-                v.get(num)
+                v.borrow().get(num)
             }
 
             _ => Err((
@@ -105,10 +105,11 @@ impl Type {
         }
     }
 
-    pub fn assign(&mut self, i: Type, value: Type) -> TResult {
+    pub fn assign(&self, i: Type, value: Type) -> TResult {
         match self {
-            Type::Array(v) => {
-                v.set(i, value)
+            Type::Array(ref v) => {
+                v.borrow_mut().set(i, value.clone())?;
+                Ok(value.clone())
             }
             _ => Err((
                 "The [...]= operator can only be applied to arrays and maps.".into(),
