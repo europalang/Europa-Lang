@@ -20,5 +20,6 @@ pub enum Expr {
     Get(Rc<Expr>, Token, Rc<Expr>),
     Set(Rc<Expr>, Token, Rc<Expr>, Rc<Expr>),
     Array(Vec<Expr>),
+    Map(Vec<(Expr, Expr)>),
     Range(Rc<Expr>, Token, Rc<Expr>, bool),
 }

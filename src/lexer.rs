@@ -53,14 +53,14 @@ impl Lexer {
             match char {
                 '{' => {
                     if self.get('{') {
-                        self.append_token(TType::LeftS)
+                        self.append_token(TType::LeftBBrace)
                     } else {
                         self.append_token(TType::LeftBrace)
                     }
                 }
                 '}' => {
                     if self.get('}') {
-                        self.append_token(TType::RightS)
+                        self.append_token(TType::RightBBrace)
                     } else {
                         self.append_token(TType::RightBrace)
                     }

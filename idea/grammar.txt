@@ -39,10 +39,11 @@ times => unary ( ( "*" | "/" | "%" ) unary )*
 unary => ( ( "!" | "-" ) unary ) | call
 call => primary ( "(" args? ")" | "[" expr "]" )*
 
-primary => NUMBER | STRING | IDENTIFIER | "true" | "false" | "nil" | "(" expr ")" | block | ifStmt | array
+primary => NUMBER | STRING | IDENTIFIER | "true" | "false" | "nil" | "(" expr ")" | block | ifStmt | array | maps
 
 block => "{" statement* "}"
 array => "[" ( expr "," )* ( expr )? "]"
+maps => "{{" ( expr ":" expr "," )* ( expr ":" expr "," )? "}}"
 
 args => expr ( "," expr )*
 params => IDENTIFIER ( "," IDENTIFIER )*

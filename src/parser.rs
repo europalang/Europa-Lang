@@ -503,6 +503,9 @@ impl Parser {
         if self.get(&[TType::LeftBrack]) {
             return self.array();
         }
+        if self.get(&[TType::LeftBBrace]) {
+            return self.map();
+        }
 
         // 'statement-like'
         if self.get(&[TType::LeftBrace]) {
@@ -586,6 +589,31 @@ impl Parser {
         Ok(Expr::Array(vals))
     }
 
+    fn map(&mut self) -> PResult {
+        // todo: enum
+        // todo: identifiers
+        let mut vals = Vec::new();
+
+        while self.peek().ttype != TType::RightBBrace {
+            let key = self.expr()?;
+            self.consume(TType::Colon, "Expected ':' after key.".into())?;
+            let value = self.expr()?;
+            vals.push((key, value));
+
+            if !self.get(&[TType::Comma]) && self.peek().ttype != TType::RightBBrace {
+                return Err(Error::new(
+                    self.peek().lineinfo,
+                    "Expected ',' after map value".into(),
+                    ErrorType::SyntaxError,
+                ));
+            }
+        }
+
+        self.next();
+        
+        Ok(Expr::Map(vals))
+    }
+
     // util
     fn finish_call(&mut self, expr: &mut Expr) -> PResult {
         let mut args: Vec<Expr> = Vec::new();
@@ -604,10 +632,12 @@ impl Parser {
     }
 
     fn finish_fn(&mut self, kind: String) -> Result<(Vec<Token>, Vec<Stmt>), Error> {
-        let lineinfo = self.consume(
-            TType::LeftParen,
-            format!("Expected '(' after {}", kind).into(),
-        )?.lineinfo;
+        let lineinfo = self
+            .consume(
+                TType::LeftParen,
+                format!("Expected '(' after {}", kind).into(),
+            )?
+            .lineinfo;
 
         let mut params: Vec<Token> = Vec::new();
         if !self.check(TType::RightParen) {
@@ -634,7 +664,10 @@ impl Parser {
         self.consume_n(
             TType::RightParen,
             "Expected ')' after function paramaters.".into(),
-            vec![ErrorNote::Expect(lineinfo, "Expected ')' to match this.".into())]
+            vec![ErrorNote::Expect(
+                lineinfo,
+                "Expected ')' to match this.".into(),
+            )],
         )?;
         self.consume(TType::LeftBrace, "Expected '{' after ')'".into())?;
 

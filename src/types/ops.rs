@@ -97,7 +97,9 @@ impl Type {
             Self::Array(v) => {
                 v.borrow().get(num)
             }
-
+            Self::Map(v) => {
+                v.borrow().get(num)
+            }
             _ => Err((
                 "The [...] operator can only be applied to arrays and maps.".into(),
                 ErrorType::TypeError,
@@ -107,7 +109,11 @@ impl Type {
 
     pub fn assign(&self, i: Type, value: Type) -> TResult {
         match self {
-            Type::Array(ref v) => {
+            Type::Array(v) => {
+                v.borrow_mut().set(i, value.clone())?;
+                Ok(value.clone())
+            }
+            Type::Map(v) => {
                 v.borrow_mut().set(i, value.clone())?;
                 Ok(value.clone())
             }

@@ -18,6 +18,9 @@ impl Type {
 
                 out + "]"
             }
+            Type::Map(n) => {
+                n.borrow().to_string(1)
+            }
             Type::Nil => "nil".into(),
             Type::Float(n) => n.to_string(),
             Type::String(n) => n.clone(),

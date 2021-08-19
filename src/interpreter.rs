@@ -7,7 +7,7 @@ use crate::{
     nodes::{expr::Expr, stmt::Stmt},
     token::{TType, Token},
     types::array::Array,
-    types::Type,
+    types::{map::Map, Type},
 };
 
 type IResult = Result<Type, Error>;
@@ -367,6 +367,18 @@ impl Interpreter {
                         ErrorType::TypeError,
                     ))
                 }
+            }
+            Expr::Map(v) => {
+                let mut out = HashMap::new();
+
+                for (key, value) in v {
+                    let key = self.eval_expr(key)?.to_string();
+                    let value = self.eval_expr(value)?;
+
+                    out.insert(key, value);
+                }
+
+                Ok(Type::Map(Rc::new(RefCell::new(Map::new(out)))))
             }
             Expr::Set(var, brack, i, val) => {
                 let collection = self.eval_expr(var)?;

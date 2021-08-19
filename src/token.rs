@@ -5,8 +5,8 @@ use crate::error::LineInfo;
 #[derive(Debug, Clone, PartialEq)]
 pub enum TType {
     // delims
-    LeftS,  // {{
-    RightS, // }}
+    LeftBBrace,  // {{
+    RightBBrace, // }}
     LeftBrace,
     RightBrace,
     LeftParen,

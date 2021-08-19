@@ -142,6 +142,12 @@ impl Resolver {
                 self.resolve_expr(left);
                 self.resolve_expr(right);
             }
+            Expr::Map(map) => {
+                for (key, value) in map {
+                    self.resolve_expr(key);
+                    self.resolve_expr(value);
+                }
+            },
             Expr::Set(var, _, i, val) => {
                 self.resolve_expr(var);
                 self.resolve_expr(i);
