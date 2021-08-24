@@ -57,6 +57,9 @@ impl Parser {
         if self.get(&[TType::Fn]) {
             return self.fn_stmt();
         }
+        if self.get(&[TType::Use]) {
+            return self.use_stmt();
+        }
 
         self.expr_stmt()
     }
@@ -269,6 +272,25 @@ impl Parser {
                 ErrorType::SyntaxError,
             ));
         }
+    }
+
+    fn use_stmt(&mut self) -> SResult {
+        let name = self.next();
+
+        let out = if matches!(name.ttype, TType::Identifier(_)) {
+            Stmt::UseStmt(name)
+        } // todo: string syntax???
+        else {
+            return Err(Error::new(
+                name.lineinfo,
+                "Expected an identifier or a string after use statement.".into(),
+                ErrorType::SyntaxError,
+            ));
+        };
+
+        self.consume(TType::Semi, "Expected ';' after use statement.".into())?;
+
+        Ok(out)
     }
 
     // expressions
@@ -610,7 +632,7 @@ impl Parser {
         }
 
         self.next();
-        
+
         Ok(Expr::Map(vals))
     }
 

@@ -1,9 +1,2 @@
-var x = {{
-    'o': {{
-        'e': 6
-    }}
-}};
-
-x['o']['e'] += 2;
-println(x['o']['e']);
-println(x);
+use io;
+println("hi");

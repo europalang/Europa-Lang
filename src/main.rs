@@ -11,6 +11,7 @@ mod resolver;
 mod tests;
 mod token;
 mod types;
+mod stdlib;
 
 use std::io::{stdin, stdout, Write};
 use std::time::Instant;

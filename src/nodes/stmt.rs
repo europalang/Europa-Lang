@@ -12,4 +12,5 @@ pub enum Stmt {
     Continue(Token),
     Return(Token, Option<Expr>),
     Function(Token, Vec<Token>, Vec<Stmt>),
+    UseStmt(Token),
 }

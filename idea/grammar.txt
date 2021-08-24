@@ -2,7 +2,7 @@ program => statement* EOF
 
 
 # statements
-statement => exprStmt | varDecl | block | ifStmt | whileStmt | doWhileStmt | breakStmt | continueStmt | fnDecl | returnStmt
+statement => exprStmt | varDecl | block | ifStmt | whileStmt | doWhileStmt | breakStmt | continueStmt | fnDecl | returnStmt | useStmt
 
 exprStmt => ( expr ";" )
 varDecl => "var" IDENTIFIER ("=" expr )? ";"
@@ -18,6 +18,8 @@ continueStmt => "continue" ";"
 
 fnDecl => "fn" IDENTIFIER function
 returnStmt => "return" expr? ";"
+
+useStmt => "use" IDENTIFIER ";"
 
 
 # expressions

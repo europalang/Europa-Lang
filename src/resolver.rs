@@ -86,6 +86,14 @@ impl Resolver {
             }
             Stmt::Break(_) => {}
             Stmt::Continue(_) => {}
+
+            // todo
+            Stmt::UseStmt(_) => {
+                // match &n.ttype {
+                //     TType::Identifier(n) => self.define(n),
+                //     _ => panic!()
+                // }
+            }
         }
     }
 

@@ -3,8 +3,9 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 use crate::{
     environment::Environment,
     error::{Error, ErrorType, LineInfo},
-    functions::{Call, Func, FuncCallable, FuncType},
+    functions::{Call, FuncCallable, FuncType},
     nodes::{expr::Expr, stmt::Stmt},
+    stdlib::Stdlib,
     token::{TType, Token},
     types::array::Array,
     types::{map::Map, Type},
@@ -18,6 +19,7 @@ pub struct Interpreter {
     pub nodes: Vec<Stmt>,
     pub environ: Environment,
     pub locals: HashMap<LineInfo, usize>,
+    stdlib: Stdlib,
 }
 
 impl Interpreter {
@@ -27,20 +29,21 @@ impl Interpreter {
             nodes,
             environ,
             locals: HashMap::new(),
+            stdlib: Stdlib::new(),
         }
     }
 
     pub fn init(&mut self) -> Result<(), Error> {
-        self.environ.define(
-            &"println".into(),
-            &Type::Func(FuncType::Native(Func::new(
-                Rc::new(|_: &mut Interpreter, args: Vec<Type>| {
-                    println!("{}", args[0].to_string());
-                    Ok(Type::Nil)
-                }),
-                1,
-            ))),
-        );
+        // self.environ.define(
+        //     &"println".into(),
+        //     &Type::Func(FuncType::Native(Func::new(
+        //         Rc::new(|_: &mut Interpreter, args: Vec<Type>| {
+        //             println!("{}", args[0].to_string());
+        //             Ok(Type::Nil)
+        //         }),
+        //         1,
+        //     ))),
+        // );
 
         for stmt in self.nodes.clone() {
             self.eval_stmt(&stmt.clone())?;
@@ -191,6 +194,27 @@ impl Interpreter {
                             ErrorType::TypeError,
                         ))
                     }
+                }
+            }
+            Stmt::UseStmt(n) => {
+                if let TType::Identifier(name) = &n.ttype {
+                    if !self.stdlib.mods.contains_key(name) {
+                        return Err(Error::new(
+                            n.lineinfo,
+                            format!("Module {} not found.", name),
+                            ErrorType::ReferenceError,
+                        ));
+                    }
+
+                    let module = &self.stdlib.mods[name].fns;
+
+                    for (name, func) in module {
+                        self.environ.define(name, &Type::Func(func.clone()));
+                    }
+
+                    Ok(Type::Nil)
+                } else {
+                    panic!();
                 }
             }
         }
