@@ -216,7 +216,7 @@ impl Interpreter {
                                         return Err(Error::new(
                                             lf,
                                             format!(
-                                                "Module item {} does not exist in {}",
+                                                "The item '{}' does not exist in the module '{}'",
                                                 name_string, name
                                             )
                                             .into(),
@@ -227,7 +227,7 @@ impl Interpreter {
                             }
                         }
                         ImportType::Mod => {
-                            self.environ.define(name, &Type::Module(ModImport::new(module.clone())))
+                            self.environ.define(name, &Type::Module(ModImport::new(name.clone(), module.clone())))
                         }
                     }
 
@@ -445,10 +445,9 @@ impl Interpreter {
                         if let Some(out) = maybe_fn {
                             Ok(Type::Func(out.clone()))
                         } else {
-                            // todo: function prnt was not found in io.
                             Err(Error::new(
                                 prop.lineinfo,
-                                format!("Function {} was not found in this module.", prop_string).into(),
+                                format!("The item '{}' does not exist in the module '{}'.", prop_string, module.name).into(),
                                 ErrorType::TypeError,
                             ))
                         }
