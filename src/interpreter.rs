@@ -1,9 +1,18 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use crate::{environment::Environment, error::{Error, ErrorType, LineInfo}, functions::{Call, FuncCallable, FuncType}, nodes::{
+use crate::{
+    environment::Environment,
+    error::{Error, ErrorType, LineInfo},
+    functions::{Call, FuncCallable, FuncType},
+    nodes::{
         expr::Expr,
         stmt::{ImportType, Stmt},
-    }, stdlib::Stdlib, token::{TType, Token}, types::{array::Array, module::ModImport}, types::{map::Map, Type}};
+    },
+    stdlib::Stdlib,
+    token::{TType, Token},
+    types::{array::Array, module::ModImport},
+    types::{map::Map, Type},
+};
 
 type IResult = Result<Type, Error>;
 // type SResult = Result<(), Error>;
@@ -13,7 +22,7 @@ pub struct Interpreter {
     pub nodes: Vec<Stmt>,
     pub environ: Environment,
     pub locals: HashMap<LineInfo, usize>,
-    stdlib: Stdlib,
+    pub stdlib: Stdlib,
 }
 
 impl Interpreter {
@@ -180,17 +189,7 @@ impl Interpreter {
                 }
             }
             Stmt::UseStmt(module, import_type) => {
-                let lf = module.lineinfo;
-
                 if let TType::Identifier(name) = &module.ttype {
-                    if !self.stdlib.mods.contains_key(name) {
-                        return Err(Error::new(
-                            module.lineinfo,
-                            format!("Module {} not found.", name),
-                            ErrorType::ReferenceError,
-                        ));
-                    }
-
                     let module = &self.stdlib.mods[name].fns;
 
                     match &import_type {
@@ -199,6 +198,7 @@ impl Interpreter {
                                 self.environ.define(name, &Type::Func(func.clone()));
                             }
                         }
+
                         ImportType::Multiple(fns) => {
                             for fn_name in fns {
                                 let name_string = match &fn_name.ttype {
@@ -213,22 +213,15 @@ impl Interpreter {
                                         self.environ.define(name_string, &Type::Func(func.clone()));
                                     }
                                     None => {
-                                        return Err(Error::new(
-                                            lf,
-                                            format!(
-                                                "The item '{}' does not exist in the module '{}'",
-                                                name_string, name
-                                            )
-                                            .into(),
-                                            ErrorType::ReferenceError,
-                                        ))
+                                        
                                     }
                                 }
                             }
                         }
-                        ImportType::Mod => {
-                            self.environ.define(name, &Type::Module(ModImport::new(name.clone(), module.clone())))
-                        }
+                        ImportType::Mod => self.environ.define(
+                            name,
+                            &Type::Module(ModImport::new(name.clone(), module.clone())),
+                        ),
                     }
 
                     Ok(Type::Nil)
@@ -447,7 +440,11 @@ impl Interpreter {
                         } else {
                             Err(Error::new(
                                 prop.lineinfo,
-                                format!("The item '{}' does not exist in the module '{}'.", prop_string, module.name).into(),
+                                format!(
+                                    "The item '{}' does not exist in the module '{}'.",
+                                    prop_string, module.name
+                                )
+                                .into(),
                                 ErrorType::TypeError,
                             ))
                         }

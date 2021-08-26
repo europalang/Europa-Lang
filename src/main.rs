@@ -139,7 +139,10 @@ fn run_string(
     // Resolve variables
     time = Instant::now();
     let mut resolver = Resolver::new(interpreter);
-    interpreter = resolver.init();
+    interpreter = match resolver.init() {
+        Err(e) => return Err(e),
+        Ok(i) => i 
+    };
     if verbose {
         eprintln!("resolver {:?}", time.elapsed());
     }

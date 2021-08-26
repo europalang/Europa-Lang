@@ -1,7 +1,11 @@
 use crate::{
+    error::{Error, ErrorType},
     interpreter::Interpreter,
-    nodes::{expr::Expr, stmt::Stmt},
-    token::{TType, Token}
+    nodes::{
+        expr::Expr,
+        stmt::{ImportType, Stmt},
+    },
+    token::{TType, Token},
 };
 
 pub struct Resolver {
@@ -17,39 +21,39 @@ impl Resolver {
         }
     }
 
-    pub fn init(&mut self) -> Interpreter {
+    pub fn init(&mut self) -> Result<Interpreter, Error> {
         let nodes = self.interpreter.nodes.clone();
 
-        self.resolves(&nodes);
+        self.resolves(&nodes)?;
 
-        self.interpreter.clone()
+        Ok(self.interpreter.clone())
     }
 
     // resolve
-    fn resolve_stmt(&mut self, node: &Stmt) {
+    fn resolve_stmt(&mut self, node: &Stmt) -> Result<(), Error> {
         match node {
             Stmt::ExprStmt(expr) => {
-                self.resolve_expr(expr);
+                self.resolve_expr(expr)?;
             }
             Stmt::VarDecl(vars) => {
                 for (name, val) in vars {
-                    self.resolve_expr(val);
+                    self.resolve_expr(val)?;
                     self.define(name);
                 }
             }
             Stmt::Block(stmts) => {
-                self.resolves(stmts);
+                self.resolves(stmts)?;
             }
             Stmt::IfStmt(cond, true_br, elif_brs, else_br) => {
-                self.resolve_if(cond, true_br, elif_brs, else_br);
+                self.resolve_if(cond, true_br, elif_brs, else_br)?;
             }
             Stmt::WhileStmt(cond, body) => {
-                self.resolve_expr(cond);
-                self.resolves(body);
+                self.resolve_expr(cond)?;
+                self.resolves(body)?;
             }
             Stmt::Return(_, val) => {
                 if let Some(v) = val {
-                    self.resolve_expr(v);
+                    self.resolve_expr(v)?;
                 }
             }
             Stmt::Function(name, args, block) => {
@@ -70,7 +74,7 @@ impl Resolver {
                     self.define(&name);
                 }
 
-                self.resolves(block);
+                self.resolves(block)?;
                 self.end_scope();
             }
             Stmt::ForStmt(name, val, block) => {
@@ -80,91 +84,149 @@ impl Resolver {
                 };
 
                 self.define(str);
-                self.resolve_expr(val);
+                self.resolve_expr(val)?;
 
-                self.resolves(block);
+                self.resolves(block)?;
             }
             Stmt::Break(_) => {}
             Stmt::Continue(_) => {}
 
             // todo
-            Stmt::UseStmt(_, _) => {
-                // match &n.ttype {
-                //     TType::Identifier(n) => self.define(n),
-                //     _ => panic!()
-                // }
+            Stmt::UseStmt(module, import_type) => {
+                let lf = module.lineinfo;
+
+                let name = match &module.ttype {
+                    TType::Identifier(n) => n,
+                    _ => panic!(),
+                };
+
+                let stdlib = self.interpreter.stdlib.mods.clone();
+                let module = stdlib.get(name).clone();
+
+                if let Some(module) = module {
+                    let fns = &module.fns;
+
+                    match &import_type {
+                        ImportType::Star => {
+                            let keys = fns.keys();
+                            for name in keys {
+                                self.define(&name);
+                            }
+                        }
+                        ImportType::Mod => {
+                            self.define(&name);
+                        }
+                        ImportType::Multiple(itms) => {
+                            for fn_name in itms {
+                                let name_string = match &fn_name.ttype {
+                                    TType::Identifier(s) => s,
+                                    _ => panic!(),
+                                };
+
+                                let maybe_func = fns.get(name_string);
+
+                                match maybe_func {
+                                    Some(_) => {
+                                        self.define(&name_string);
+                                    }
+                                    None => {
+                                        return Err(Error::new(
+                                            lf,
+                                            format!(
+                                                "The item '{}' does not exist in the module '{}'.",
+                                                name_string, name
+                                            )
+                                            .into(),
+                                            ErrorType::ReferenceError,
+                                        ))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    return Err(Error::new(
+                        lf,
+                        format!("Module '{}' not found.", name),
+                        ErrorType::ReferenceError,
+                    ));
+                }
             }
         }
+
+        Ok(())
     }
 
-    fn resolve_expr(&mut self, expr: &Expr) {
+    fn resolve_expr(&mut self, expr: &Expr) -> Result<(), Error> {
         match expr {
             Expr::Assign(var, val) => {
                 self.resolve_local(var);
-                self.resolve_expr(val);
+                self.resolve_expr(val)?;
             }
             Expr::Binary(left, _, right) => {
-                self.resolve_expr(left);
-                self.resolve_expr(right);
+                self.resolve_expr(left)?;
+                self.resolve_expr(right)?;
             }
-            Expr::Grouping(expr) => self.resolve_expr(expr),
+            Expr::Grouping(expr) => self.resolve_expr(expr)?,
             Expr::Unary(_, expr) => {
-                self.resolve_expr(expr);
+                self.resolve_expr(expr)?;
             }
             Expr::Variable(var) => {
                 self.resolve_local(var);
             }
             Expr::Block(stmts) => {
-                self.resolves(stmts);
+                self.resolves(stmts)?;
             }
             Expr::Logical(left, _, right) => {
-                self.resolve_expr(left);
-                self.resolve_expr(right);
+                self.resolve_expr(left)?;
+                self.resolve_expr(right)?;
             }
             Expr::Ternary(cond, left, right) => {
-                self.resolve_expr(cond);
-                self.resolve_expr(left);
-                self.resolve_expr(right);
+                self.resolve_expr(cond)?;
+                self.resolve_expr(left)?;
+                self.resolve_expr(right)?;
             }
             Expr::Call(call, _, args) => {
-                self.resolve_expr(call);
+                self.resolve_expr(call)?;
 
                 for arg in args {
-                    self.resolve_expr(arg);
+                    self.resolve_expr(arg)?;
                 }
             }
             Expr::IfExpr(cond, true_br, elif_brs, else_br) => {
-                self.resolve_if(cond, true_br, elif_brs, else_br);
+                self.resolve_if(cond, true_br, elif_brs, else_br)?;
             }
             Expr::Literal(_) => {}
             Expr::Get(val, _, key) => {
-                self.resolve_expr(val);
-                self.resolve_expr(key);
+                self.resolve_expr(val)?;
+                self.resolve_expr(key)?;
             }
             Expr::Array(itms) => {
                 for itm in itms {
-                    self.resolve_expr(itm);
+                    self.resolve_expr(itm)?;
                 }
             }
             Expr::Range(left, _, right, _) => {
-                self.resolve_expr(left);
-                self.resolve_expr(right);
+                self.resolve_expr(left)?;
+                self.resolve_expr(right)?;
             }
             Expr::Map(map) => {
                 for (key, value) in map {
-                    self.resolve_expr(key);
-                    self.resolve_expr(value);
+                    self.resolve_expr(key)?;
+                    self.resolve_expr(value)?;
                 }
-            },
+            }
             Expr::Set(var, _, i, val) => {
-                self.resolve_expr(var);
-                self.resolve_expr(i);
-                self.resolve_expr(val);
+                self.resolve_expr(var)?;
+                self.resolve_expr(i)?;
+                self.resolve_expr(val)?;
             }
             Expr::Prop(var, _) => {
-                self.resolve_expr(var);
+                self.resolve_expr(var)?;
             }
         }
+
+        Ok(())
     }
 
     // util
@@ -177,12 +239,14 @@ impl Resolver {
     }
 
     // resolve
-    fn resolves(&mut self, stmts: &Vec<Stmt>) {
+    fn resolves(&mut self, stmts: &Vec<Stmt>) -> Result<(), Error> {
         self.begin_scope();
         for stmt in stmts {
-            self.resolve_stmt(stmt);
+            self.resolve_stmt(stmt)?;
         }
         self.end_scope();
+
+        Ok(())
     }
     // resolve_local resolves a variable
     fn resolve_local(&mut self, name: &Token) {
@@ -193,7 +257,8 @@ impl Resolver {
 
         for i in (0..self.scopes.len()).rev() {
             if self.scopes[i].contains(var) {
-                return self.interpreter
+                return self
+                    .interpreter
                     .resolve(name.clone(), self.scopes.len() - 1 - i);
             }
         }
@@ -205,20 +270,22 @@ impl Resolver {
         true_br: &Vec<Stmt>,
         elif_brs: &Vec<(Expr, Vec<Stmt>)>,
         else_br: &Option<Vec<Stmt>>,
-    ) {
-        self.resolve_expr(cond);
+    ) -> Result<(), Error> {
+        self.resolve_expr(cond)?;
 
-        self.resolves(true_br);
+        self.resolves(true_br)?;
 
         for (cond, block) in elif_brs {
-            self.resolve_expr(cond);
+            self.resolve_expr(cond)?;
 
-            self.resolves(block);
+            self.resolves(block)?;
         }
 
         if let Some(br) = else_br {
-            self.resolves(br);
+            self.resolves(br)?;
         }
+
+        Ok(())
     }
 
     // define
