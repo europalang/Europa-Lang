@@ -4,7 +4,10 @@ use crate::{
     environment::Environment,
     error::{Error, ErrorType, LineInfo},
     functions::{Call, FuncCallable, FuncType},
-    nodes::{expr::Expr, stmt::Stmt},
+    nodes::{
+        expr::Expr,
+        stmt::{ImportType, Stmt},
+    },
     stdlib::Stdlib,
     token::{TType, Token},
     types::array::Array,
@@ -196,11 +199,13 @@ impl Interpreter {
                     }
                 }
             }
-            Stmt::UseStmt(n) => {
-                if let TType::Identifier(name) = &n.ttype {
+            Stmt::UseStmt(module, import_type) => {
+                let lf = module.lineinfo;
+
+                if let TType::Identifier(name) = &module.ttype {
                     if !self.stdlib.mods.contains_key(name) {
                         return Err(Error::new(
-                            n.lineinfo,
+                            module.lineinfo,
                             format!("Module {} not found.", name),
                             ErrorType::ReferenceError,
                         ));
@@ -208,8 +213,30 @@ impl Interpreter {
 
                     let module = &self.stdlib.mods[name].fns;
 
-                    for (name, func) in module {
-                        self.environ.define(name, &Type::Func(func.clone()));
+                    match &import_type {
+                        ImportType::Star => {
+                            for (name, func) in module {
+                                self.environ.define(name, &Type::Func(func.clone()));
+                            }
+                        }
+                        ImportType::Multiple(fns) => {
+                            for fn_name in fns {
+                                let name_string = match &fn_name.ttype {
+                                    TType::Identifier(s) => s,
+                                    _ => panic!()
+                                };
+
+                                let maybe_func = module.get(name_string);
+
+                                match maybe_func {
+                                    Some(func) => {
+                                        self.environ.define(name_string, &Type::Func(func.clone()));
+                                    }
+                                    None => return Err(Error::new(lf, format!("Module item {} does not exist in {}", name_string, name).into(), ErrorType::ReferenceError))
+                                }
+                            }
+                        }
+                        _ => panic!()
                     }
 
                     Ok(Type::Nil)

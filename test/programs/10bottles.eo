@@ -1,3 +1,5 @@
+use io.println;
+
 var count = 10;
 while count > 0 {
     var bottle = "bottle" + (count == 1 ? "" : "s");

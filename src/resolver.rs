@@ -88,7 +88,7 @@ impl Resolver {
             Stmt::Continue(_) => {}
 
             // todo
-            Stmt::UseStmt(_) => {
+            Stmt::UseStmt(_, _) => {
                 // match &n.ttype {
                 //     TType::Identifier(n) => self.define(n),
                 //     _ => panic!()

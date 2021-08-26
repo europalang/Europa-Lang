@@ -1,3 +1,5 @@
+use io.println;
+
 var i = 1;
 do {
     var x = if i % 3 == 0 { "Fizz " } else { "" } + if i % 5 == 0 { "Buzz" } else { "" };

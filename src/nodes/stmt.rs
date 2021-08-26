@@ -12,5 +12,12 @@ pub enum Stmt {
     Continue(Token),
     Return(Token, Option<Expr>),
     Function(Token, Vec<Token>, Vec<Stmt>),
-    UseStmt(Token),
+    UseStmt(Token, ImportType),
+}
+
+#[derive(Clone, Debug)]
+pub enum ImportType {
+    Mod,
+    Star,
+    Multiple(Vec<Token>),
 }

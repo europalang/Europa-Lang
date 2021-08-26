@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use crate::error::{Error, ErrorNote, ErrorType, LineInfo};
 use crate::nodes::expr::Expr;
-use crate::nodes::stmt::Stmt;
+use crate::nodes::stmt::{ImportType, Stmt};
 use crate::token::{TType, Token};
 use crate::types::Type;
 
@@ -278,8 +278,62 @@ impl Parser {
         let name = self.next();
 
         let out = if matches!(name.ttype, TType::Identifier(_)) {
-            Stmt::UseStmt(name)
-        } // todo: string syntax???
+            // Stmt::UseStmt(name)
+            if self.get(&[TType::Dot]) {
+                // use io.*
+                if self.get(&[TType::Times]) {
+                    Stmt::UseStmt(name, ImportType::Star)
+                } else {
+                    // use io.{
+                    if self.get(&[TType::LeftBrace]) {
+                        let mut fns = Vec::new();
+
+                        while self.peek().ttype != TType::RightBrace {
+                            let next = self.next();
+                            fns.push(match next.ttype {
+                                TType::Identifier(_) => next,
+                                _ => {
+                                    return Err(Error::new(
+                                        name.lineinfo,
+                                        "Expected an identifier for the function name.".into(),
+                                        ErrorType::SyntaxError,
+                                    ))
+                                }
+                            });
+
+                            if !self.get(&[TType::Comma]) && self.peek().ttype != TType::RightBrace
+                            {
+                                return Err(Error::new(
+                                    self.peek().lineinfo,
+                                    "Expected ',' after function value".into(),
+                                    ErrorType::SyntaxError,
+                                ));
+                            }
+                        }
+
+                        self.next(); // }
+
+                        Stmt::UseStmt(name, ImportType::Multiple(fns))
+
+                        // use io.println
+                    } else {
+                        let tok = self.next();
+                        if let TType::Identifier(_) = tok.ttype {
+                            Stmt::UseStmt(name, ImportType::Multiple(vec![tok]))
+                        } else {
+                            return Err(Error::new(
+                                name.lineinfo,
+                                "Expected an identifier after '.'.".into(),
+                                ErrorType::SyntaxError,
+                            ));
+                        }
+                    }
+                }
+            } else {
+                Stmt::UseStmt(name, ImportType::Mod)
+            }
+        }
+        // todo: string syntax???
         else {
             return Err(Error::new(
                 name.lineinfo,
