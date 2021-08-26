@@ -11,7 +11,7 @@ use crate::functions::FuncType;
 
 mod io;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Module {
     pub fns: HashMap<String, FuncType>,
 }

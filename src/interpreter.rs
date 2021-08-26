@@ -1,18 +1,9 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use crate::{
-    environment::Environment,
-    error::{Error, ErrorType, LineInfo},
-    functions::{Call, FuncCallable, FuncType},
-    nodes::{
+use crate::{environment::Environment, error::{Error, ErrorType, LineInfo}, functions::{Call, FuncCallable, FuncType}, nodes::{
         expr::Expr,
         stmt::{ImportType, Stmt},
-    },
-    stdlib::Stdlib,
-    token::{TType, Token},
-    types::array::Array,
-    types::{map::Map, Type},
-};
+    }, stdlib::Stdlib, token::{TType, Token}, types::{array::Array, module::ModImport}, types::{map::Map, Type}};
 
 type IResult = Result<Type, Error>;
 // type SResult = Result<(), Error>;
@@ -37,17 +28,6 @@ impl Interpreter {
     }
 
     pub fn init(&mut self) -> Result<(), Error> {
-        // self.environ.define(
-        //     &"println".into(),
-        //     &Type::Func(FuncType::Native(Func::new(
-        //         Rc::new(|_: &mut Interpreter, args: Vec<Type>| {
-        //             println!("{}", args[0].to_string());
-        //             Ok(Type::Nil)
-        //         }),
-        //         1,
-        //     ))),
-        // );
-
         for stmt in self.nodes.clone() {
             self.eval_stmt(&stmt.clone())?;
         }
@@ -223,7 +203,7 @@ impl Interpreter {
                             for fn_name in fns {
                                 let name_string = match &fn_name.ttype {
                                     TType::Identifier(s) => s,
-                                    _ => panic!()
+                                    _ => panic!(),
                                 };
 
                                 let maybe_func = module.get(name_string);
@@ -232,11 +212,23 @@ impl Interpreter {
                                     Some(func) => {
                                         self.environ.define(name_string, &Type::Func(func.clone()));
                                     }
-                                    None => return Err(Error::new(lf, format!("Module item {} does not exist in {}", name_string, name).into(), ErrorType::ReferenceError))
+                                    None => {
+                                        return Err(Error::new(
+                                            lf,
+                                            format!(
+                                                "Module item {} does not exist in {}",
+                                                name_string, name
+                                            )
+                                            .into(),
+                                            ErrorType::ReferenceError,
+                                        ))
+                                    }
                                 }
                             }
                         }
-                        _ => panic!()
+                        ImportType::Mod => {
+                            self.environ.define(name, &Type::Module(ModImport::new(module.clone())))
+                        }
                     }
 
                     Ok(Type::Nil)
@@ -437,6 +429,36 @@ impl Interpreter {
                 let val = self.eval_expr(val)?;
 
                 self.out(&collection.assign(i, val), brack)
+            }
+            Expr::Prop(var, prop) => {
+                let module = self.eval_expr(var)?;
+                match module {
+                    Type::Module(module) => {
+                        // correct
+                        let prop_string = match &prop.ttype {
+                            TType::Identifier(v) => v,
+                            _ => panic!(),
+                        };
+
+                        let maybe_fn = module.fns.get(prop_string);
+
+                        if let Some(out) = maybe_fn {
+                            Ok(Type::Func(out.clone()))
+                        } else {
+                            // todo: function prnt was not found in io.
+                            Err(Error::new(
+                                prop.lineinfo,
+                                format!("Function {} was not found in this module.", prop_string).into(),
+                                ErrorType::TypeError,
+                            ))
+                        }
+                    }
+                    _ => Err(Error::new(
+                        prop.lineinfo,
+                        "Only modules have properties.".into(),
+                        ErrorType::TypeError,
+                    )),
+                }
             }
         }
     }

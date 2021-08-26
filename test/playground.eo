@@ -1,9 +1,3 @@
-use io.{println, readln};
+use io;
 
-println("Hello there!");
-var name = readln("What is your name? ");
-
-println("Hello " + name + "!");
-if name == "Dababy" {
-    println("Less gooooooo");
-}
+io.println("hai " + io.readln("your name? "));

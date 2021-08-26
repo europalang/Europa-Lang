@@ -161,6 +161,9 @@ impl Resolver {
                 self.resolve_expr(i);
                 self.resolve_expr(val);
             }
+            Expr::Prop(var, _) => {
+                self.resolve_expr(var);
+            }
         }
     }
 

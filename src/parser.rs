@@ -558,6 +558,13 @@ impl Parser {
                     )],
                 )?;
                 expr = Expr::Get(Rc::new(expr), tok, Rc::new(val));
+            } else if self.get(&[TType::Dot]) {
+                let name = self.next();
+                if let TType::Identifier(_) = &name.ttype {
+                    expr = Expr::Prop(Rc::new(expr), name)
+                } else {
+                    return Err(Error::new(name.lineinfo, "Expected property name after '.'".into(), ErrorType::SyntaxError))
+                }
             } else {
                 break;
             }

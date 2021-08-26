@@ -26,6 +26,9 @@ impl Type {
             Type::String(n) => n.clone(),
             Type::Bool(n) => n.to_string(),
             Type::Func(n) => n.to_string(),
+            Type::Module(n) => {
+                n.to_string(1)
+            }
         }
     }
 }
