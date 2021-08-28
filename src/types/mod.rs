@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use crate::functions::FuncType;
 use array::Array;
 use map::Map;
-use module::ModImport;
+use module::Module;
 
 pub mod map;
 pub mod tostring;
@@ -20,7 +20,7 @@ pub enum Type {
     Bool(bool),
     Array(Rc<RefCell<Array>>),
     Map(Rc<RefCell<Map>>),
-    Module(ModImport),
+    Module(Module),
     Func(FuncType),
     Nil,
 }

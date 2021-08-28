@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 
-use crate::functions::FuncType;
+use super::Type;
 
 #[derive(Debug, Clone)]
-pub struct ModImport {
+pub struct Module {
     pub name: String,
-    pub fns: HashMap<String, FuncType>,
+    pub fns: HashMap<String, Type>,
 }
 
-impl ModImport {
-    pub fn new(name: String, fns: HashMap<String, FuncType>) -> Self {
+impl Module {
+    pub fn new(name: String, fns: HashMap<String, Type>) -> Self {
         Self { name, fns }
     }
 

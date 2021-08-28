@@ -10,7 +10,7 @@ use crate::{
     },
     stdlib::Stdlib,
     token::{TType, Token},
-    types::{array::Array, module::ModImport},
+    types::{array::Array, module::Module},
     types::{map::Map, Type},
 };
 
@@ -195,7 +195,7 @@ impl Interpreter {
                     match &import_type {
                         ImportType::Star => {
                             for (name, func) in module {
-                                self.environ.define(name, &Type::Func(func.clone()));
+                                self.environ.define(name, &func.clone());
                             }
                         }
 
@@ -210,17 +210,15 @@ impl Interpreter {
 
                                 match maybe_func {
                                     Some(func) => {
-                                        self.environ.define(name_string, &Type::Func(func.clone()));
+                                        self.environ.define(name_string, &func.clone());
                                     }
-                                    None => {
-                                        
-                                    }
+                                    _ => {}
                                 }
                             }
                         }
                         ImportType::Mod => self.environ.define(
                             name,
-                            &Type::Module(ModImport::new(name.clone(), module.clone())),
+                            &Type::Module(Module::new(name.clone(), module.clone())),
                         ),
                     }
 
@@ -436,7 +434,7 @@ impl Interpreter {
                         let maybe_fn = module.fns.get(prop_string);
 
                         if let Some(out) = maybe_fn {
-                            Ok(Type::Func(out.clone()))
+                            Ok(out.clone())
                         } else {
                             Err(Error::new(
                                 prop.lineinfo,

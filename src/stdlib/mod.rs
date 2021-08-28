@@ -7,13 +7,30 @@ use std::collections::HashMap;
 
 use maplit::hashmap;
 
-use crate::functions::FuncType;
+use crate::types::module::Module;
 
 mod io;
+mod math;
+mod clock;
 
-#[derive(Debug, Clone)]
-pub struct Module {
-    pub fns: HashMap<String, FuncType>,
+/**
+Easier coding.
+
+# Usage
+```
+native_func!(|interpreter, args| {
+    // ...
+}, 1)
+```
+*/
+#[macro_export]
+macro_rules! native_func {
+    ($func:expr, $arity:expr) => {
+        Type::Func(FuncType::Native(Func::new(
+            Rc::new($func),
+            $arity,
+        )))
+    };
 }
 
 #[derive(Clone)]
@@ -25,7 +42,9 @@ impl Stdlib {
     pub fn new() -> Self {
         Stdlib {
             mods: hashmap! {
-                "io".into() => io::new()
+                "io".into() => io::new(),
+                "math".into() => math::new(),
+                "clock".into() => clock::new(),
             },
         }
     }

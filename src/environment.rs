@@ -46,6 +46,7 @@ impl Environment {
     }
 
     pub fn get_at(&mut self, distance: usize, name: &Token) -> Type {
+        println!("{:#?}", self.scopes);
         if let TType::Identifier(n) = &name.ttype {
             self.ancestor(distance).get(n).unwrap().clone()
         } else {

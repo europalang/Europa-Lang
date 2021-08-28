@@ -143,6 +143,9 @@ fn run_string(
         Err(e) => return Err(e),
         Ok(i) => i 
     };
+
+    println!("{:#?}", interpreter.locals);
+
     if verbose {
         eprintln!("resolver {:?}", time.elapsed());
     }
