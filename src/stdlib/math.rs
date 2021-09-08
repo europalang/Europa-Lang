@@ -1,6 +1,7 @@
 use std::rc::Rc;
-
+use rand::Rng;
 use maplit::hashmap;
+
 
 use crate::{
     functions::{Func, FuncType},
@@ -20,7 +21,15 @@ pub fn new() -> Module {
             // funcs
             "sin".into() => native_func!(|_, _args| {
                 Ok(Type::Float(3f32))
-            }, 1)
+            }, 1),
+            "random".into() => native_func!(|_, args| {
+                println!("{:?}", args);
+                let range1 = args[0].to_string().parse::<i32>().unwrap();
+                let range2 = args[1].to_string().parse::<i32>().unwrap();
+                println!("{}", range1);
+                let mut rng = rand::thread_rng();
+                Ok(Type::Float(rng.gen_range(range1..range2) as f32))
+            }, 1),
         },
     }
 }

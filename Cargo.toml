@@ -7,3 +7,4 @@ description = "A fun language with no classes whatsoever"
 [dependencies]
 maplit = "1.0.2"
 clap = "2.33.3"
+rand = "0.8.4"
