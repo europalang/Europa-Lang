@@ -14,8 +14,8 @@ use crate::types::Type;
 use rustyline::config::Configurer;
 use rustyline::error::ReadlineError;
 use rustyline::{
-    Cmd, ConditionalEventHandler, Editor, Event, EventContext, KeyCode, KeyEvent,
-    Modifiers, RepeatCount,
+    Cmd, ConditionalEventHandler, Editor, Event, EventContext, EventHandler,
+    KeyCode, KeyEvent, Modifiers, RepeatCount,
 };
 
 pub fn init(mut environ: Environment, verbose: bool) {
@@ -37,6 +37,10 @@ pub fn init(mut environ: Environment, verbose: bool) {
     rl.set_auto_add_history(true);
     rl.set_tab_stop(4);
     rl.set_indent_size(4);
+    rl.bind_sequence(
+        Event::KeySeq(vec![ KeyEvent(KeyCode::Tab, Modifiers::NONE) ].into()),
+        EventHandler::Conditional(Box::new(TabEventHandler)),
+    );
 
     if let Some(history_file) = &history_file {
         if Path::new(&history_file).exists() {
@@ -63,6 +67,8 @@ pub fn init(mut environ: Environment, verbose: bool) {
                 Ok(read) => read,
                 Err(ReadlineError::Eof) => break 'main_loop,
                 Err(ReadlineError::Interrupted) => continue 'main_loop,
+                #[cfg(windows)]
+                Err(ReadlineError::WindowResize) => continue,
                 Err(err) => {
                     eprintln!("Unexpected error: {}", err);
                     process::exit(1);
@@ -173,4 +179,31 @@ fn has_unclosed_brackets(code: &[Token]) -> bool {
     }
 
     stack.len() > 0
+}
+
+#[derive(Clone, Copy)]
+struct TabEventHandler;
+
+impl ConditionalEventHandler for TabEventHandler {
+    fn handle(
+        &self,
+        event: &Event,
+        _n: RepeatCount,
+        _p: bool,
+        ctx: &EventContext<'_>,
+    ) -> Option<Cmd> {
+        if let Event::KeySeq(keys) = event {
+            if let KeyEvent(KeyCode::Tab, Modifiers::NONE) = keys[0] {
+                if ctx.line()[..ctx.pos()].chars().all(|ch| ch.is_whitespace()) {
+                    Some(Cmd::Insert(1, String::from("\t")))
+                } else {
+                    Some(Cmd::Complete)
+                }
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
 }
