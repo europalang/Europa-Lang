@@ -64,6 +64,13 @@ impl Call for FuncCallable {
         )
         .into()
     }
+
+    fn name(&self) -> String {
+        match &self.name.ttype {
+            TType::Identifier(name) => name.clone(),
+            _ => panic!(),
+        }
+    }
 }
 
 impl Debug for FuncCallable {

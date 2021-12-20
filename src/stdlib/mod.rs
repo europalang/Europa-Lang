@@ -26,7 +26,12 @@ native_func!(|interpreter, args| {
 #[macro_export]
 macro_rules! native_func {
     ($func:expr, $arity:expr) => {
+        native_func!("<native function>", $func, $arity)
+    };
+
+    ($name:literal, $func:expr, $arity:expr) => {
         Type::Func(FuncType::Native(Func::new(
+            $name,
             Rc::new($func),
             $arity,
         )))

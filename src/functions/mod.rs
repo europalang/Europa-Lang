@@ -1,5 +1,7 @@
 use crate::{interpreter::Interpreter, types::Type};
 
+use std::fmt::{self, Display};
+
 pub use self::{
     native::Func,
     traits::{Call, FResult},
@@ -36,5 +38,18 @@ impl Call for FuncType {
             Self::Native(n) => n.to_string(),
             Self::User(n) => n.to_string(),
         }
+    }
+
+    fn name(&self) -> String {
+        match self {
+            Self::Native(n) => n.name(),
+            Self::User(n) => n.name(),
+        }
+    }
+}
+
+impl Display for FuncType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "fn {} [{} args]", self.name(), self.arity())
     }
 }
