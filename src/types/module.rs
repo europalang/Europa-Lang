@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use super::Type;
 
+use std::fmt::{ self, Display };
+
 #[derive(Debug, Clone)]
 pub struct Module {
     pub name: String,
@@ -25,5 +27,11 @@ impl Module {
         out += "}";
 
         out
+    }
+}
+
+impl Display for Module {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "mod {} [{} items]", self.name, self.fns.len())
     }
 }

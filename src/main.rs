@@ -7,13 +7,13 @@ mod interpreter;
 mod lexer;
 mod nodes;
 mod parser;
+mod repl;
 mod resolver;
 mod tests;
 mod token;
 mod types;
 mod stdlib;
 
-use std::io::{stdin, stdout, Write};
 use std::time::Instant;
 use std::{env, fs, process};
 
@@ -24,8 +24,7 @@ use resolver::Resolver;
 
 use crate::environment::Environment;
 use crate::error::Error;
-use crate::nodes::stmt::Stmt;
-use crate::token::Token;
+use crate::types::Type;
 
 use clap::{App, Arg};
 
@@ -79,72 +78,61 @@ fn main() {
     } else {
         // no code to run, drop into repl
 
-        println!("Welcome to the Europa Interactive Repl.");
+        println!("Welcome to the Europa interactive REPL.");
 
         // start no-context repl
         let environ = Environment::new();
-        init_repl(environ, verbose);
+        repl::init(environ, verbose);
 
         return;
     };
 
     // load and run code
-    match run_string(&code, Environment::new(), verbose) {
+    let mut environ = Environment::new();
+    match run_string(&code, &mut environ, verbose) {
         Err(e) => {
             e.display(&code);
             process::exit(1);
         }
-        Ok(environ) => {
+        Ok(eval) => {
             if matches.is_present("repl") {
+                println!("{:?}", eval);
+
                 // drop into repl with environment
-                init_repl(environ, verbose);
+                repl::init(environ, verbose);
             }
         }
     }
 }
 
-// Loader for code, returns Environment mutated from environ
+// Loader for code, mutates Environment and returns evaluated (probably Nil)
 fn run_string(
     code: &String,
-    environ: Environment,
+    environ: &mut Environment,
     verbose: bool,
-) -> Result<Environment, Error> {
+) -> Result<Type, Error> {
+    // Tokenise code
     let mut time = Instant::now();
-    let tokens: Vec<Token> = match Lexer::new(&code).init() {
-        Err(e) => return Err(e),
-        Ok(toks) => {
-            if verbose {
-                eprintln!("lexer {:?}", time.elapsed());
-            }
+    let tokens = Lexer::new(&code).init()?;
 
-            toks
-        }
-    };
+    if verbose {
+        eprintln!("lexer {:?}", time.elapsed());
+    }
 
     // Turn tokens into AST
     time = Instant::now();
-    let tree: Vec<Stmt> = match Parser::new(tokens).init() {
-        Err(e) => return Err(e),
-        Ok(tree) => {
-            if verbose {
-                eprintln!("parser {:?}", time.elapsed());
-            }
-            tree
-        }
-    };
+    let tree = Parser::new(tokens).init()?;
+
+    if verbose {
+        eprintln!("parser {:?}", time.elapsed());
+    }
 
     // Create interpreter
     let mut interpreter = Interpreter::new(tree, environ.clone());
 
     // Resolve variables
     time = Instant::now();
-    let mut resolver = Resolver::new(interpreter);
-    interpreter = match resolver.init() {
-        Err(e) => return Err(e),
-        Ok(i) => i 
-    };
-
-    println!("{:#?}", interpreter.locals);
+    interpreter = Resolver::new(interpreter).init()?;
 
     if verbose {
         eprintln!("resolver {:?}", time.elapsed());
@@ -152,53 +140,13 @@ fn run_string(
 
     // Run interpreter
     time = Instant::now();
-    match interpreter.init() {
-        Err(e) => return Err(e),
-        Ok(_) => {
-            if verbose {
-                eprintln!("interpreter {:?}", time.elapsed());
-            }
+    let eval = interpreter.init()?;
 
-            Ok(interpreter.environ)
-        }
+    if verbose {
+        eprintln!("interpreter {:?}", time.elapsed());
     }
-}
 
-// Loops until exited
-fn init_repl(mut environ: Environment, verbose: bool) {
-    loop {
-        // Same line print
-        print!("\x1b[33m>\x1b[0m ");
-        stdout().flush().unwrap();
+    *environ = interpreter.environ;
 
-        // Wait for input from user
-        let mut input = String::new();
-        match stdin().read_line(&mut input) {
-            Err(e) => {
-                println!("Unexpected REPL Error: {:?}", e);
-                process::exit(1);
-            }
-            Ok(n) => {
-                if n == 0 {
-                    println!("\n");
-                    process::exit(0);
-                }
-                input = input.trim().to_string();
-            }
-        }
-
-        // Exit out of program
-        if input.eq("exit") {
-            process::exit(0);
-        }
-
-        // Attempt to run code
-        match run_string(&input, environ.clone(), verbose) {
-            Err(e) => e.display(&input),
-            Ok(env) => {
-                // Change environ values if no errors
-                environ = env;
-            }
-        };
-    }
+    Ok(eval)
 }

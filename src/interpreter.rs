@@ -36,12 +36,13 @@ impl Interpreter {
         }
     }
 
-    pub fn init(&mut self) -> Result<(), Error> {
+    pub fn init(&mut self) -> IResult {
+        let mut eval = Type::Nil;
         for stmt in self.nodes.clone() {
-            self.eval_stmt(&stmt.clone())?;
+            eval = self.eval_stmt(&stmt)?;
         }
 
-        Ok(())
+        Ok(eval)
     }
 
     // eval
