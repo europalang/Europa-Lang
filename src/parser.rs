@@ -69,7 +69,7 @@ impl Parser {
 
         if !self.get(&[TType::Semi]) {
             let semi = self.peek();
-            if semi.ttype != TType::RightBrace {
+            if semi.ttype != TType::RightBrace && semi.ttype != TType::EOF {
                 return Err(Error::new_n(
                     self.prev().lineinfo,
                     "Expected ';' after statement.".into(),
