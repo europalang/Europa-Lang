@@ -45,6 +45,10 @@ impl Lexer {
         }
     }
 
+    pub fn set_lineinfo(&mut self, info: LineInfo) {
+        self.info = info;
+    }
+
     pub fn init(&mut self) -> Result<Vec<Token>, Error> {
         while self.i < self.code.len() {
             let char = self.peek();
