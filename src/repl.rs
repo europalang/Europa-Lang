@@ -1,5 +1,6 @@
-use std::process;
+use std::path::Path;
 use std::time::Instant;
+use std::{env, process};
 
 use crate::environment::Environment;
 use crate::error::{Error, LineInfo};
@@ -10,12 +11,38 @@ use crate::resolver::Resolver;
 use crate::token::{Token, TType};
 use crate::types::Type;
 
+use rustyline::config::Configurer;
 use rustyline::error::ReadlineError;
-use rustyline::Editor;
+use rustyline::{
+    Cmd, ConditionalEventHandler, Editor, Event, EventContext, KeyCode, KeyEvent,
+    Modifiers, RepeatCount,
+};
 
 pub fn init(mut environ: Environment, verbose: bool) {
     let mut code; let mut tokens;
+
+    let history_file = if cfg!(windows) {
+        if let Ok(dir) = env::var("USERPROFILE") {
+            Some(format!("{}\\.europa_history", dir))
+        } else if let Ok(dir) = env::var("DEFAULTUSERPROFILE") {
+            Some(format!("{}\\.europa_history", dir))
+        } else { None }
+    } else if cfg!(unix) {
+        if let Ok(home) = env::var("HOME") {
+            Some(format!("{}/.europa_history", home))
+        } else { None }
+    } else { None };
+
     let mut rl = Editor::<()>::new();
+    rl.set_auto_add_history(true);
+    rl.set_tab_stop(4);
+    rl.set_indent_size(4);
+
+    if let Some(history_file) = &history_file {
+        if Path::new(&history_file).exists() {
+            let _ = rl.load_history(&history_file);
+        }
+    }
 
     'main_loop: loop {
         tokens = Vec::new();
@@ -44,6 +71,10 @@ pub fn init(mut environ: Environment, verbose: bool) {
 
             if read == ".exit" {
                 break 'main_loop
+            }
+
+            if let Some(history_file) = &history_file {
+                let _ = rl.append_history(&history_file);
             }
 
             code.push_str(&read);
