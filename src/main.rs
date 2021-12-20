@@ -24,8 +24,6 @@ use resolver::Resolver;
 
 use crate::environment::Environment;
 use crate::error::Error;
-use crate::nodes::stmt::Stmt;
-use crate::token::Token;
 use crate::types::Type;
 
 use clap::{App, Arg};
@@ -113,40 +111,28 @@ fn run_string(
     environ: &mut Environment,
     verbose: bool,
 ) -> Result<Type, Error> {
+    // Tokenise code
     let mut time = Instant::now();
-    let tokens: Vec<Token> = match Lexer::new(&code).init() {
-        Err(e) => return Err(e),
-        Ok(toks) => {
-            if verbose {
-                eprintln!("lexer {:?}", time.elapsed());
-            }
+    let tokens = Lexer::new(&code).init()?;
 
-            toks
-        }
-    };
+    if verbose {
+        eprintln!("lexler {:?}", time.elapsed());
+    }
 
     // Turn tokens into AST
     time = Instant::now();
-    let tree: Vec<Stmt> = match Parser::new(tokens).init() {
-        Err(e) => return Err(e),
-        Ok(tree) => {
-            if verbose {
-                eprintln!("parser {:?}", time.elapsed());
-            }
-            tree
-        }
-    };
+    let tree = Parser::new(tokens).init()?;
+
+    if verbose {
+        eprintln!("parser {:?}", time.elapsed());
+    }
 
     // Create interpreter
     let mut interpreter = Interpreter::new(tree, environ.clone());
 
     // Resolve variables
     time = Instant::now();
-    let mut resolver = Resolver::new(interpreter);
-    interpreter = match resolver.init() {
-        Err(e) => return Err(e),
-        Ok(i) => i 
-    };
+    interpreter = Resolver::new(interpreter).init()?;
 
     if verbose {
         eprintln!("resolver {:?}", time.elapsed());
@@ -154,7 +140,6 @@ fn run_string(
 
     // Run interpreter
     time = Instant::now();
-
     let eval = interpreter.init()?;
 
     if verbose {
