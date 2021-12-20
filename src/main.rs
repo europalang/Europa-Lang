@@ -26,6 +26,7 @@ use crate::environment::Environment;
 use crate::error::Error;
 use crate::nodes::stmt::Stmt;
 use crate::token::Token;
+use crate::types::Type;
 
 use clap::{App, Arg};
 
@@ -89,13 +90,16 @@ fn main() {
     };
 
     // load and run code
-    match run_string(&code, Environment::new(), verbose) {
+    let mut environ = Environment::new();
+    match run_string(&code, &mut environ, verbose) {
         Err(e) => {
             e.display(&code);
             process::exit(1);
         }
-        Ok(environ) => {
+        Ok(eval) => {
             if matches.is_present("repl") {
+                println!("{:?}", eval);
+
                 // drop into repl with environment
                 init_repl(environ, verbose);
             }
@@ -103,12 +107,12 @@ fn main() {
     }
 }
 
-// Loader for code, returns Environment mutated from environ
+// Loader for code, mutates Environment and returns evaluated (probably Nil)
 fn run_string(
     code: &String,
-    environ: Environment,
+    environ: &mut Environment,
     verbose: bool,
-) -> Result<Environment, Error> {
+) -> Result<Type, Error> {
     let mut time = Instant::now();
     let tokens: Vec<Token> = match Lexer::new(&code).init() {
         Err(e) => return Err(e),
@@ -144,24 +148,22 @@ fn run_string(
         Ok(i) => i 
     };
 
-    println!("{:#?}", interpreter.locals);
-
     if verbose {
         eprintln!("resolver {:?}", time.elapsed());
     }
 
     // Run interpreter
     time = Instant::now();
-    match interpreter.init() {
-        Err(e) => return Err(e),
-        Ok(_) => {
-            if verbose {
-                eprintln!("interpreter {:?}", time.elapsed());
-            }
 
-            Ok(interpreter.environ)
-        }
+    let eval = interpreter.init()?;
+
+    if verbose {
+        eprintln!("interpreter {:?}", time.elapsed());
     }
+
+    *environ = interpreter.environ;
+
+    Ok(eval)
 }
 
 // Loops until exited
@@ -193,12 +195,11 @@ fn init_repl(mut environ: Environment, verbose: bool) {
         }
 
         // Attempt to run code
-        match run_string(&input, environ.clone(), verbose) {
+        match run_string(&input, &mut environ, verbose) {
             Err(e) => e.display(&input),
-            Ok(env) => {
-                // Change environ values if no errors
-                environ = env;
-            }
+            Ok(eval) => if eval != Type::Nil {
+                println!("{}", eval)
+            },
         };
     }
 }
