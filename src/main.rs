@@ -116,7 +116,7 @@ fn run_string(
     let tokens = Lexer::new(&code).init()?;
 
     if verbose {
-        eprintln!("lexler {:?}", time.elapsed());
+        eprintln!("lexer {:?}", time.elapsed());
     }
 
     // Turn tokens into AST
