@@ -7,13 +7,13 @@ mod interpreter;
 mod lexer;
 mod nodes;
 mod parser;
+mod repl;
 mod resolver;
 mod tests;
 mod token;
 mod types;
 mod stdlib;
 
-use std::io::{stdin, stdout, Write};
 use std::time::Instant;
 use std::{env, fs, process};
 
@@ -82,7 +82,7 @@ fn main() {
 
         // start no-context repl
         let environ = Environment::new();
-        init_repl(environ, verbose);
+        repl::init(environ, verbose);
 
         return;
     };
@@ -99,7 +99,7 @@ fn main() {
                 println!("{:?}", eval);
 
                 // drop into repl with environment
-                init_repl(environ, verbose);
+                repl::init(environ, verbose);
             }
         }
     }
@@ -149,42 +149,4 @@ fn run_string(
     *environ = interpreter.environ;
 
     Ok(eval)
-}
-
-// Loops until exited
-fn init_repl(mut environ: Environment, verbose: bool) {
-    loop {
-        // Same line print
-        print!("\x1b[33m>\x1b[0m ");
-        stdout().flush().unwrap();
-
-        // Wait for input from user
-        let mut input = String::new();
-        match stdin().read_line(&mut input) {
-            Err(e) => {
-                println!("Unexpected REPL Error: {:?}", e);
-                process::exit(1);
-            }
-            Ok(n) => {
-                if n == 0 {
-                    println!("\n");
-                    process::exit(0);
-                }
-                input = input.trim().to_string();
-            }
-        }
-
-        // Exit out of program
-        if input.eq("exit") {
-            process::exit(0);
-        }
-
-        // Attempt to run code
-        match run_string(&input, &mut environ, verbose) {
-            Err(e) => e.display(&input),
-            Ok(eval) => if eval != Type::Nil {
-                println!("{}", eval)
-            },
-        };
-    }
 }
