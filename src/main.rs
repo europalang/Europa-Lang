@@ -78,7 +78,7 @@ fn main() {
     } else {
         // no code to run, drop into repl
 
-        println!("Welcome to the Europa Interactive Repl.");
+        println!("Welcome to the Europa interactive REPL.");
 
         // start no-context repl
         let environ = Environment::new();
