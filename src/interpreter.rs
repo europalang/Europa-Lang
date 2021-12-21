@@ -128,67 +128,6 @@ impl Interpreter {
 
                 Ok(Type::Nil)
             }
-            Stmt::ForStmt(name, arr, block) => {
-                let val = self.eval_expr(arr)?;
-                match val {
-                    Type::Array(exprs) => {
-                        // for i in itm {
-                        for expr in &exprs.borrow().arr {
-                            let v = expr;
-                            let name_str = match &name.ttype {
-                                TType::Identifier(v) => v,
-                                _ => panic!(),
-                            };
-
-                            self.environ.define(name_str, v);
-                            match self.eval_block(block, false) {
-                                Err(e) => match e.error_type {
-                                    ErrorType::Break => break,
-                                    ErrorType::Continue => continue,
-                                    _ => return Err(e),
-                                },
-                                _ => {}
-                            };
-                        }
-
-                        self.environ.pop_scope();
-                        self.environ.pop_scope();
-
-                        Ok(Type::Nil)
-                    }
-                    Type::String(str) => {
-                        for i in str.chars() {
-                            let v = Type::String(String::from(i));
-                            let name_str = match &name.ttype {
-                                TType::Identifier(v) => v,
-                                _ => panic!(),
-                            };
-
-                            self.environ.define(name_str, &v);
-                            match self.eval_block(block, false) {
-                                Err(e) => match e.error_type {
-                                    ErrorType::Break => break,
-                                    ErrorType::Continue => continue,
-                                    _ => return Err(e),
-                                },
-                                _ => {}
-                            };
-                        }
-
-                        self.environ.pop_scope();
-                        self.environ.pop_scope();
-
-                        Ok(Type::Nil)
-                    }
-                    _ => {
-                        return Err(Error::new(
-                            name.lineinfo,
-                            "Only arrays can be iterated over.".into(),
-                            ErrorType::TypeError,
-                        ))
-                    }
-                }
-            }
             Stmt::UseStmt(module, import_type) => {
                 if let TType::Identifier(name) = &module.ttype {
                     let module = &self.stdlib.mods[name].fns;

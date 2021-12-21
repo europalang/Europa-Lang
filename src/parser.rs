@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::error::{Error, ErrorNote, ErrorType, LineInfo};
+use crate::error::{Error, ErrorNote, ErrorType};
 use crate::nodes::expr::Expr;
 use crate::nodes::stmt::{ImportType, Stmt};
 use crate::token::{TType, Token};
@@ -44,9 +44,6 @@ impl Parser {
         }
         if self.get(&[TType::Do]) {
             return self.dowhile_stmt();
-        }
-        if self.get(&[TType::For]) {
-            return self.for_stmt();
         }
         if self.get(&[TType::LeftBrace]) {
             return Ok(Stmt::Block(self.block()?));
@@ -181,48 +178,6 @@ impl Parser {
             Stmt::Block(body.clone()),
             Stmt::WhileStmt(condition, body.clone()),
         ]))
-    }
-
-    fn for_stmt(&mut self) -> SResult {
-        let parens: Option<LineInfo>;
-
-        if self.get(&[TType::LeftParen]) {
-            parens = Some(self.prev().lineinfo);
-        } else {
-            parens = None;
-        }
-
-        let name = self.next();
-        if !matches!(name.ttype, TType::Identifier(_)) {
-            return Err(Error::new(
-                name.lineinfo,
-                "Expected variable name after 'for' keyword".into(),
-                ErrorType::SyntaxError,
-            ));
-        }
-
-        self.consume(TType::In, "Expected 'in' after for loop variable.".into())?;
-
-        let val = self.expr()?;
-
-        match parens {
-            Some(lineinfo) => {
-                self.consume_n(
-                    TType::RightParen,
-                    "Expected ')' after for expression.".into(),
-                    vec![ErrorNote::Expect(
-                        lineinfo,
-                        "Expected ')' to match this.".into(),
-                    )],
-                )?;
-            }
-            _ => {}
-        }
-
-        self.consume(TType::LeftBrace, "Expected '{' after for expression".into())?;
-        let block = self.block()?;
-
-        Ok(Stmt::Block(vec![Stmt::ForStmt(name, val, block)]))
     }
 
     fn controlflow_stmt(&mut self) -> SResult {

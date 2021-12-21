@@ -77,17 +77,6 @@ impl Resolver {
                 self.resolves(block)?;
                 self.end_scope();
             }
-            Stmt::ForStmt(name, val, block) => {
-                let str = match &name.ttype {
-                    TType::Identifier(x) => x,
-                    _ => panic!(),
-                };
-
-                self.define(str);
-                self.resolve_expr(val)?;
-
-                self.resolves(block)?;
-            }
             Stmt::Break(_) => {}
             Stmt::Continue(_) => {}
 

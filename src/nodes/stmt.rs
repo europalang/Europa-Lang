@@ -7,7 +7,6 @@ pub enum Stmt {
     Block(Vec<Stmt>),
     IfStmt(Expr, Vec<Stmt>, Vec<(Expr, Vec<Stmt>)>, Option<Vec<Stmt>>),
     WhileStmt(Expr, Vec<Stmt>),
-    ForStmt(Token, Expr, Vec<Stmt>),
     Break(Token),
     Continue(Token),
     Return(Token, Option<Expr>),
