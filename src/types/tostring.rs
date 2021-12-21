@@ -3,6 +3,7 @@ use crate::functions::Call;
 use super::Type;
 
 use std::fmt::{ self, Display };
+use std::str::FromStr;
 
 impl Type {
     // wtf is this????
@@ -33,6 +34,9 @@ impl Type {
                 n.to_string(1)
             }
         }
+    }
+    pub fn parse<F: FromStr>(&self) -> Result<F, F::Err> {
+        self.to_string().parse::<F>()
     }
 }
 
