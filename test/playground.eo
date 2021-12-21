@@ -13,16 +13,16 @@ fn while_loop(n) {
     return now - clock.now();
 }
 
-fn for_loop(n) {
-    var now = clock.now();
+// fn for_loop(n) {
+//     var now = clock.now();
 
-    var s = 0;
-    for i in 0..n {
-        s += i;
-    }
+//     var s = 0;
+//     for i in 0..n {
+//         s += i;
+//     }
 
-    return now - clock.now();
-}
+//     return now - clock.now();
+// }
 
 println("while " + while_loop(2));
-println("for " + while_loop(2));
+// println("for " + while_loop(2));
