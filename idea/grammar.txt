@@ -11,7 +11,7 @@ ifStmt => "if" expr block ( "elif" expr block )* ( "else" block )?
 
 whileStmt => "while" expr block
 doWhileStmt => "do" block "while" expr ";"
-forStmt => "for" ( ( IDENTIFIER "in" expr ) | ( "(" IDENTIFIER "in" expr ")" ) ) block
+# forStmt => "for" ( ( IDENTIFIER "in" expr ) | ( "(" IDENTIFIER "in" expr ")" ) ) block
 
 breakStmt => "break" ";"
 continueStmt => "continue" ";"
@@ -19,7 +19,7 @@ continueStmt => "continue" ";"
 fnDecl => "fn" IDENTIFIER function
 returnStmt => "return" expr? ";"
 
-useStmt => "use" IDENTIFIER ";"
+useStmt => "use" IDENTIFIER ( "." ( ( "{" ( IDENTIFIER "," )* IDENTIFIER "}" ) | IDENTIFIER | "*" ) ) ";"
 
 
 # expressions
@@ -45,7 +45,7 @@ primary => NUMBER | STRING | IDENTIFIER | "true" | "false" | "nil" | "(" expr ")
 
 block => "{" statement* "}"
 array => "[" ( expr "," )* ( expr )? "]"
-maps => "{{" ( expr ":" expr "," )* ( expr ":" expr "," )? "}}"
+maps => "{{" ( expr ":" expr? "," )* ( expr ":" expr? )? "}}"
 
 args => expr ( "," expr )*
 params => IDENTIFIER ( "," IDENTIFIER )*
