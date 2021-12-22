@@ -19,7 +19,7 @@ continueStmt => "continue" ";"
 fnDecl => "fn" IDENTIFIER function
 returnStmt => "return" expr? ";"
 
-useStmt => "use" IDENTIFIER ";"
+useStmt => "use" IDENTIFIER ( "." ( ( "{" ( IDENTIFIER "," )* IDENTIFIER "}" ) | IDENTIFIER | "*" ) ) ";"
 
 
 # expressions
