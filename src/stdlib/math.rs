@@ -36,7 +36,7 @@ pub fn new() -> Module {
             }, 1),
 
             // RNG functions
-            "randint".into() => native_func!(|_, args| {
+            "randrange".into() => native_func!(|_, args| {
                 Ok(Type::Float(thread_rng().gen_range(
                     args[0].parse::<i32>()
                         .expect("Invalid Argument: Type is not Int")..
