@@ -634,6 +634,12 @@ impl Parser {
 
         while self.peek().ttype != TType::RightBBrace {
             let key = self.expr()?;
+
+            if self.get(&[TType::Comma]) || self.peek().ttype == TType::RightBBrace {
+                vals.push((key.clone(), key));
+                continue;
+            }
+
             self.consume(TType::Colon, "Expected ':' after key.".into())?;
             let value = self.expr()?;
             vals.push((key, value));

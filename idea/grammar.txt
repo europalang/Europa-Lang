@@ -45,7 +45,7 @@ primary => NUMBER | STRING | IDENTIFIER | "true" | "false" | "nil" | "(" expr ")
 
 block => "{" statement* "}"
 array => "[" ( expr "," )* ( expr )? "]"
-maps => "{{" ( expr ":" expr "," )* ( expr ":" expr "," )? "}}"
+maps => "{{" ( expr ":" expr? "," )* ( expr ":" expr? )? "}}"
 
 args => expr ( "," expr )*
 params => IDENTIFIER ( "," IDENTIFIER )*

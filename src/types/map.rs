@@ -45,6 +45,7 @@ impl Map {
                 Type::Map(v) => {
                     v.borrow().to_string(idt + 1)
                 },
+                Type::String(v) => format!("\"{}\"", v),
                 _ => value.to_string()
             });
         }
