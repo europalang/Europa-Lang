@@ -51,7 +51,3 @@ args => expr ( "," expr )*
 params => IDENTIFIER ( "," IDENTIFIER )*
 
 function => "(" params? ")" block
-
-
-IDENTIFIER => ( [ a-z A-Z _ ] )? ( [ 0-9 a-z A-Z _ ] )*
-STRING => ( "\"" ( [^ " ]+ ) "\"" ) | ( "'" ( [ ^ ' ]+ ) "'" ) | ( "`"+ ( [ ^ ` ]+ ) "`"+ )

@@ -1,4 +1,4 @@
-use std::{fmt::Display, collections::HashMap};
+use std::fmt::Display;
 
 use crate::error::LineInfo;
 
@@ -51,7 +51,6 @@ pub enum TType {
     // literals
     Identifier(String),
     String(String),
-    TemplateString(String, HashMap<usize, Vec<Token>>),
     Number(f32),
     True,
     False,
