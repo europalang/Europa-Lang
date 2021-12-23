@@ -22,6 +22,11 @@ native_func!(|interpreter, args| {
     // ...
 }, 1)
 ```
+
+## Explanation
+`interpreter` is the interpreter instance, use `_` if not using this argument.
+`args` is a `Vec<Type>`, use `_` if not using this argument.
+
 */
 #[macro_export]
 macro_rules! native_func {

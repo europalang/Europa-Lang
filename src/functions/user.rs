@@ -46,7 +46,7 @@ impl Call for FuncCallable {
                 return Ok(v)
             }
 
-            return Err(e)
+            return Err((e.get_msg(), e.error_type))
         }
 
         interpreter.environ.pop_scope();

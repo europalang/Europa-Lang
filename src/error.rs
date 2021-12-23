@@ -57,6 +57,10 @@ impl Error {
         }
     }
 
+    pub fn get_msg(&self) -> String {
+        self.error.clone()
+    }
+
     pub fn display(&self, code: &String) {
         let line = self.info.line as usize;
         let col = self.info.col as usize;

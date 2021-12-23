@@ -1,6 +1,6 @@
-use crate::{error::Error, interpreter::Interpreter, types::Type};
+use crate::{error::ErrorType, interpreter::Interpreter, types::Type};
 
-pub type FResult = Result<Type, Error>;
+pub type FResult = Result<Type, (String, ErrorType)>;
 
 pub trait Call {
     fn arity(&self) -> usize;

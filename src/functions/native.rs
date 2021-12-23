@@ -1,6 +1,6 @@
 use std::{fmt::Debug, rc::Rc};
 
-use crate::{error::Error, interpreter::Interpreter, types::Type};
+use crate::{interpreter::Interpreter, types::Type};
 
 use super::traits::{Call, FResult};
 
@@ -9,13 +9,13 @@ use super::traits::{Call, FResult};
 pub struct Func {
     name: String,
     args: usize,
-    exec: Rc<dyn Fn(&mut Interpreter, Vec<Type>) -> Result<Type, Error>>,
+    exec: Rc<dyn Fn(&mut Interpreter, Vec<Type>) -> FResult>,
 }
 
 impl Func {
     pub fn new(
         name: &str,
-        func: Rc<dyn Fn(&mut Interpreter, Vec<Type>) -> Result<Type, Error>>,
+        func: Rc<dyn Fn(&mut Interpreter, Vec<Type>) -> FResult>,
         args: usize,
     ) -> Self {
         Self {

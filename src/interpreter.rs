@@ -276,7 +276,10 @@ impl Interpreter {
                         ));
                     }
 
-                    return func.call(self, params);
+                    return match func.call(self, params){
+                        Ok(v) => Ok(v),
+                        Err(e) => Err(Error::new(tok.lineinfo, e.0, e.1)),
+                    };
                 } else {
                     return Err(Error::new(
                         tok.lineinfo,
