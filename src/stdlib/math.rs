@@ -9,6 +9,7 @@ use crate::{
     native_func,
     types::module::Module,
     types::Type,
+    error::{ErrorType},
 };
 
 pub fn new() -> Module {
@@ -23,26 +24,43 @@ pub fn new() -> Module {
             // TODO: add more functions
             // Trigonometric functions
             "sin".into() => native_func!(|_, args| {
-                Ok(Type::Float(args[0].parse::<f32>()
-                    .expect("Invalid Argument: Type is not Float").sin()))
+                match args[0].parse::<f32>() {
+                    Ok(x) => Ok(Type::Float(x.sin())),
+                    Err(_) => Err((
+                        "Incorrect Argument Type: Type is not Float".into(),
+                        ErrorType::TypeError,
+                    )),
+                }
             }, 1),
             "cos".into() => native_func!(|_, args| {
-                Ok(Type::Float(args[0].parse::<f32>()
-                    .expect("Invalid Argument: Type is not Float").cos()))
+                match args[0].parse::<f32>() {
+                    Ok(x) => Ok(Type::Float(x.cos())),
+                    Err(_) => Err((
+                        "Incorrect Argument Type: Type is not Float".into(),
+                        ErrorType::TypeError,
+                    )),
+                }
             }, 1),
             "tan".into() => native_func!(|_, args| {
-                Ok(Type::Float(args[0].parse::<f32>()
-                    .expect("Invalid Argument: Type is not Float").tan()))
+                match args[0].parse::<f32>() {
+                    Ok(x) => Ok(Type::Float(x.tan())),
+                    Err(_) => Err((
+                        "Incorrect Argument Type: Type is not Float".into(),
+                        ErrorType::TypeError,
+                    )),
+                }
             }, 1),
 
             // RNG functions
             "randrange".into() => native_func!(|_, args| {
-                Ok(Type::Float(thread_rng().gen_range(
-                    args[0].parse::<i32>()
-                        .expect("Invalid Argument: Type is not Int")..
-                    args[1].parse::<i32>()
-                        .expect("Invalid Argument: Type is not Int")
-                ) as f32))
+                if let (Ok(min), Ok(max)) = (args[0].parse::<f32>(), args[1].parse::<f32>()) {
+                    Ok(Type::Float(thread_rng().gen_range(min..max)))
+                } else {
+                    Err((
+                        "Incorrect Argument Type: Type is not Int".into(),
+                        ErrorType::TypeError,
+                    ))
+                }
             }, 2)
         },
     }
