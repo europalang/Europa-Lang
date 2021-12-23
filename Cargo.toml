@@ -3,9 +3,12 @@ name = "europa-lang"
 version = "0.0.0"
 edition = "2018"
 description = "A fun language with no classes whatsoever"
+readme = "README.md"
+license = "MIT"
+repository = "https://github.com/europalang/Europa-Lang/"
 
 [dependencies]
 clap = "^2.34"
 maplit = "^1.0"
-rustyline = "^9.1"
 rand = "^0.8"
+rustyline = "^9.1"
