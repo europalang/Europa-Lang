@@ -119,6 +119,9 @@ fn run_string(
         eprintln!("lexer {:?}", time.elapsed());
     }
 
+    println!("{:#?}", tokens);
+    return Ok(Type::Nil);
+
     // Turn tokens into AST
     time = Instant::now();
     let tree = Parser::new(tokens).init()?;
