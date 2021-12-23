@@ -24,28 +24,28 @@ pub fn new() -> Module {
             // TODO: add more functions
             // Trigonometric functions
             "sin".into() => native_func!(|_, args| {
-                match args[0].parse::<f32>() {
+                match args[0].parse_float() {
                     Ok(x) => Ok(Type::Float(x.sin())),
-                    Err(_) => Err((
-                        "Incorrect Argument Type: Type is not Float".into(),
+                    Err(x) => Err((
+                        x.into(),
                         ErrorType::TypeError,
                     )),
                 }
             }, 1),
             "cos".into() => native_func!(|_, args| {
-                match args[0].parse::<f32>() {
+                match args[0].parse_float() {
                     Ok(x) => Ok(Type::Float(x.cos())),
-                    Err(_) => Err((
-                        "Incorrect Argument Type: Type is not Float".into(),
+                    Err(x) => Err((
+                        x.into(),
                         ErrorType::TypeError,
                     )),
                 }
             }, 1),
             "tan".into() => native_func!(|_, args| {
-                match args[0].parse::<f32>() {
+                match args[0].parse_float() {
                     Ok(x) => Ok(Type::Float(x.tan())),
-                    Err(_) => Err((
-                        "Incorrect Argument Type: Type is not Float".into(),
+                    Err(x) => Err((
+                        x.into(),
                         ErrorType::TypeError,
                     )),
                 }
@@ -53,11 +53,11 @@ pub fn new() -> Module {
 
             // RNG functions
             "randrange".into() => native_func!(|_, args| {
-                if let (Ok(min), Ok(max)) = (args[0].parse::<f32>(), args[1].parse::<f32>()) {
+                if let (Some(min), Some(max)) = (args[0].get_float(), args[1].get_float()) {
                     Ok(Type::Float(thread_rng().gen_range(min..max)))
                 } else {
                     Err((
-                        "Incorrect Argument Type: Type is not Int".into(),
+                        "Incorrect Argument Type: Type is not Float".into(),
                         ErrorType::TypeError,
                     ))
                 }

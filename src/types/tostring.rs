@@ -35,8 +35,24 @@ impl Type {
             }
         }
     }
-    pub fn parse<F: FromStr>(&self) -> Result<F, F::Err> {
-        self.to_string().parse::<F>()
+
+    pub fn get_float(&self) -> Option<f32> {
+        match self {
+            Type::Float(n) => Some(*n),
+            _ => None,
+        }
+    }
+
+    pub fn parse_float(&self) -> Result<f32, String>{
+        match self {
+            Type::Nil => Ok(0.0),
+            Type::Float(n) => Ok(*n),
+            Type::String(n) => {
+                f32::from_str(n).map_err(|e| e.to_string())
+            }
+            Type::Bool(n) => Ok(*n as i32 as f32),
+            _ => Err(format!("{} is inconvertable to Type Float", self))
+        }
     }
 }
 
