@@ -16,7 +16,7 @@ pub fn new() -> Module {
     Module {
         name: "clock".into(),
         fns: hashmap! {
-            "now".into() => native_func!(|_, _| {
+            "now".into() => native_func!(|_, _, _| {
                 let start = SystemTime::now().duration_since(UNIX_EPOCH).expect("Error getting time.");
                 Ok(Type::Float(start.as_millis() as f32))
             }, 0)

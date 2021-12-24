@@ -111,20 +111,35 @@ impl Interpreter {
                     ErrorType::Return(expr),
                 ))
             }
-            Stmt::Function(name, args, block) => {
+            Stmt::Function(name, args, optional_args, block) => {
                 let var_name = match &name.ttype {
                     TType::Identifier(x) => x,
                     _ => panic!(),
                 };
+
+                let mut opt_args = HashMap::new();
+
+                for (tok, expr) in optional_args {
+                    opt_args.insert(
+                        match &tok.ttype {
+                            TType::Identifier(name) => name.clone(),
+                            _ => panic!(),
+                        },
+                        self.eval_expr(expr)?,
+                    );
+                }
 
                 self.environ.define(
                     &var_name,
                     &Type::Func(FuncType::User(FuncCallable::new(
                         name.clone(),
                         args.clone(),
+                        opt_args.clone(),
                         block.clone(),
                     ))),
                 );
+
+                println!("def {:?}", self.environ);
 
                 Ok(Type::Nil)
             }
@@ -251,12 +266,17 @@ impl Interpreter {
 
                 Ok(self.eval_expr(else_br)?)
             }
-            Expr::Call(func, tok, args) => {
+            Expr::Call(func, tok, args, optional_args) => {
                 let callee = self.eval_expr(func)?;
 
                 let mut params: Vec<Type> = Vec::new();
+                let mut opt_params: HashMap<String, Type> = HashMap::new();
                 for arg in args {
                     params.push(self.eval_expr(arg)?);
+                }
+
+                for (tok, expr) in optional_args {
+                    opt_params.insert(tok.clone(), self.eval_expr(expr)?);
                 }
 
                 if let Type::Func(func) = callee {
@@ -276,7 +296,7 @@ impl Interpreter {
                         ));
                     }
 
-                    return func.call(self, params);
+                    return func.call(self, params, opt_params);
                 } else {
                     return Err(Error::new(
                         tok.lineinfo,

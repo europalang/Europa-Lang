@@ -13,7 +13,9 @@ pub struct Environment {
 
 impl Environment {
     pub fn new() -> Self {
-        Self { scopes: vec![HashMap::new()] }
+        Self {
+            scopes: vec![HashMap::new()],
+        }
     }
 
     pub fn push_scope(&mut self) {
@@ -47,6 +49,8 @@ impl Environment {
 
     pub fn get_at(&mut self, distance: usize, name: &Token) -> Type {
         if let TType::Identifier(n) = &name.ttype {
+            let scopes = self.scopes.clone();
+            println!("getat {} {:?} {:?}", n, scopes, self.ancestor(distance));
             self.ancestor(distance).get(n).unwrap().clone()
         } else {
             panic!()

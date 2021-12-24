@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, collections::HashMap};
 
 use crate::{
     interpreter::Interpreter,
@@ -15,12 +15,13 @@ use super::traits::{Call, FResult};
 pub struct FuncCallable {
     name: Token,
     args: Vec<Token>,
+    optional_args: HashMap<String, Type>,
     block: Vec<Stmt>,
 }
 
 impl FuncCallable {
-    pub fn new(name: Token, args: Vec<Token>, block: Vec<Stmt>) -> Self {
-        Self { name, args, block }
+    pub fn new(name: Token, args: Vec<Token>, optional_args: HashMap<String, Type>, block: Vec<Stmt>) -> Self {
+        Self { name, args, optional_args, block }
     }
 }
 
@@ -29,14 +30,22 @@ impl Call for FuncCallable {
         self.args.len()
     }
 
-    fn call(&self, interpreter: &mut Interpreter, args: Vec<Type>) -> FResult {
+    fn call(&self, interpreter: &mut Interpreter, args: Vec<Type>, opt_args: HashMap<String, Type>) -> FResult {
         interpreter.environ.push_scope();
+        println!("push {:?}", interpreter.environ);
 
         for (i, name) in self.args.iter().enumerate() {
             match &name.ttype {
                 TType::Identifier(n) => interpreter.environ.define(&n, &args[i]),
                 _ => panic!(),
             }
+        }
+
+        for (name, val) in self.optional_args.iter() {
+            interpreter.environ.define(name, match &opt_args.get(name) {
+                Some(t) => t,
+                None => val
+            });
         }
 
         let out = interpreter.eval_block(&self.block, false);
@@ -50,6 +59,7 @@ impl Call for FuncCallable {
         }
 
         interpreter.environ.pop_scope();
+        println!("pop {:?}", interpreter.environ);
 
         Ok(Type::Nil)
     }

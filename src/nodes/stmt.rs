@@ -10,7 +10,7 @@ pub enum Stmt {
     Break(Token),
     Continue(Token),
     Return(Token, Option<Expr>),
-    Function(Token, Vec<Token>, Vec<Stmt>),
+    Function(Token, Vec<Token>, Vec<(Token, Expr)>, Vec<Stmt>),
     UseStmt(Token, ImportType),
 }
 

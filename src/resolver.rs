@@ -56,7 +56,7 @@ impl Resolver {
                     self.resolve_expr(v)?;
                 }
             }
-            Stmt::Function(name, args, block) => {
+            Stmt::Function(name, args, optional_args, block) => {
                 let func_name = match &name.ttype {
                     TType::Identifier(s) => s,
                     _ => panic!(),
@@ -72,6 +72,16 @@ impl Resolver {
                     };
 
                     self.define(&name);
+                }
+
+                for (param, expr) in optional_args {
+                    let name = match &param.ttype {
+                        TType::Identifier(x) => x,
+                        _ => panic!(),
+                    };
+
+                    self.define(&name);
+                    self.resolve_expr(expr)?;
                 }
 
                 self.resolves(block)?;
@@ -175,10 +185,14 @@ impl Resolver {
                 self.resolve_expr(left)?;
                 self.resolve_expr(right)?;
             }
-            Expr::Call(call, _, args) => {
+            Expr::Call(call, _, args, optional_args) => {
                 self.resolve_expr(call)?;
 
                 for arg in args {
+                    self.resolve_expr(arg)?;
+                }
+
+                for (_, arg) in optional_args {
                     self.resolve_expr(arg)?;
                 }
             }
@@ -243,7 +257,7 @@ impl Resolver {
             TType::Identifier(v) => v,
             _ => panic!(),
         };
-
+        
         for i in (0..self.scopes.len()).rev() {
             if self.scopes[i].contains(var) {
                 return self
