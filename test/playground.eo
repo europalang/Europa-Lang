@@ -1,11 +1,15 @@
 use io.println;
 
-fn add(a, b, print = true) {
-    if print {
-        println(a + b);
+fn fib(a = 0, b = 1) {
+    if a + b < 1000 {
+        if true {
+            println(a + b);
+        }
+        
+        fib(a = b, b = a + b);
     }
+
     return a + b;
 }
 
-println(add(1, 2, print = false));
-add(1, 2);
+fib();
