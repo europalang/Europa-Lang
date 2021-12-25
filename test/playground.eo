@@ -8,4 +8,4 @@ fn add(a, b, print) {
 }
 
 println(add(1, 2, false));
-add(1, 2, true);
+// add(1, 2, true);

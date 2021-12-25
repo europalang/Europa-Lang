@@ -32,8 +32,7 @@ impl Call for FuncCallable {
 
     fn call(&self, interpreter: &mut Interpreter, args: Vec<Type>, opt_args: HashMap<String, Type>) -> FResult {
         interpreter.environ.push_scope();
-        println!("push {:?}", interpreter.environ);
-
+        
         for (i, name) in self.args.iter().enumerate() {
             match &name.ttype {
                 TType::Identifier(n) => interpreter.environ.define(&n, &args[i]),
@@ -41,6 +40,7 @@ impl Call for FuncCallable {
             }
         }
 
+        
         for (name, val) in self.optional_args.iter() {
             interpreter.environ.define(name, match &opt_args.get(name) {
                 Some(t) => t,
@@ -48,20 +48,32 @@ impl Call for FuncCallable {
             });
         }
 
+        println!("vars {:?}", interpreter.environ);
+        
         let out = interpreter.eval_block(&self.block, false);
-
-        if let Err(e) = out {
-            if let ErrorType::Return(v) = e.error_type {
-                return Ok(v)
-            }
-
-            return Err(e)
-        }
-
+        println!("reach");
         interpreter.environ.pop_scope();
-        println!("pop {:?}", interpreter.environ);
 
-        Ok(Type::Nil)
+        return match out {
+            Ok(v) => match v {
+                Some(v) => Ok(v),
+                _ => Ok(Type::Nil)
+            },
+            Err(e) => match e.error_type {
+                ErrorType::Return(v) => Ok(v),
+                _ => Err(e)
+            }
+        };
+
+        // if let Err(e) = out {
+        //     if let ErrorType::Return(v) = e.error_type {
+        //         return Ok(v)
+        //     }
+
+        //     return Err(e)
+        // }
+
+        // Ok(Type::Nil)
     }
 
     fn to_string(&self) -> String {

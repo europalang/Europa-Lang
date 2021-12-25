@@ -20,10 +20,12 @@ impl Environment {
 
     pub fn push_scope(&mut self) {
         self.scopes.push(HashMap::new());
+        println!("scope+ {:?}", self.scopes);
     }
 
     pub fn pop_scope(&mut self) {
         self.scopes.pop();
+        println!("scope- {:?}", self.scopes);
     }
 
     pub fn get(&self, tok: &Token) -> Result<Type, Error> {
@@ -50,8 +52,14 @@ impl Environment {
     pub fn get_at(&mut self, distance: usize, name: &Token) -> Type {
         if let TType::Identifier(n) = &name.ttype {
             let scopes = self.scopes.clone();
-            println!("getat {} {:?} {:?}", n, scopes, self.ancestor(distance));
-            self.ancestor(distance).get(n).unwrap().clone()
+            let ancestor = self.ancestor(distance).clone();
+            self.ancestor(distance)
+                .get(n)
+                .unwrap_or_else(|| {
+                    println!("getat {} {:?} {:?}", n, scopes, ancestor);
+                    panic!()
+                })
+                .clone()
         } else {
             panic!()
         }
