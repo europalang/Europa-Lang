@@ -18,8 +18,8 @@ pub fn new() -> Module {
             "nan".into() => Type::Float(f32::NAN),
 
             // funcs
-            "sin".into() => native_func!(|_, _args| {
-                Ok(Type::Float(3f32))
+            "sin".into() => native_func!(|_, _args, _| {
+                Ok(Type::Float(3f32)) // ???????
             }, 1)
         },
     }

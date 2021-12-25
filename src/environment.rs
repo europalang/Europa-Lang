@@ -13,7 +13,9 @@ pub struct Environment {
 
 impl Environment {
     pub fn new() -> Self {
-        Self { scopes: vec![HashMap::new()] }
+        Self {
+            scopes: vec![HashMap::new()],
+        }
     }
 
     pub fn push_scope(&mut self) {

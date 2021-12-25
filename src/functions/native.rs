@@ -1,4 +1,4 @@
-use std::{fmt::Debug, rc::Rc};
+use std::{fmt::Debug, rc::Rc, collections::HashMap};
 
 use crate::{error::Error, interpreter::Interpreter, types::Type};
 
@@ -9,13 +9,13 @@ use super::traits::{Call, FResult};
 pub struct Func {
     name: String,
     args: usize,
-    exec: Rc<dyn Fn(&mut Interpreter, Vec<Type>) -> Result<Type, Error>>,
+    exec: Rc<dyn Fn(&mut Interpreter, Vec<Type>, HashMap<String, Type>) -> Result<Type, Error>>,
 }
 
 impl Func {
     pub fn new(
         name: &str,
-        func: Rc<dyn Fn(&mut Interpreter, Vec<Type>) -> Result<Type, Error>>,
+        func: Rc<dyn Fn(&mut Interpreter, Vec<Type>, HashMap<String, Type>) -> Result<Type, Error>>,
         args: usize,
     ) -> Self {
         Self {
@@ -31,8 +31,8 @@ impl Call for Func {
         self.args
     }
 
-    fn call(&self, interpreter: &mut Interpreter, args: Vec<Type>) -> FResult {
-        (self.exec)(interpreter, args)
+    fn call(&self, interpreter: &mut Interpreter, args: Vec<Type>, opt_args: HashMap<String, Type>) -> FResult {
+        (self.exec)(interpreter, args, opt_args)
     }
 
     fn to_string(&self) -> String {

@@ -16,19 +16,19 @@ pub fn new() -> Module {
     Module {
         name: "io".into(),
         fns: hashmap! {
-            "println".into() => native_func!(|_, args| {
+            "println".into() => native_func!(|_, args, _| {
                 println!("{}", args[0].to_string());
                 Ok(Type::Nil)
             }, 1),
-            "print".into() => native_func!(|_, args| {
+            "print".into() => native_func!(|_, args, _| {
                 print!("{}", args[0].to_string());
                 Ok(Type::Nil)
             }, 1),
-            "flush".into() => native_func!(|_, _| {
+            "flush".into() => native_func!(|_, _, _| {
                 stdout().flush().expect("Failed to flush.");
                 Ok(Type::Nil)
             }, 0),
-            "readln".into() => native_func!(|_, args| {
+            "readln".into() => native_func!(|_, args, _| {
                 let msg = args[0].to_string();
                 print!("{}", msg);
                 stdout().flush().expect("Failed to flush.");

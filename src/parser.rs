@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use crate::error::{Error, ErrorNote, ErrorType};
@@ -217,9 +218,9 @@ impl Parser {
 
         if let TType::Identifier(_) = name.ttype {
             self.next();
-            let (params, block) = self.finish_fn("function name".into())?;
+            let (params, optional_params, block) = self.finish_fn("function name".into())?;
 
-            return Ok(Stmt::Function(name, params, block));
+            return Ok(Stmt::Function(name, params, optional_params, block));
         } else {
             return Err(Error::new(
                 name.lineinfo,
@@ -518,7 +519,11 @@ impl Parser {
                 if let TType::Identifier(_) = &name.ttype {
                     expr = Expr::Prop(Rc::new(expr), name)
                 } else {
-                    return Err(Error::new(name.lineinfo, "Expected property name after '.'".into(), ErrorType::SyntaxError))
+                    return Err(Error::new(
+                        name.lineinfo,
+                        "Expected property name after '.'".into(),
+                        ErrorType::SyntaxError,
+                    ));
                 }
             } else {
                 break;
@@ -661,9 +666,22 @@ impl Parser {
     // util
     fn finish_call(&mut self, expr: &mut Expr) -> PResult {
         let mut args: Vec<Expr> = Vec::new();
+        let mut optional_args: HashMap<String, Expr> = HashMap::new();
+
         if !self.check(TType::RightParen) {
             loop {
-                args.push(self.expr()?);
+                match self.peek().ttype {
+                    TType::Identifier(name) => {
+                        if self.peek_n(1).ttype == TType::Eq {
+                            self.next(); // consume the name
+                            self.next(); // consume the eq
+                            optional_args.insert(name, self.expr()?);
+                        } else {
+                            args.push(self.expr()?)
+                        }
+                    }
+                    _ => args.push(self.expr()?),
+                }
 
                 if !self.get(&[TType::Comma]) {
                     break;
@@ -672,10 +690,13 @@ impl Parser {
         }
 
         let tok = self.consume(TType::RightParen, "Expected ')' after arguments.".into())?;
-        Ok(Expr::Call(Rc::new(expr.clone()), tok, args))
+        Ok(Expr::Call(Rc::new(expr.clone()), tok, args, optional_args))
     }
 
-    fn finish_fn(&mut self, kind: String) -> Result<(Vec<Token>, Vec<Stmt>), Error> {
+    fn finish_fn(
+        &mut self,
+        kind: String,
+    ) -> Result<(Vec<Token>, Vec<(Token, Expr)>, Vec<Stmt>), Error> {
         let lineinfo = self
             .consume(
                 TType::LeftParen,
@@ -684,13 +705,19 @@ impl Parser {
             .lineinfo;
 
         let mut params: Vec<Token> = Vec::new();
+        let mut optional_params: Vec<(Token, Expr)> = Vec::new();
+
         if !self.check(TType::RightParen) {
             loop {
                 let tok = self.peek();
 
                 if let TType::Identifier(_) = tok.ttype {
                     self.next();
-                    params.push(tok);
+                    if self.get(&[TType::Eq]) {
+                        optional_params.push((tok, self.expr()?));
+                    } else {
+                        params.push(tok);
+                    }
                 } else {
                     return Err(Error::new(
                         tok.lineinfo,
@@ -717,7 +744,7 @@ impl Parser {
 
         let body = self.block()?;
 
-        Ok((params, body))
+        Ok((params, optional_params, body))
     }
 
     // errors
@@ -802,6 +829,10 @@ impl Parser {
     /// get the current token
     fn peek(&self) -> Token {
         self.tokens[self.i].clone()
+    }
+
+    fn peek_n(&self, i: usize) -> Token {
+        self.tokens[self.i + i].clone()
     }
 
     /// get the previous token

@@ -1,22 +1,11 @@
 use io.println;
 
-var x = {{
-    'a': 5,
-    5 + 3 > 5 ? 3 : 4 : 6,
-    'b',
-    'c': 'c',
-    6: 6
-}};
-
-x['a'] += 1;
-
-println(x);
-
-if x != 5 {
-    println("yay!")
+fn add(a, b, print = true) {
+    if print {
+        println(a + b);
+    }
+    return a + b;
 }
 
-var n = 5;
-
-var x = if n > 1 ? true : false { 1 } else { 2 };
-println(x);
+println(add(1, 2, print = false));
+add(1, 2);
