@@ -48,7 +48,12 @@ impl Error {
         }
     }
 
-    pub fn new_n(info: LineInfo, error: String, error_type: ErrorType, notes: Vec<ErrorNote>) -> Self {
+    pub fn new_n(
+        info: LineInfo,
+        error: String,
+        error_type: ErrorType,
+        notes: Vec<ErrorNote>,
+    ) -> Self {
         Self {
             info,
             error,
@@ -72,29 +77,36 @@ impl Error {
             code.split('\n').collect::<Vec<&str>>()[line - 1]
         );
         let notes: String = if self.notes.len() > 0 {
-            format!("\n{}", self.notes.iter().map(|o| match o {
-                ErrorNote::Note(x) => format!("\n\x1b[1m\x1b[96mNote\x1b[0m: {}", x),
-                ErrorNote::Expect(t, x) => {
-                    let line = t.line as usize;
-                    let col = t.col as usize;
+            format!(
+                "\n{}",
+                self.notes
+                    .iter()
+                    .map(|o| match o {
+                        ErrorNote::Note(x) => format!("\n\x1b[1m\x1b[96mNote\x1b[0m: {}", x),
+                        ErrorNote::Expect(t, x) => {
+                            let line = t.line as usize;
+                            let col = t.col as usize;
 
-                    let gutter = format!("\x1b[1m{}\x1b[0m | ", line);
-                    let editor = format!(
-                        "{}{}",
-                        gutter,
-                        code.split('\n').collect::<Vec<&str>>()[line - 1]
-                    );
-                    format!(
-                        "\n\x1b[1m\x1b[33mNote\x1b[0m: {}
+                            let gutter = format!("\x1b[1m{}\x1b[0m | ", line);
+                            let editor = format!(
+                                "{}{}",
+                                gutter,
+                                code.split('\n').collect::<Vec<&str>>()[line - 1]
+                            );
+                            format!(
+                                "\n\x1b[1m\x1b[33mNote\x1b[0m: {}
 {edt}
 \x1b[33m{arrow:=>length$} this\x1b[0m",
-                        x,
-                        edt = editor,
-                        length = col + gutter.len() - 8, // - \x1b[1m\x1b[0m
-                        arrow = '^',
-                    )
-                }
-            }).collect::<Vec<String>>().join(""))
+                                x,
+                                edt = editor,
+                                length = col + gutter.len() - 8, // - \x1b[1m\x1b[0m
+                                arrow = '^',
+                            )
+                        }
+                    })
+                    .collect::<Vec<String>>()
+                    .join("")
+            )
         } else {
             "".into()
         };

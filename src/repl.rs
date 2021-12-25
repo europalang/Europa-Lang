@@ -8,37 +8,44 @@ use crate::interpreter::Interpreter;
 use crate::lexer::Lexer;
 use crate::parser::Parser;
 use crate::resolver::Resolver;
-use crate::token::{Token, TType};
+use crate::token::{TType, Token};
 use crate::types::Type;
 
 use rustyline::config::Configurer;
 use rustyline::error::ReadlineError;
 use rustyline::{
-    Cmd, ConditionalEventHandler, Editor, Event, EventContext, EventHandler,
-    KeyCode, KeyEvent, Modifiers, RepeatCount,
+    Cmd, ConditionalEventHandler, Editor, Event, EventContext, EventHandler, KeyCode, KeyEvent,
+    Modifiers, RepeatCount,
 };
 
 pub fn init(mut environ: Environment, verbose: bool) {
-    let mut code; let mut tokens;
+    let mut code;
+    let mut tokens;
 
     let history_file = if cfg!(windows) {
         if let Ok(dir) = env::var("USERPROFILE") {
             Some(format!("{}\\.europa_history", dir))
         } else if let Ok(dir) = env::var("DEFAULTUSERPROFILE") {
             Some(format!("{}\\.europa_history", dir))
-        } else { None }
+        } else {
+            None
+        }
     } else if cfg!(unix) {
         if let Ok(home) = env::var("HOME") {
             Some(format!("{}/.europa_history", home))
-        } else { None }
-    } else { None };
+        } else {
+            None
+        }
+    } else {
+        None
+    };
 
     let mut rl = Editor::<()>::new();
     rl.set_auto_add_history(true);
     rl.set_tab_stop(4);
     rl.set_indent_size(4);
     rl.bind_sequence(
-        Event::KeySeq(vec![ KeyEvent(KeyCode::Tab, Modifiers::NONE) ].into()),
+        Event::KeySeq(vec![KeyEvent(KeyCode::Tab, Modifiers::NONE)].into()),
         EventHandler::Conditional(Box::new(TabEventHandler)),
     );
 
@@ -60,7 +67,7 @@ pub fn init(mut environ: Environment, verbose: bool) {
                 _ => {
                     tokens.pop().unwrap(); // remove the EOF
                     "... "
-                },
+                }
             };
 
             let read = match rl.readline(prompt) {
@@ -72,11 +79,11 @@ pub fn init(mut environ: Environment, verbose: bool) {
                 Err(err) => {
                     eprintln!("Unexpected error: {}", err);
                     process::exit(1);
-                },
+                }
             };
 
             if read == ".exit" {
-                break 'main_loop
+                break 'main_loop;
             }
 
             if let Some(history_file) = &history_file {
@@ -92,8 +99,8 @@ pub fn init(mut environ: Environment, verbose: bool) {
                 Ok(mut lexed) => tokens.append(&mut lexed),
                 Err(error) => {
                     error.display(&read);
-                    continue 'main_loop
-                },
+                    continue 'main_loop;
+                }
             }
 
             line += 1;
@@ -101,18 +108,16 @@ pub fn init(mut environ: Environment, verbose: bool) {
 
         match run_code(&tokens, &mut environ, verbose) {
             Err(error) => error.display(&code),
-            Ok(eval) => if eval != Type::Nil {
-                println!("{}", eval);
-            },
+            Ok(eval) => {
+                if eval != Type::Nil {
+                    println!("{}", eval);
+                }
+            }
         }
     }
 }
 
-fn run_code(
-    code: &[Token],
-    environ: &mut Environment,
-    verbose: bool,
-) -> Result<Type, Error> {
+fn run_code(code: &[Token], environ: &mut Environment, verbose: bool) -> Result<Type, Error> {
     // Turn tokens into AST
     let mut time = Instant::now();
     let tree = Parser::new(code.to_vec()).init()?;
@@ -162,18 +167,26 @@ fn has_unclosed_brackets(code: &[Token]) -> bool {
             TType::LeftBrace => stack.push(BracketType::Brace),
             TType::LeftParen => stack.push(BracketType::Paren),
             TType::LeftBrack => stack.push(BracketType::Brack),
-            TType::RightBBrace => if stack.pop() != Some(BracketType::BBrace) {
-                return false
-            },
-            TType::RightBrace => if stack.pop() != Some(BracketType::Brace) {
-                return false
-            },
-            TType::RightParen => if stack.pop() != Some(BracketType::Paren) {
-                return false
-            },
-            TType::RightBrack => if stack.pop() != Some(BracketType::Brack) {
-                return false
-            },
+            TType::RightBBrace => {
+                if stack.pop() != Some(BracketType::BBrace) {
+                    return false;
+                }
+            }
+            TType::RightBrace => {
+                if stack.pop() != Some(BracketType::Brace) {
+                    return false;
+                }
+            }
+            TType::RightParen => {
+                if stack.pop() != Some(BracketType::Paren) {
+                    return false;
+                }
+            }
+            TType::RightBrack => {
+                if stack.pop() != Some(BracketType::Brack) {
+                    return false;
+                }
+            }
             _ => (),
         }
     }

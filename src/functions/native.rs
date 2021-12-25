@@ -1,4 +1,4 @@
-use std::{fmt::Debug, rc::Rc, collections::HashMap};
+use std::{collections::HashMap, fmt::Debug, rc::Rc};
 
 use crate::{error::Error, interpreter::Interpreter, types::Type};
 
@@ -31,7 +31,12 @@ impl Call for Func {
         self.args
     }
 
-    fn call(&self, interpreter: &mut Interpreter, args: Vec<Type>, opt_args: HashMap<String, Type>) -> FResult {
+    fn call(
+        &self,
+        interpreter: &mut Interpreter,
+        args: Vec<Type>,
+        opt_args: HashMap<String, Type>,
+    ) -> FResult {
         (self.exec)(interpreter, args, opt_args)
     }
 

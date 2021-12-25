@@ -2,7 +2,7 @@ use crate::functions::Call;
 
 use super::Type;
 
-use std::fmt::{ self, Display };
+use std::fmt::{self, Display};
 
 impl Type {
     // wtf is this????
@@ -21,17 +21,13 @@ impl Type {
 
                 out + "]"
             }
-            Type::Map(n) => {
-                n.borrow().to_string(1)
-            }
+            Type::Map(n) => n.borrow().to_string(1),
             Type::Nil => "nil".into(),
             Type::Float(n) => n.to_string(),
             Type::String(n) => n.clone(),
             Type::Bool(n) => n.to_string(),
             Type::Func(n) => Call::to_string(n),
-            Type::Module(n) => {
-                n.to_string(1)
-            }
+            Type::Module(n) => n.to_string(1),
         }
     }
 }
@@ -53,7 +49,7 @@ impl Display for Type {
                 }
 
                 write!(f, "]")
-            },
+            }
             Self::Map(items) => {
                 let items = &items.borrow().map;
 
@@ -64,7 +60,7 @@ impl Display for Type {
                 }
 
                 write!(f, "\n}}")
-            },
+            }
             Self::Nil => write!(f, "nil"),
             Self::Float(value) => write!(f, "{}", value),
             Self::String(value) => write!(

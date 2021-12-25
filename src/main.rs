@@ -9,10 +9,10 @@ mod nodes;
 mod parser;
 mod repl;
 mod resolver;
+mod stdlib;
 mod tests;
 mod token;
 mod types;
-mod stdlib;
 
 use std::time::Instant;
 use std::{env, fs, process};
@@ -106,11 +106,7 @@ fn main() {
 }
 
 // Loader for code, mutates Environment and returns evaluated (probably Nil)
-fn run_string(
-    code: &String,
-    environ: &mut Environment,
-    verbose: bool,
-) -> Result<Type, Error> {
+fn run_string(code: &String, environ: &mut Environment, verbose: bool) -> Result<Type, Error> {
     // Tokenise code
     let mut time = Instant::now();
     let tokens = Lexer::new(&code).init()?;

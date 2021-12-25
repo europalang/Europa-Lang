@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use super::Type;
 
-use std::fmt::{ self, Display };
+use std::fmt::{self, Display};
 
 #[derive(Debug, Clone)]
 pub struct Module {

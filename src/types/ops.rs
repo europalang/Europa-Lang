@@ -94,12 +94,8 @@ impl Type {
     // arrays and maps
     pub fn index(&self, num: Type) -> TResult {
         match self {
-            Self::Array(v) => {
-                v.borrow().get(num)
-            }
-            Self::Map(v) => {
-                v.borrow().get(num)
-            }
+            Self::Array(v) => v.borrow().get(num),
+            Self::Map(v) => v.borrow().get(num),
             _ => Err((
                 "The [...] operator can only be applied to arrays and maps.".into(),
                 ErrorType::TypeError,

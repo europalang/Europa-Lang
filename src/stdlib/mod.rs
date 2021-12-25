@@ -9,9 +9,9 @@ use maplit::hashmap;
 
 use crate::types::module::Module;
 
+mod clock;
 mod io;
 mod math;
-mod clock;
 
 /**
 Easier coding.
@@ -30,11 +30,7 @@ macro_rules! native_func {
     };
 
     ($name:literal, $func:expr, $arity:expr) => {
-        Type::Func(FuncType::Native(Func::new(
-            $name,
-            Rc::new($func),
-            $arity,
-        )))
+        Type::Func(FuncType::Native(Func::new($name, Rc::new($func), $arity)))
     };
 }
 

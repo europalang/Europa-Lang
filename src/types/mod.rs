@@ -5,13 +5,12 @@ use array::Array;
 use map::Map;
 use module::Module;
 
-pub mod map;
-pub mod tostring;
-pub mod ops;
-pub mod hash;
 pub mod array;
+pub mod hash;
+pub mod map;
 pub mod module;
-
+pub mod ops;
+pub mod tostring;
 
 #[derive(Debug, Clone)]
 pub enum Type {

@@ -22,7 +22,7 @@ impl Map {
             Some(val) => Ok(match val {
                 Type::Array(v) => Type::Array(Rc::clone(v)),
                 Type::Map(v) => Type::Map(Rc::clone(v)),
-                _ => val.clone()
+                _ => val.clone(),
             }),
             _ => Err((
                 format!("'{}' is not a key in the map.", key,),
@@ -41,13 +41,18 @@ impl Map {
         let mut out = String::from("{{\n");
 
         for (key, value) in &self.map {
-            out += &format!("{}\"{}\": {},\n", "  ".repeat(idt), key, match value {
-                Type::Map(v) => {
-                    v.borrow().to_string(idt + 1)
-                },
-                Type::String(v) => format!("\"{}\"", v),
-                _ => value.to_string()
-            });
+            out += &format!(
+                "{}\"{}\": {},\n",
+                "  ".repeat(idt),
+                key,
+                match value {
+                    Type::Map(v) => {
+                        v.borrow().to_string(idt + 1)
+                    }
+                    Type::String(v) => format!("\"{}\"", v),
+                    _ => value.to_string(),
+                }
+            );
         }
 
         out += &"  ".repeat(idt - 1);

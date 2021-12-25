@@ -1,6 +1,9 @@
 use crate::{interpreter::Interpreter, types::Type};
 
-use std::{fmt::{self, Display}, collections::HashMap};
+use std::{
+    collections::HashMap,
+    fmt::{self, Display},
+};
 
 pub use self::{
     native::Func,
@@ -26,7 +29,12 @@ impl Call for FuncType {
         }
     }
 
-    fn call(&self, interpreter: &mut Interpreter, args: Vec<Type>, opt_args: HashMap<String, Type>) -> FResult {
+    fn call(
+        &self,
+        interpreter: &mut Interpreter,
+        args: Vec<Type>,
+        opt_args: HashMap<String, Type>,
+    ) -> FResult {
         match self {
             Self::Native(n) => n.call(interpreter, args, opt_args),
             Self::User(n) => n.call(interpreter, args, opt_args),

@@ -427,7 +427,7 @@ impl Interpreter {
                         // this could be a return
                         self.environ.pop_scope();
                         return Err(e);
-                    } 
+                    }
                 };
             } else {
                 match self.eval_stmt(stmt) {
@@ -439,7 +439,7 @@ impl Interpreter {
                 };
             }
         }
-        
+
         self.environ.pop_scope();
 
         if ret_val {

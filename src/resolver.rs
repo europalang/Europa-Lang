@@ -257,7 +257,7 @@ impl Resolver {
             TType::Identifier(v) => v,
             _ => panic!(),
         };
-        
+
         for i in (0..self.scopes.len()).rev() {
             if self.scopes[i].contains(var) {
                 return self

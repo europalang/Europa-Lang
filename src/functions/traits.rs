@@ -6,7 +6,12 @@ pub type FResult = Result<Type, Error>;
 
 pub trait Call {
     fn arity(&self) -> usize;
-    fn call(&self, interpreter: &mut Interpreter, args: Vec<Type>, opt_args: HashMap<String, Type>) -> FResult;
+    fn call(
+        &self,
+        interpreter: &mut Interpreter,
+        args: Vec<Type>,
+        opt_args: HashMap<String, Type>,
+    ) -> FResult;
     fn to_string(&self) -> String;
     fn name(&self) -> String;
 }
