@@ -139,8 +139,6 @@ impl Interpreter {
                     ))),
                 );
 
-                println!("def {:?}", self.environ);
-
                 Ok(Type::Nil)
             }
             Stmt::UseStmt(module, import_type) => {
@@ -423,12 +421,25 @@ impl Interpreter {
         let mut val = Type::Nil;
         for stmt in block {
             if ret_val {
-                val = self.eval_stmt(stmt)?;
+                val = match self.eval_stmt(stmt) {
+                    Ok(v) => v,
+                    Err(e) => {
+                        // this could be a return
+                        self.environ.pop_scope();
+                        return Err(e);
+                    } 
+                };
             } else {
-                self.eval_stmt(stmt)?;
+                match self.eval_stmt(stmt) {
+                    Ok(v) => v,
+                    Err(e) => {
+                        self.environ.pop_scope();
+                        return Err(e);
+                    }
+                };
             }
         }
-
+        
         self.environ.pop_scope();
 
         if ret_val {

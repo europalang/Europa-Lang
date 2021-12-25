@@ -48,10 +48,7 @@ impl Call for FuncCallable {
             });
         }
 
-        println!("vars {:?}", interpreter.environ);
-        
         let out = interpreter.eval_block(&self.block, false);
-        println!("reach");
         interpreter.environ.pop_scope();
 
         return match out {
