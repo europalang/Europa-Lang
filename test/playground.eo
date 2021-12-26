@@ -1,15 +1,11 @@
 use io.println;
 
-fn fib(a = 0, b = 1) {
-    if a + b < 1000 {
-        if true {
-            println(a + b);
-        }
-        
-        fib(a = b, b = a + b);
+fn fnc(a = 0) {
+    println(a);
+    
+    if a > 2 {
+        fnc(a = a - 1);
     }
-
-    return a + b;
 }
 
-fib();
+fnc(a = 2);
