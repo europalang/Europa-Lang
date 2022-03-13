@@ -24,7 +24,9 @@ impl Resolver {
     pub fn init(&mut self) -> Result<Interpreter, Error> {
         let nodes = self.interpreter.nodes.clone();
 
+        self.begin_scope();
         self.resolves(&nodes)?;
+        self.end_scope();
 
         Ok(self.interpreter.clone())
     }
@@ -42,14 +44,19 @@ impl Resolver {
                 }
             }
             Stmt::Block(stmts) => {
+                self.begin_scope();
                 self.resolves(stmts)?;
+                self.end_scope();
             }
             Stmt::IfStmt(cond, true_br, elif_brs, else_br) => {
                 self.resolve_if(cond, true_br, elif_brs, else_br)?;
             }
             Stmt::WhileStmt(cond, body) => {
                 self.resolve_expr(cond)?;
+
+                self.begin_scope();
                 self.resolves(body)?;
+                self.end_scope();
             }
             Stmt::Return(_, val) => {
                 if let Some(v) = val {
@@ -174,7 +181,9 @@ impl Resolver {
                 self.resolve_local(var);
             }
             Expr::Block(stmts) => {
+                self.begin_scope();
                 self.resolves(stmts)?;
+                self.end_scope();
             }
             Expr::Logical(left, _, right) => {
                 self.resolve_expr(left)?;
@@ -243,11 +252,9 @@ impl Resolver {
 
     // resolve
     fn resolves(&mut self, stmts: &Vec<Stmt>) -> Result<(), Error> {
-        self.begin_scope();
         for stmt in stmts {
             self.resolve_stmt(stmt)?;
         }
-        self.end_scope();
 
         Ok(())
     }
@@ -276,16 +283,22 @@ impl Resolver {
     ) -> Result<(), Error> {
         self.resolve_expr(cond)?;
 
+        self.begin_scope();
         self.resolves(true_br)?;
+        self.end_scope();
 
         for (cond, block) in elif_brs {
             self.resolve_expr(cond)?;
-
+            
+            self.begin_scope();
             self.resolves(block)?;
+            self.end_scope();
         }
 
         if let Some(br) = else_br {
+            self.begin_scope();
             self.resolves(br)?;
+            self.end_scope();
         }
 
         Ok(())

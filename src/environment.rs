@@ -8,7 +8,7 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct Environment {
-    scopes: Vec<HashMap<String, Type>>,
+    pub scopes: Vec<HashMap<String, Type>>,
 }
 
 impl Environment {
@@ -19,10 +19,12 @@ impl Environment {
     }
 
     pub fn push_scope(&mut self) {
+        println!("bruh?");
         self.scopes.push(HashMap::new());
     }
 
     pub fn pop_scope(&mut self) {
+        println!("ee");
         self.scopes.pop();
     }
 
@@ -48,6 +50,9 @@ impl Environment {
     }
 
     pub fn get_at(&mut self, distance: usize, name: &Token) -> Type {
+        println!("{:?}", name);
+        let scopes = self.scopes.clone();
+        println!("{:#?} {}", scopes, distance);
         if let TType::Identifier(n) = &name.ttype {
             self.ancestor(distance).get(n).unwrap().clone()
         } else {

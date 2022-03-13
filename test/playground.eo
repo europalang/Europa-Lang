@@ -1,11 +1,28 @@
 use io.println;
 
-fn fnc(a = 0) {
+fn fnc(a) {
     println(a);
     
-    if a > 2 {
-        fnc(a = a - 1);
+    if a > 1 {
+        fnc(a - 1);
     }
 }
 
-fnc(a = 2);
+fnc(2);
+
+/*
+fn make_count() {
+    var i = 0;
+
+    fn count() {
+        i += 1;
+        println(i);
+    }
+
+    return count;
+}
+
+var c = make_count();
+c();
+c();
+*/

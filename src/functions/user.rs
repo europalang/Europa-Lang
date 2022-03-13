@@ -5,7 +5,7 @@ use crate::{
     interpreter::Interpreter,
     nodes::stmt::Stmt,
     token::{TType, Token},
-    types::Type,
+    types::Type, environment::Environment,
 };
 
 use super::traits::{Call, FResult};
@@ -17,6 +17,7 @@ pub struct FuncCallable {
     args: Vec<Token>,
     optional_args: HashMap<String, Type>,
     block: Vec<Stmt>,
+    closure: Environment
 }
 
 impl FuncCallable {
@@ -25,12 +26,14 @@ impl FuncCallable {
         args: Vec<Token>,
         optional_args: HashMap<String, Type>,
         block: Vec<Stmt>,
+        closure: Environment
     ) -> Self {
         Self {
             name,
             args,
             optional_args,
             block,
+            closure
         }
     }
 }
@@ -53,6 +56,10 @@ impl Call for FuncCallable {
                 TType::Identifier(n) => interpreter.environ.define(&n, &args[i]),
                 _ => panic!(),
             }
+        }
+
+        for (name, val) in self.closure.scopes.last().unwrap() {
+            interpreter.environ.define(name, val);
         }
 
         for (name, val) in self.optional_args.iter() {

@@ -7,10 +7,40 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug",
-            "program": "${workspaceFolder}/target/debug/europa-lang.exe",
-            "args": ["test/playground.eo"],
-            "preLaunchTask": "rust: cargo build",
+            "name": "Debug executable 'europa-lang'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=europa-lang",
+                    "--package=europa-lang"
+                ],
+                "filter": {
+                    "name": "europa-lang",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                "./test/playground.eo"
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'europa-lang'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=europa-lang",
+                    "--package=europa-lang"
+                ],
+                "filter": {
+                    "name": "europa-lang",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
             "cwd": "${workspaceFolder}"
         }
     ]

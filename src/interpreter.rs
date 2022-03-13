@@ -57,7 +57,9 @@ impl Interpreter {
                 Ok(Type::Nil)
             }
             Stmt::Block(stmts) => {
+                self.environ.push_scope();
                 self.eval_block(stmts, false)?;
+                self.environ.pop_scope();
                 Ok(Type::Nil)
             }
             Stmt::IfStmt(cond, true_br, elif_brs, else_br) => {
@@ -69,8 +71,10 @@ impl Interpreter {
                     if !self.is_truthy(&cond) {
                         break;
                     }
-
+                    
+                    self.environ.push_scope();
                     let out = self.eval_block(block, false);
+                    self.environ.pop_scope();
 
                     if let Err(e) = out {
                         if e.error_type == ErrorType::Break {
@@ -136,6 +140,7 @@ impl Interpreter {
                         args.clone(),
                         opt_args.clone(),
                         block.clone(),
+                        self.environ.clone()
                     ))),
                 );
 
@@ -239,7 +244,13 @@ impl Interpreter {
 
                 self.assign(k, &val)
             }
-            Expr::Block(stmts) => Ok(self.eval_block(stmts, true)?.unwrap()),
+            Expr::Block(stmts) => {
+                self.environ.push_scope();
+                let out = self.eval_block(stmts, true)?.unwrap();
+                self.environ.pop_scope();
+
+                Ok(out)
+            },
             Expr::Logical(left, tok, right) => {
                 let lval = self.eval_expr(left)?;
 
@@ -416,8 +427,6 @@ impl Interpreter {
     }
 
     pub fn eval_block(&mut self, block: &Vec<Stmt>, ret_val: bool) -> Result<Option<Type>, Error> {
-        self.environ.push_scope();
-
         let mut val = Type::Nil;
         for stmt in block {
             if ret_val {
@@ -440,8 +449,6 @@ impl Interpreter {
             }
         }
 
-        self.environ.pop_scope();
-
         if ret_val {
             Ok(Some(val))
         } else {
@@ -459,18 +466,30 @@ impl Interpreter {
         let cond_val = self.eval_expr(cond)?;
 
         if self.is_truthy(&cond_val) {
-            return Ok(self.eval_block(true_br, true)?.unwrap());
+            self.environ.push_scope();
+            let out = self.eval_block(true_br, true)?.unwrap();
+            self.environ.pop_scope();
+
+            return Ok(out);
         }
         if elif_brs.len() != 0 {
             for (cond, elif_block) in elif_brs {
                 let cond_val = self.eval_expr(cond)?;
                 if self.is_truthy(&cond_val) {
-                    return Ok(self.eval_block(elif_block, true)?.unwrap());
+                    self.environ.push_scope();
+                    let out = self.eval_block(elif_block, true)?.unwrap();
+                    self.environ.pop_scope();
+
+                    return Ok(out);
                 }
             }
         }
         if let Some(else_block) = else_br {
-            return Ok(self.eval_block(else_block, true)?.unwrap());
+            self.environ.push_scope();
+            let out = self.eval_block(else_block, true)?.unwrap();
+            self.environ.pop_scope();
+
+            return Ok(out);
         }
 
         Ok(Type::Nil)
