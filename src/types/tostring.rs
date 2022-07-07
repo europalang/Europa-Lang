@@ -1,11 +1,8 @@
-use crate::functions::Call;
-
 use super::Type;
 
 use std::fmt::{self, Display};
 
 impl Type {
-    // wtf is this????
     pub fn to_string(&self) -> String {
         match self {
             Type::Array(v) => {
@@ -26,7 +23,6 @@ impl Type {
             Type::Float(n) => n.to_string(),
             Type::String(n) => n.clone(),
             Type::Bool(n) => n.to_string(),
-            Type::Func(n) => Call::to_string(n),
             Type::Module(n) => n.to_string(1),
         }
     }
@@ -72,7 +68,6 @@ impl Display for Type {
                     .replace('\r', "\\r"),
             ),
             Self::Bool(value) => write!(f, "{}", value),
-            Self::Func(function) => write!(f, "{}", function),
             Self::Module(module) => write!(f, "{}", module),
         }
     }

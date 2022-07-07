@@ -206,7 +206,7 @@ impl Parser {
 
                 Stmt::Return(tok, val)
             }
-            _ => panic!(),
+            _ => unreachable!(),
         };
 
         self.consume(TType::Semi, format!("Expected ';' after {}", stype).into())?;
@@ -318,7 +318,7 @@ impl Parser {
             let inclusive = match tok.ttype {
                 TType::DotDot => false,
                 TType::DotEq => true,
-                _ => panic!(),
+                _ => unreachable!(),
             };
 
             expr = Expr::Range(Rc::new(expr), tok, Rc::new(right), inclusive);
@@ -371,7 +371,7 @@ impl Parser {
                         TType::DivideEq => TType::Divide,
                         TType::PowEq => TType::Pow,
                         TType::ModEq => TType::Mod,
-                        _ => panic!(),
+                        _ => unreachable!(),
                     },
                     ..eq
                 })

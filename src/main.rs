@@ -2,15 +2,10 @@ extern crate maplit;
 
 mod environment;
 mod error;
-mod functions;
 mod interpreter;
 mod lexer;
 mod nodes;
 mod parser;
-mod repl;
-mod resolver;
-mod stdlib;
-mod tests;
 mod token;
 mod types;
 
@@ -20,7 +15,6 @@ use std::{env, fs, process};
 use interpreter::Interpreter;
 use lexer::Lexer;
 use parser::Parser;
-use resolver::Resolver;
 
 use crate::environment::Environment;
 use crate::error::Error;
@@ -80,9 +74,7 @@ fn main() {
 
         println!("Welcome to the Europa interactive REPL.\nUse \".exit\" to exit.");
 
-        // start no-context repl
-        let environ = Environment::new();
-        repl::init(environ, verbose);
+        // todo: re-add once things work again
 
         return;
     };
@@ -99,7 +91,7 @@ fn main() {
                 println!("{:?}", eval);
 
                 // drop into repl with environment
-                repl::init(environ, verbose);
+                // repl::init(environ, verbose);
             }
         }
     }
@@ -127,12 +119,14 @@ fn run_string(code: &String, environ: &mut Environment, verbose: bool) -> Result
     let mut interpreter = Interpreter::new(tree, environ.clone());
 
     // Resolve variables
+    /*
     time = Instant::now();
     interpreter = Resolver::new(interpreter).init()?;
 
     if verbose {
         eprintln!("resolver {:?}", time.elapsed());
     }
+    */
 
     // Run interpreter
     time = Instant::now();
