@@ -5,6 +5,7 @@ edition = "2018"
 description = "A fun language with no classes whatsoever"
 
 [dependencies]
+chrono = "0.4.38"
 clap = "^2.34"
 maplit = "^1.0"
 rustyline = "^9.1"
