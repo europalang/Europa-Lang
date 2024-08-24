@@ -43,6 +43,14 @@ impl Type {
             return Ok(Self::Float(a * b));
         }
 
+        if let (Self::String(a), Self::Float(b)) = (self, other) {
+            return Ok(Self::String(a.repeat((*b) as usize)));
+        }
+
+        if let (Self::Float(a), Self::String(b)) = (self, other) {
+            return Ok(Self::String(b.repeat((*a) as usize)));
+        }
+
         Err((
             "Operator '*' can only be applied to numbers.".into(),
             ErrorType::TypeError,
