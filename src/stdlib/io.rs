@@ -38,6 +38,15 @@ pub fn new() -> Module {
 
                 Ok(Type::String(out.trim().to_string()))
             }, 1),
+            "exit".into() => native_func!(|_, args, _| {
+                std::process::exit(match args[0] {
+                    Type::Float(value) => value as i32,
+                    _ => {
+                        eprintln!("Expected a number for the exit code.");
+                        0
+                    }
+                });
+            }, 1),
         },
     }
 }

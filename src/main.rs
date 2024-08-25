@@ -78,7 +78,7 @@ fn main() {
     } else {
         // no code to run, drop into repl
 
-        println!("Welcome to the Europa interactive REPL.\nUse \".exit\" to exit.");
+        println!("Welcome to the Europa interactive REPL.\nUse \".exit\" or \"use io.exit; exit(0);\" to exit.");
 
         // start no-context repl
         let environ = Environment::new();

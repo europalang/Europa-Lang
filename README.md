@@ -2,10 +2,12 @@
 [Discord Server](https://discord.gg/csdaFGd5K9)
 
 # Europa Lang
+
 This language aims to be simple, minimal, and compact. There will not be any classes whatsoever, and importing other files should be painless.
 
 ## Example
-```
+
+```europa
 use Math;
 use Io;
 
@@ -48,6 +50,7 @@ for i in array {
 ```
 
 ## Credits
+
 - @justamirror and Dart for name and language design suggestions.
 - @CoolCoderSJ for creating the discord server, along with language design suggestions!
 - @SixBeeps for designing the Europa logo!
