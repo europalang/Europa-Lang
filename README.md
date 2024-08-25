@@ -49,6 +49,12 @@ for i in array {
 }
 ```
 
+## Usage
+
+```sh
+cargo run -- [file]
+```
+
 ## Credits
 
 - @justamirror and Dart for name and language design suggestions.

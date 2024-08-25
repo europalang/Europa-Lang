@@ -1,11 +1,5 @@
 use io.println;
 
-fn add(a, b, print = true) {
-    if print {
-        println(a + b);
-    }
-    return a + b;
-}
-
-println(add(1, 2, print = false));
-add(1, 2);
+println("a" * -5);
+println("a" * 5);
+println("a" * "a");

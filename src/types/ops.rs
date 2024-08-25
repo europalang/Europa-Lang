@@ -44,15 +44,27 @@ impl Type {
         }
 
         if let (Self::String(a), Self::Float(b)) = (self, other) {
+            if b.fract() != 0.0 {
+                return Err((
+                    "Operator '*' can only be applied to strings and integer numbers.".into(),
+                    ErrorType::TypeError,
+                ));
+            }
             return Ok(Self::String(a.repeat((*b) as usize)));
         }
 
         if let (Self::Float(a), Self::String(b)) = (self, other) {
+            if a.fract() != 0.0 {
+                return Err((
+                    "Operator '*' can only be applied to strings and integer numbers.".into(),
+                    ErrorType::TypeError,
+                ));
+            }
             return Ok(Self::String(b.repeat((*a) as usize)));
         }
 
         Err((
-            "Operator '*' can only be applied to numbers.".into(),
+            "Operator '*' can only be applied to numbers, or numbers and strings.".into(),
             ErrorType::TypeError,
         ))
     }
@@ -102,12 +114,8 @@ impl Type {
     // arrays and maps
     pub fn index(&self, num: Type) -> TResult {
         match self {
-            Self::Array(v) => {
-                v.borrow().get(num)
-            }
-            Self::Map(v) => {
-                v.borrow().get(num)
-            }
+            Self::Array(v) => v.borrow().get(num),
+            Self::Map(v) => v.borrow().get(num),
             _ => Err((
                 "The [...] operator can only be applied to arrays and maps.".into(),
                 ErrorType::TypeError,
