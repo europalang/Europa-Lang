@@ -8,23 +8,19 @@ This language aims to be simple, minimal, and compact. There will not be any cla
 ## Example
 
 ```europa
-use Math;
-use Io;
+use io;
 
-Io.println("Hello, World!");
-var input = Io.stdin.readline();
-Io.println("You said: " + input);
-
-Io.println("Random Number 0..1: " + Math.random());
+io.println("Hello, World!");
+var input = io.readln("");
+io.println("You said: " + input);
 
 var map = {{
-    a_map = 'strings can look like this too';
-    [1 + 1] = 'expression keys';
+    "a_map": 'strings can look like this too',
+    1 + 1: 'expression keys'
 }};
 
-Io.println(map['a_map']);
-Io.println(map.a_map);
-Io.println(map[2]);
+io.println(map['a_map']);
+io.println(map[2]);
 
 fn add_two(a, b) {
     return a + b;
@@ -41,11 +37,6 @@ while true {
     } else {
         break;
     }
-}
-
-var array = [1, 2, 3];
-for i in array {
-    Io.println(i);
 }
 ```
 
