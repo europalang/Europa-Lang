@@ -273,7 +273,7 @@ impl Lexer {
                 } else if self.get('*') {
                     let lf = self.info;
 
-                    while self.is_valid() && (self.peek() != '*' && self.peek_n(1) != '/') {
+                    while self.is_valid() && !(self.peek() == '*' && self.peek_n(1) == '/') {
                         if self.peek() == '\n' {
                             self.newline();
                         }
@@ -329,7 +329,7 @@ impl Lexer {
                         self.next();
                     }
 
-                    if self.peek() == '.' && (self.peek_n(1) != '.' && self.peek_n(1) != '=') {
+                    if self.peek() == '.' && self.is_number(self.peek_n(1)) {
                         num += &self.peek().to_string();
                         self.next(); // .
 

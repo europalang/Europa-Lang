@@ -1,0 +1,21 @@
+123
+6.7
+.67
+67.
+6_7.6_9____1
+6_._7
+
+
+/* expect token:
+Number(123.0)
+Number(6.7)
+Dot
+Number(67.0)
+Number(67.0)
+Dot
+Number(67.691)
+Number(6.0)
+Dot
+Identifier("_7")
+EOF
+*/

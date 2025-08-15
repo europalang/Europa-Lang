@@ -8,7 +8,25 @@
 "\""
 '\''
 "\?"
-"\x10" // A
+"\x69" // i
 "\o123" // S
 "\U00000045" // E
 "\u0045" // E
+"hello world"
+/* expect token:
+String("")
+String("")
+String("\n")
+String("\n")
+String("\n\r\t")
+String("\u{7}\u{8}\u{1b}\u{c}\u{b}")
+String("\"")
+String("'")
+String("?")
+String("i")
+String("S")
+String("E")
+String("E")
+String("hello world")
+EOF
+*/

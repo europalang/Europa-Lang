@@ -1,7 +1,7 @@
 name _ _name name_space name_ name_123
 abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_
 
-/*
+/* expect token:
 Identifier("name")
 Identifier("_")
 Identifier("_name")

@@ -1,0 +1,14 @@
+space    tabs				newlines
+
+
+
+
+end
+
+/* expect token:
+Identifier("space")
+Identifier("tabs")
+Identifier("newlines")
+Identifier("end")
+EOF
+*/

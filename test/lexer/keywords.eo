@@ -2,7 +2,7 @@ true false nil
 fn return var use do while for in break continue
 or and if else elif
 
-/*
+/* expect token:
 True
 False
 Nil
