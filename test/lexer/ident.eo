@@ -1,0 +1,13 @@
+name _ _name name_space name_ name_123
+abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_
+
+/*
+Identifier("name")
+Identifier("_")
+Identifier("_name")
+Identifier("name_space")
+Identifier("name_")
+Identifier("name_123")
+Identifier("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_")
+EOF
+*/

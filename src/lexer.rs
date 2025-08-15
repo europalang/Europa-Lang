@@ -59,7 +59,7 @@ impl Lexer {
         Ok(self.tokens.clone())
     }
 
-    pub fn lex_char(&mut self) -> Result<(), Error> {
+    fn lex_char(&mut self) -> Result<(), Error> {
         let char = self.peek();
         self.next();
 
@@ -132,11 +132,11 @@ impl Lexer {
                             'n' => '\n',
                             'r' => '\r',
                             't' => '\t',
-                            'a' => '\x07',
-                            'b' => '\x08',
-                            'e' => '\x1b',
-                            'f' => '\x0c',
-                            'v' => '\x0b',
+                            'a' => '\x07', // bell
+                            'b' => '\x08', // backspace
+                            'e' => '\x1b', // ansii escape
+                            'f' => '\x0c', // form feed
+                            'v' => '\x0b', // vertical tab
                             '\\' => '\\',
                             '\'' => '\'',
                             '\"' => '\"',
