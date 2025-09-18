@@ -48,7 +48,12 @@ impl Array {
 
                 if idx < 0f32 || idx as usize >= len {
                     return Err((
-                        format!("Index {} out of array range 0-{}.", i, len - 1).into(),
+                        format!(
+                            "Index {} out of array range 0-{}.",
+                            i,
+                            if len > 0 { len - 1 } else { 0 }
+                        )
+                        .into(),
                         ErrorType::ReferenceError,
                     ));
                 }
